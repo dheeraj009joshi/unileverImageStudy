@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="UnileverImageStudy - Professional IPED Study System">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <title>{% block title %}UnileverImageStudy{% endblock %}</title>
+    
+    <!-- Macros -->
+    {% macro study_progress_bar(current_step, study_type='grid', draft=none) %}
+        <!-- DEBUG: study_type={{ study_type }}, draft={{ 'exists' if draft else 'none' }} -->
+        <!-- DEBUG: 1c_layer complete={{ draft.is_step_complete('1c_layer') if draft else 'N/A' }} -->
+        <!-- DEBUG: 2a_layer complete={{ draft.is_step_complete('2a_layer') if draft else 'N/A' }} -->
+        
+        <div class="progress-section" 
+             data-current-step="{{ current_step }}" 
+             data-study-type="{{ study_type }}"
+             data-step1a-complete="{{ 'true' if draft and draft.is_step_complete('1a') else 'false' }}"
+             data-step1b-complete="{{ 'true' if draft and draft.is_step_complete('1b') else 'false' }}"
+             data-step1c-complete="{{ 'true' if draft and draft.is_step_complete('1c') else 'false' }}"
+             data-step1c-layer-complete="{{ 'true' if draft and draft.is_step_complete('1c_layer') else 'false' }}"
+             data-step2a-complete="{{ 'true' if draft and draft.is_step_complete('2a') else 'false' }}"
+             data-step2a-layer-complete="{{ 'true' if draft and draft.is_step_complete('2a_layer') else 'false' }}"
+             data-step2b-complete="{{ 'true' if draft and draft.is_step_complete('2b') else 'false' }}"
+             data-step2c-complete="{{ 'true' if draft and draft.is_step_complete('2c') else 'false' }}"
+             data-step3a-complete="{{ 'true' if draft and draft.is_step_complete('3a') else 'false' }}"
+             data-step3b-complete="{{ 'true' if draft and draft.is_step_complete('3b') else 'false' }}">
+            <div class="progress-bar">
+                <div class="progress-step" data-step-id="1a" data-step-name="Basic Details">
+                    <div class="step-number">1a</div>
+                    <span class="step-label">Basic Details</span>
+                </div>
+                <div class="progress-step" data-step-id="1b" data-step-name="Study Type">
+                    <div class="step-number">1b</div>
+                    <span class="step-label">Study Type</span>
+                </div>
+                <div class="progress-step" data-step-id="1c" data-step-name="Rating Scale">
+                    <div class="step-number">1c</div>
+                    <span class="step-label">Rating Scale</span>
+                </div>
+                <div class="progress-step" data-step-id="1c_layer" data-step-name="Categories" data-layer-only="true">
+                    <div class="step-number">1c</div>
+                    <span class="step-label">Categories</span>
+                </div>
+                <div class="progress-step" data-step-id="2a" data-step-name="Elements" data-grid-only="true">
+                    <div class="step-number">2a</div>
+                    <span class="step-label">Elements</span>
+                </div>
+                <div class="progress-step" data-step-id="2a_layer" data-step-name="Categories & Elements" data-layer-only="true">
+                    <div class="step-number">2a</div>
+                    <span class="step-label">Categories & Elements</span>
+                </div>
+                <div class="progress-step" data-step-id="2b" data-step-name="Questions">
+                    <div class="step-number">2b</div>
+                    <span class="step-label">Questions</span>
+                </div>
+                <div class="progress-step" data-step-id="2c" data-step-name="IPED Parameters">
+                    <div class="step-number">2c</div>
+                    <span class="step-label">IPED Parameters</span>
+                </div>
+                <div class="progress-step" data-step-id="3a" data-step-name="Generate Tasks">
+                    <div class="step-number">3a</div>
+                    <span class="step-label">Generate Tasks</span>
+                </div>
+                <div class="progress-step" data-step-id="3b" data-step-name="Launch">
+                    <div class="step-number">3b</div>
+                    <span class="step-label">Launch</span>
+                </div>
+            </div>
+
+        </div>
+    {% endmacro %}
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', filename='css/base.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/components.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/utilities.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='js/base.js') }}" as="script">
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/internal-pages.css') }}">
+    
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body class="app-body">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="app-header" role="banner">
+        <nav class="nav-container" role="navigation" aria-label="Main navigation">
+            <div class="nav-brand">
+                <a href="{{ url_for('index.index') }}" class="brand-link" aria-label="Home">
+                    <span class="brand-icon">🧠</span>
+                    <span class="brand-text">UnileverImageStudy</span>
+                </a>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard.index') }}" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('study_creation.step1a') }}" class="nav-link">
+                        <span class="nav-icon">➕</span>
+                        Create Study
+                    </a>
+                    
+                    <!-- User Menu -->
+                    <div class="user-menu" aria-haspopup="true">
+                        <button class="user-menu-toggle" aria-expanded="false">
+                            <span class="user-avatar">👤</span>
+                            <span class="user-name">{{ current_user.username }}</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <ul class="user-dropdown" role="menu">
+                            <li><a href="{{ url_for('auth.profile') }}" role="menuitem">Profile</a></li>
+                            <li><a href="{{ url_for('auth.change_password') }}" role="menuitem">Change Password</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a href="{{ url_for('auth.logout') }}" role="menuitem">Logout</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="nav-link">
+                        <span class="nav-icon">🔑</span>
+                        Login
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="nav-link">
+                        <span class="nav-icon">📝</span>
+                        Sign Up
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Mobile menu toggle -->
+            <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container" role="alert" aria-live="polite">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}" data-auto-hide="true">
+                        <div class="flash-content">
+                            <span class="flash-icon">
+                                {% if category == 'success' %}✅
+                                {% elif category == 'error' %}❌
+                                {% elif category == 'warning' %}⚠️
+                                {% else %}ℹ️
+                                {% endif %}
+                            </span>
+                            <span class="flash-text">{{ message }}</span>
+                        </div>
+                        <button class="flash-close" aria-label="Close message">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
+        <div class="loading-overlay-content">
+            <div class="loading-spinner loading-spinner--xl"></div>
+            <p class="loading-overlay-text">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="app-main" role="main">
+        {% block content %}{% endblock %}
+    </main>
+
+
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" aria-hidden="true">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <p class="loading-text">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/base.js') }}" defer></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Initialize page -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize base functionality
+            if (typeof initializeBase === 'function') {
+                initializeBase();
+            }
+            
+            // Initialize page-specific functionality
+            if (typeof initializePage === 'function') {
+                initializePage();
+            }
+            
+            // Initialize interactive progress bar
+            console.log('Initializing interactive progress bar...');
+            initializeInteractiveProgressBar();
+        });
+        
+        // Interactive Progress Bar Functionality
+        function initializeInteractiveProgressBar() {
+            console.log('Looking for progress sections...');
+            const progressSections = document.querySelectorAll('.progress-section');
+            console.log('Found progress sections:', progressSections.length);
+            
+            progressSections.forEach(progressSection => {
+                const currentStep = progressSection.dataset.currentStep;
+                const studyType = progressSection.dataset.studyType || 'grid';
+                const steps = progressSection.querySelectorAll('.progress-step');
+                
+                console.log('Processing progress section:', { currentStep, studyType });
+                console.log('Study type from dataset:', progressSection.dataset.studyType);
+                console.log('All dataset attributes:', progressSection.dataset);
+                
+                // DEBUG: Show what we're working with (console only)
+                console.log(`DEBUG: Study Type: ${studyType}, Current Step: ${currentStep}`);
+                console.log(`DEBUG: Dataset keys: ${Object.keys(progressSection.dataset).join(', ')}`);
+                console.log(`DEBUG: 1c_layer complete: ${progressSection.dataset['step1cLayerComplete']}`);
+                console.log(`DEBUG: 2a_layer complete: ${progressSection.dataset['step2aLayerComplete']}`);
+                
+                // Define step order and dependencies
+                const stepOrder = getStepOrder(studyType);
+                const currentStepIndex = stepOrder.indexOf(currentStep);
+                
+                // Update step states and visibility
+                steps.forEach((step, index) => {
+                    const stepId = step.dataset.stepId;
+                    if (!stepId) return; // Skip if no step ID
+                    
+                    console.log(`Processing step: ${stepId} for study type: ${studyType}`);
+                    
+                    // FIRST: Handle step visibility based on study type
+                    console.log(`Checking visibility for step ${stepId} with study type ${studyType}`);
+                    
+                    if (studyType === 'grid') {
+                        // Grid studies: hide layer-specific steps
+                        if (stepId === '1c_layer' || stepId === '2a_layer') {
+                            console.log(`Hiding ${stepId} for grid study`);
+                            step.style.display = 'none';
+                            step.style.visibility = 'hidden';
+                            return; // Skip further processing for hidden steps
+                        } else {
+                            console.log(`Showing ${stepId} for grid study`);
+                            step.style.display = 'flex';
+                            step.style.visibility = 'visible';
+                        }
+                    } else if (studyType === 'layer') {
+                        // Layer studies: hide grid-specific steps
+                        if (stepId === '2a') {
+                            console.log(`Hiding ${stepId} for layer study`);
+                            step.style.display = 'none';
+                            step.style.visibility = 'hidden';
+                            return; // Skip further processing for hidden steps
+                        } else {
+                            console.log(`Showing ${stepId} for layer study`);
+                            step.style.display = 'flex';
+                            step.style.visibility = 'visible';
+                        }
+                    } else {
+                        // Default: show all steps
+                        console.log(`Default: showing ${stepId}`);
+                        step.style.display = 'flex';
+                        step.style.visibility = 'visible';
+                    }
+                    
+                    // Debug: Log the step element and its data attributes
+                    console.log(`Step element for ${stepId}:`, step);
+                    console.log(`Step dataset:`, step.dataset);
+                    
+                    // SECOND: Only process visible steps for state management
+                    const stepIndex = stepOrder.indexOf(stepId);
+                    if (stepIndex === -1) {
+                        console.log(`Step ${stepId} not in current study type order, skipping state management`);
+                        return;
+                    }
+                    
+                    // Check if this step is actually completed based on backend data
+                    // HTML data attributes are converted to camelCase by the browser
+                    const stepDataKey = `step${stepId.replace(/_/g, '')}Complete`;
+                    const isStepComplete = progressSection.dataset[stepDataKey] === 'true';
+                    
+                    console.log(`Step ${stepId}: Looking for completion data with key: ${stepDataKey}`);
+                    console.log(`Available dataset keys:`, Object.keys(progressSection.dataset));
+                    console.log(`Completion value:`, progressSection.dataset[stepDataKey]);
+                    
+                    // Special handling for layer-specific steps
+                    let finalIsStepComplete = isStepComplete;
+                    if (studyType === 'layer') {
+                        if (stepId === '1c_layer') {
+                            // Check if 1c_layer is complete - use camelCase key
+                            finalIsStepComplete = progressSection.dataset['step1cLayerComplete'] === 'true';
+                            console.log(`Layer study: 1c_layer completion check:`, finalIsStepComplete);
+                            console.log(`Raw dataset value for step1cLayerComplete:`, progressSection.dataset['step1cLayerComplete']);
+                        } else if (stepId === '2a_layer') {
+                            // Check if 2a_layer is complete - use camelCase key
+                            finalIsStepComplete = progressSection.dataset['step2aLayerComplete'] === 'true';
+                            console.log(`Layer study: 2a_layer completion check:`, finalIsStepComplete);
+                            console.log(`Raw dataset value for step2aLayerComplete:`, progressSection.dataset['step2aLayerComplete']);
+                        }
+                    }
+                    
+                    console.log(`Step ${stepId}: stepDataKey=${stepDataKey}, backend-complete=${isStepComplete}, final-complete=${finalIsStepComplete}`);
+                    
+                    // Additional debugging for all dataset values
+                    console.log(`All dataset values:`, {
+                        'step1a-complete': progressSection.dataset['step1aComplete'],
+                        'step1b-complete': progressSection.dataset['step1bComplete'],
+                        'step1c-complete': progressSection.dataset['step1cComplete'],
+                        'step1c-layer-complete': progressSection.dataset['step1cLayerComplete'],
+                        'step2a-complete': progressSection.dataset['step2aComplete'],
+                        'step2a-layer-complete': progressSection.dataset['step2aLayerComplete'],
+                        'step2b-complete': progressSection.dataset['step2bComplete'],
+                        'step2c-complete': progressSection.dataset['step2cComplete'],
+                        'step3a-complete': progressSection.dataset['step3aComplete'],
+                        'step3b-complete': progressSection.dataset['step3bComplete']
+                    });
+                    
+                    // Determine step state
+                    if (stepId === currentStep) {
+                        step.classList.add('active');
+                        step.classList.remove('completed', 'accessible');
+                        console.log(`Step ${stepId} is current step - setting as active`);
+                    } else if (finalIsStepComplete) {
+                        // Step is actually completed (from backend) - make it clickable
+                        step.classList.add('completed');
+                        step.classList.remove('active', 'accessible');
+                        console.log(`Step ${stepId} is completed - setting as completed`);
+                    } else {
+                        // Step is not completed - not accessible
+                        step.classList.remove('active', 'completed', 'accessible');
+                        console.log(`Step ${stepId} is not completed - setting as default`);
+                    }
+                    
+                    // Debug logging
+                    console.log(`Step ${stepId}: index=${stepIndex}, current=${currentStepIndex}, backend-complete=${isStepComplete}, state=${step.classList.toString()}, clickable=${step.classList.contains('completed')}`);
+                    
+                    // Add click functionality only for completed steps
+                    if (finalIsStepComplete) {
+                        step.style.cursor = 'pointer';
+                        step.addEventListener('click', () => navigateToStep(stepId));
+                        console.log(`Step ${stepId} is clickable (completed)`);
+                    } else {
+                        step.style.cursor = 'default';
+                        console.log(`Step ${stepId} is not clickable (not completed)`);
+                    }
+                });
+            });
+        }
+        
+        function getStepOrder(studyType) {
+            if (studyType === 'layer') {
+                return ['1a', '1b', '1c', '1c_layer', '2a_layer', '2b', '2c', '3a', '3b'];
+            } else {
+                return ['1a', '1b', '1c', '2a', '2b', '2c', '3a', '3b'];
+            }
+        }
+        
+        function navigateToStep(stepId) {
+            // Show loading state
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+            
+            // Navigate to the selected step
+            const stepUrl = `/study/create/${stepId}`;
+            window.location.href = stepUrl;
+        }
+        
+        // Auto-scroll to center current step
+        function autoScrollToCurrentStep() {
+            console.log('Auto-scroll function called');
+            
+            const progressSection = document.querySelector('.progress-section');
+            if (!progressSection) {
+                console.log('No progress section found');
+                return;
+            }
+            
+            const currentStep = progressSection.dataset.currentStep;
+            console.log('Current step from dataset:', currentStep);
+            
+            if (!currentStep) {
+                console.log('No current step found in dataset');
+                return;
+            }
+            
+            const currentStepElement = progressSection.querySelector(`[data-step-id="${currentStep}"]`);
+            console.log('Current step element found:', currentStepElement);
+            
+            if (!currentStepElement) {
+                console.log('Could not find element with data-step-id:', currentStep);
+                return;
+            }
+            
+            const container = progressSection.querySelector('.progress-bar');
+            if (!container) {
+                console.log('No progress bar container found');
+                return;
+            }
+            
+            // Wait a bit for layout to be complete
+            setTimeout(() => {
+                // Get the actual scrollable container (might be the progress-section itself)
+                const scrollContainer = container.scrollWidth > container.offsetWidth ? container : progressSection;
+                
+                // Calculate scroll position to center the current step
+                const stepRect = currentStepElement.getBoundingClientRect();
+                const containerRect = scrollContainer.getBoundingClientRect();
+                
+                // Calculate the scroll position needed to center the step
+                const stepCenter = stepRect.left + (stepRect.width / 2);
+                const containerCenter = containerRect.left + (containerRect.width / 2);
+                const scrollOffset = stepCenter - containerCenter;
+                
+                console.log('Step center:', stepCenter, 'Container center:', containerCenter, 'Scroll offset:', scrollOffset);
+                
+                // Get current scroll position
+                const currentScroll = scrollContainer.scrollLeft || 0;
+                const newScroll = currentScroll + scrollOffset;
+                
+                console.log('Current scroll:', currentScroll, 'New scroll position:', newScroll);
+                
+                // Ensure scroll position is valid
+                if (newScroll >= 0 && newScroll <= scrollContainer.scrollWidth - scrollContainer.offsetWidth) {
+                    // Smooth scroll to center the current step
+                    scrollContainer.scrollTo({
+                        left: newScroll,
+                        behavior: 'smooth'
+                    });
+                    
+                    console.log('Scrolling to position:', newScroll);
+                } else {
+                    console.log('Scroll position out of bounds, using alternative method');
+                    
+                    // Alternative method: scroll to step position
+                    const stepLeft = currentStepElement.offsetLeft;
+                    const containerWidth = scrollContainer.offsetWidth;
+                    const stepWidth = currentStepElement.offsetWidth;
+                    
+                    const alternativeScroll = stepLeft - (containerWidth / 2) + (stepWidth / 2);
+                    
+                    scrollContainer.scrollTo({
+                        left: Math.max(0, alternativeScroll),
+                        behavior: 'smooth'
+                    });
+                    
+                    console.log('Alternative scroll to position:', alternativeScroll);
+                }
+            }, 200);
+        }
+        
+        // Call auto-scroll when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded - calling auto-scroll');
+            setTimeout(autoScrollToCurrentStep, 500);
+        });
+        
+        // Also call auto-scroll when progress bar is updated
+        window.addEventListener('load', function() {
+            console.log('Window load - calling auto-scroll');
+            setTimeout(autoScrollToCurrentStep, 800);
+        });
+        
+        // Call auto-scroll when progress bar state changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    console.log('Progress bar class changed, calling auto-scroll');
+                    setTimeout(autoScrollToCurrentStep, 200);
+                }
+            });
+        });
+        
+        // Start observing progress sections
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressSections = document.querySelectorAll('.progress-section');
+            console.log('Found progress sections:', progressSections.length);
+            progressSections.forEach(section => {
+                observer.observe(section, { attributes: true });
+                console.log('Observing section:', section);
+            });
+        });
+        
+        // Additional trigger for when progress bar is fully rendered
+        function triggerAutoScroll() {
+            console.log('Manual trigger for auto-scroll');
+            setTimeout(autoScrollToCurrentStep, 200);
+        }
+        
+        // Call it after a longer delay to ensure everything is rendered
+        setTimeout(triggerAutoScroll, 1000);
+        
+        // Force auto-scroll on any user interaction with progress bar
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.progress-step')) {
+                console.log('Progress step clicked, triggering auto-scroll');
+                setTimeout(autoScrollToCurrentStep, 100);
+            }
+        });
+        
+        // Check if progress bar is scrollable and force scroll if needed
+        function checkAndForceScroll() {
+            const container = document.querySelector('.progress-bar');
+            if (container && container.scrollWidth > container.offsetWidth) {
+                console.log('Progress bar is scrollable, forcing auto-scroll');
+                setTimeout(autoScrollToCurrentStep, 300);
+            } else {
+                console.log('Progress bar not scrollable, container width:', container?.offsetWidth, 'scroll width:', container?.scrollWidth);
+            }
+        }
+        
+        // Force scroll to current step with a more direct approach
+        function forceScrollToCurrentStep() {
+            const currentStep = document.querySelector('.progress-section')?.dataset.currentStep;
+            if (!currentStep) return;
+            
+            const currentStepElement = document.querySelector(`[data-step-id="${currentStep}"]`);
+            if (!currentStepElement) return;
+            
+            const container = document.querySelector('.progress-bar');
+            if (!container) return;
+            
+            // Simple direct scroll to step
+            currentStepElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+            
+            console.log('Force scroll to current step:', currentStep);
+        }
+        
+        // Check after images and fonts are loaded
+        window.addEventListener('load', function() {
+            setTimeout(checkAndForceScroll, 1000);
+            // Also try the force scroll method
+            setTimeout(forceScrollToCurrentStep, 1200);
+        });
+        
+        // Additional trigger with force scroll
+        setTimeout(forceScrollToCurrentStep, 1500);
+    </script>
+    
+    <!-- Footer -->
+    <footer class="app-footer" role="contentinfo">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title">UnileverImageStudy</h3>
+                    <p class="footer-description">Professional IPED Study System for Research and Data Collection</p>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('about') }}">About</a></li>
+                        <li><a href="{{ url_for('contact') }}">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="#help">Help Center</a></li>
+                        <li><a href="#docs">Documentation</a></li>
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="footer-copyright">&copy; 2024 UnileverImageStudy. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

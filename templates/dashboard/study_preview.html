@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Preview{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1>Study Preview</h1>
+            <p class="text-muted">{{ study.title }} - See how respondents experience your study</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-outline-secondary">Back to Study</a>
+            <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn-outline-primary">Share Study</a>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- Preview Navigation -->
+        <div class="content-section">
+            <div class="preview-nav">
+                <button class="btn btn-outline-primary active" onclick="showPreviewSection('welcome')">Welcome</button>
+                <button class="btn btn-outline-primary" onclick="showPreviewSection('classification')">Classification</button>
+                <button class="btn btn-outline-primary" onclick="showPreviewSection('orientation')">Orientation</button>
+                <button class="btn btn-outline-primary" onclick="showPreviewSection('task')">Sample Task</button>
+                <button class="btn btn-outline-primary" onclick="showPreviewSection('completion')">Completion</button>
+            </div>
+        </div>
+
+        <!-- Welcome Section Preview -->
+        <div class="preview-section active" id="welcome-preview">
+            <div class="content-section">
+                <h2>Welcome Page Preview</h2>
+                <div class="preview-container">
+                    <div class="study-welcome">
+                        <h1>{{ study.title }}</h1>
+                        <div class="study-background">
+                            <p>{{ study.background }}</p>
+                        </div>
+                        <div class="study-instructions">
+                            <h3>Instructions</h3>
+                            <p>You will be asked to complete {{ study.iped_parameters.tasks_per_consumer }} tasks. Each task will show you {{ study.iped_parameters.min_active_elements }}-{{ study.iped_parameters.max_active_elements }} elements, and you'll rate them on a scale from {{ study.rating_scale.min_value }} to {{ study.rating_scale.max_value }}.</p>
+                            <p><strong>Expected duration:</strong> {{ study.iped_parameters.tasks_per_consumer * 2 }}-{{ study.iped_parameters.tasks_per_consumer * 5 }} minutes</p>
+                        </div>
+                        <div class="start-button">
+                            <button class="btn btn-primary btn-lg">Start Study</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classification Questions Preview -->
+        <div class="preview-section" id="classification-preview">
+            <div class="content-section">
+                <h2>Classification Questions Preview</h2>
+                <div class="preview-container">
+                    <div class="classification-form">
+                        <h3>Demographic Information</h3>
+                        <p class="text-muted">Please answer these questions to help us understand your background.</p>
+                        
+                        {% if study.classification_questions %}
+                        {% for question in study.classification_questions %}
+                        <div class="question-item">
+                            <label class="form-label">
+                                {{ question.question_text }}
+                                {% if question.is_required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            
+                            <!-- All classification questions are single choice -->
+                            <div class="form-group">
+                                {% for option in question.answer_options %}
+                                <div class="form-check">
+                                    <input type="radio" name="q{{ question.question_id }}" value="{{ option }}" class="form-check-input">
+                                    <label class="form-check-label">{{ option }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="text-muted">No classification questions configured for this study.</p>
+                        {% endif %}
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary">Continue to Orientation</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orientation Preview -->
+        <div class="preview-section" id="orientation-preview">
+            <div class="content-section">
+                <h2>Orientation Preview</h2>
+                <div class="preview-container">
+                    <div class="orientation-content">
+                        <h3>Study Orientation</h3>
+                        <div class="orientation-text">
+                            {{ study.orientation_text }}
+                        </div>
+                        
+                        <div class="rating-scale-preview">
+                            <h4>Rating Scale</h4>
+                            <p>You will rate elements on a scale from <strong>{{ study.rating_scale.min_value }}</strong> to <strong>{{ study.rating_scale.max_value }}</strong>:</p>
+                            <div class="scale-display">
+                                <span class="scale-min">{{ study.rating_scale.min_value }} - {{ study.rating_scale.min_label }}</span>
+                                {% if study.rating_scale.middle_label %}
+                                <span class="scale-middle">{{ study.rating_scale.middle_label }}</span>
+                                {% endif %}
+                                <span class="scale-max">{{ study.rating_scale.max_value }} - {{ study.rating_scale.max_label }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="task-structure">
+                            <h4>Task Structure</h4>
+                            <ul>
+                                <li>You will complete <strong>{{ study.iped_parameters.tasks_per_consumer }}</strong> tasks</li>
+                                <li>Each task shows <strong>{{ study.iped_parameters.min_active_elements }}-{{ study.iped_parameters.max_active_elements }}</strong> elements</li>
+                                <li>Rate each element using the scale above</li>
+                                <li>Take your time to consider each element carefully</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary">Start Tasks</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sample Task Preview -->
+        <div class="preview-section" id="task-preview">
+            <div class="content-section">
+                <h2>Sample Task Preview</h2>
+                <div class="preview-container">
+                    <div class="task-container">
+                        <!-- Progress Bar -->
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 25%"></div>
+                            </div>
+                            <span class="progress-text">Task 1 of {{ study.iped_parameters.tasks_per_consumer }}</span>
+                        </div>
+                        
+                        <!-- Main Question -->
+                        <div class="main-question">
+                            <h3>{{ study.main_question }}</h3>
+                        </div>
+                        
+                        <!-- Elements Display -->
+                        <div class="elements-display">
+                            <h4>Rate the following elements:</h4>
+                            
+                            {% if study.elements %}
+                            {% for element in study.elements[:3] %}
+                            <div class="element-item">
+                                <div class="element-content">
+                                    {% if element.element_type == 'image' %}
+                                    <img src="{{ element.content }}" alt="{{ element.alt_text or element.name }}" class="element-image">
+                                    {% else %}
+                                    <div class="element-text">{{ element.content }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="element-rating">
+                                    <label class="rating-label">Rating:</label>
+                                    <div class="rating-options">
+                                        {% for i in range(study.rating_scale.min_value, study.rating_scale.max_value + 1) %}
+                                        <input type="radio" name="rating_{{ element.element_id }}" value="{{ i }}" class="rating-radio">
+                                        <label class="rating-option">{{ i }}</label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p class="text-muted">No elements configured for this study.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary">Submit Rating</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Preview -->
+        <div class="preview-section" id="completion-preview">
+            <div class="content-section">
+                <h2>Completion Page Preview</h2>
+                <div class="preview-container">
+                    <div class="completion-content">
+                        <div class="completion-icon">✅</div>
+                        <h3>Study Completed!</h3>
+                        <p class="completion-message">Thank you for participating in our research study.</p>
+                        
+                        <div class="completion-summary">
+                            <h4>Study Summary</h4>
+                            <ul>
+                                <li><strong>Study:</strong> {{ study.title }}</li>
+                                <li><strong>Tasks Completed:</strong> {{ study.iped_parameters.tasks_per_consumer }}</li>
+                                <li><strong>Total Duration:</strong> ~{{ study.iped_parameters.tasks_per_consumer * 3 }} minutes</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="privacy-note">
+                            <h4>Privacy & Data</h4>
+                            <p>Your responses are anonymous and will be used for research purposes only. No personal information is collected or stored.</p>
+                        </div>
+                        
+                        <div class="completion-actions">
+                            <button class="btn btn-outline-primary">Return Home</button>
+                            <button class="btn btn-outline-secondary">Participate Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPreviewSection(section) {
+    // Hide all preview sections
+    document.querySelectorAll('.preview-section').forEach(div => {
+        div.classList.remove('active');
+    });
+    
+    // Show selected section
+    document.getElementById(section + '-preview').classList.add('active');
+    
+    // Update navigation buttons
+    document.querySelectorAll('.preview-nav .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+// Initialize with welcome section
+document.addEventListener('DOMContentLoaded', function() {
+    showPreviewSection('welcome');
+});
+</script>
+
+<style>
+.preview-nav {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.preview-section {
+    display: none;
+}
+
+.preview-section.active {
+    display: block;
+}
+
+.preview-container {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.study-welcome h1 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.study-background {
+    background: var(--background-color);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+}
+
+.study-instructions {
+    background: var(--info-color);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+}
+
+.start-button {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.classification-form .question-item {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.orientation-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.rating-scale-preview {
+    background: var(--background-color);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin: 1.5rem 0;
+}
+
+.scale-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+.task-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.progress-container {
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    background: var(--border-color);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    background: var(--primary-color);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.elements-display {
+    margin: 2rem 0;
+}
+
+.element-item {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.element-content {
+    margin-bottom: 1rem;
+}
+
+.element-image {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+}
+
+.element-text {
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.element-rating {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rating-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rating-option {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 36px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rating-option:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+}
+
+.rating-radio:checked + .rating-option {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+}
+
+.rating-radio {
+    display: none;
+}
+
+.completion-content {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.completion-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.completion-summary {
+    background: var(--background-color);
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.privacy-note {
+    background: var(--info-color);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin: 1.5rem 0;
+}
+
+.completion-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.required {
+    color: var(--danger-color);
+}
+</style>
+{% endblock %}

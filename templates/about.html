@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}About - UnileverImageStudy{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="about-header">
+        <h1>About UnileverImageStudy</h1>
+        <p class="lead">Advanced research platform for Individual Parameter Estimation Design studies</p>
+    </div>
+
+    <div class="about-content">
+        <div class="content-section">
+            <h2>What is IPED?</h2>
+            <p>Individual Parameter Estimation Design (IPED) is a sophisticated research methodology that enables researchers to efficiently estimate individual-level parameters through carefully designed experimental tasks. Our system provides a comprehensive platform for creating, managing, and analyzing IPED studies.</p>
+        </div>
+
+        <div class="content-section">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>Advanced Study Design</h3>
+                    <p>Create complex experimental designs with customizable parameters, elements, and task structures.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-time Analytics</h3>
+                    <p>Monitor study progress with detailed timing data, element interactions, and completion analytics.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Precise Parameter Estimation</h3>
+                    <p>Utilize sophisticated algorithms to generate balanced task matrices for optimal parameter estimation.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Responsive Design</h3>
+                    <p>Studies work seamlessly across all devices, from desktop computers to mobile phones.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Built with privacy-first design, ensuring participant anonymity and data security.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Comprehensive Export</h3>
+                    <p>Export data in multiple formats for further analysis in statistical software.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>How It Works</h2>
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Design Your Study</h3>
+                        <p>Use our intuitive wizard to configure study parameters, elements, and experimental design.</p>
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Generate Task Matrix</h3>
+                        <p>Our IPED algorithm automatically generates balanced task matrices for optimal parameter estimation.</p>
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Collect Data</h3>
+                        <p>Share your study with participants and collect real-time responses with detailed timing data.</p>
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Analyze Results</h3>
+                        <p>Use built-in analytics and export data for advanced statistical analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>Use Cases</h2>
+            <div class="use-cases">
+                <div class="use-case">
+                    <h3>Academic Research</h3>
+                    <p>Conduct rigorous experimental studies in psychology, marketing, and behavioral sciences.</p>
+                </div>
+                
+                <div class="use-case">
+                    <h3>Market Research</h3>
+                    <p>Evaluate consumer preferences and product perceptions with precise measurement.</p>
+                </div>
+                
+                <div class="use-case">
+                    <h3>User Experience</h3>
+                    <p>Test interface designs and user interactions with detailed behavioral data.</p>
+                </div>
+                
+                <div class="use-case">
+                    <h3>Clinical Studies</h3>
+                    <p>Assess patient responses and treatment effectiveness in controlled settings.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>Technology Stack</h2>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <strong>Backend:</strong> Flask, Python, MongoDB
+                </div>
+                <div class="tech-item">
+                    <strong>Frontend:</strong> HTML5, CSS3, Vanilla JavaScript
+                </div>
+                <div class="tech-item">
+                    <strong>Database:</strong> MongoDB with MongoEngine ODM
+                </div>
+                <div class="tech-item">
+                    <strong>Deployment:</strong> Docker, Gunicorn, Nginx
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>Get Started</h2>
+            <div class="cta-section">
+                <p>Ready to create your first IPED study? Sign up for free and start designing your research today.</p>
+                <div class="cta-buttons">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Create Account</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.about-header {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.about-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.about-header .lead {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+}
+
+.content-section {
+    margin: 3rem 0;
+}
+
+.content-section h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.feature-card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.workflow {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1.5rem;
+}
+
+.step-number {
+    background: var(--primary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.use-cases {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.use-case {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+}
+
+.use-case h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.tech-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.tech-item {
+    background: var(--background-color);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.cta-section {
+    text-align: center;
+    background: var(--primary-color);
+    color: white;
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+}
+
+.cta-section p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .workflow-step {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+</style>
+{% endblock %}

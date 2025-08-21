@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - UnileverImageStudy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<header class="dashboard-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="header-title">Welcome back, {{ current_user.username }}!</h1>
+                <p class="header-subtitle">Manage your research studies and track progress</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('study_creation.step1a') }}" class="btn btn--primary">
+                    Create New Study
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Statistics Overview -->
+<section class="stats-section">
+    <div class="container">
+        <h2 class="section-title">Overview</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ stats.total_studies }}</h3>
+                    <p class="stat-label">Total Studies</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🚀</div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ stats.active_studies }}</h3>
+                    <p class="stat-label">Active Studies</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ stats.draft_studies }}</h3>
+                    <p class="stat-label">Draft Studies</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ stats.total_responses }}</h3>
+                    <p class="stat-label">Total Responses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Actions -->
+<section class="quick-actions-section">
+    <div class="container">
+        <h2 class="section-title">Quick Actions</h2>
+        <div class="quick-actions-grid">
+            <a href="{{ url_for('study_creation.step1a') }}" class="action-card">
+                <div class="action-icon">➕</div>
+                <h3 class="action-title">Create Study</h3>
+                <p class="action-description">Start a new IPED research study</p>
+            </a>
+            
+            <a href="{{ url_for('dashboard.studies') }}" class="action-card">
+                <div class="action-icon">📋</div>
+                <h3 class="action-title">View Studies</h3>
+                <p class="action-description">Manage all your studies</p>
+            </a>
+            
+            <a href="{{ url_for('dashboard.studies', status='active') }}" class="action-card">
+                <div class="action-icon">📊</div>
+                <h3 class="action-title">Active Studies</h3>
+                <p class="action-description">Monitor running studies</p>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

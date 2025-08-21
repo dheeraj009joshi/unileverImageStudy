@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Classification Questions{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="study-participation-container">
+    
+       
+       
+
+    
+    <div class="form-section">
+        <div class="form-header">
+            <div class="progress-text">2/4</div>
+            <h1 class="form-title">Classification Questions</h1>
+            <p class="form-subtitle">Please answer the following questions about your preferences and characteristics.</p>
+        </div>
+        
+        <form method="POST" class="classification-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+
+            
+            {% if study.classification_questions %}
+                {% for question in study.classification_questions %}
+                <div class="question-group" data-question-id="{{ question.question_id }}">
+                    <label class="question-label">{{ question.question_text }} *</label>
+                    
+                    <div class="options-grid">
+                        {% if question.answer_options %}
+                            {% for option in question.answer_options %}
+                            <div class="option-item">
+                                <input type="radio" 
+                                       id="classification_{{ question.question_id }}_{{ loop.index }}" 
+                                       name="classification_{{ question.question_id }}" 
+                                       value="{{ option }}" 
+                                       class="option-input" 
+                                       required>
+                                <label for="classification_{{ question.question_id }}_{{ loop.index }}" class="option-label">
+                                    <span class="option-text">{{ option }}</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-options">
+                                <p>No options available for this question.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-questions">
+                    <p>No classification questions available for this study.</p>
+                </div>
+            {% endif %}
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">Continue</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Classification questions page loaded');
+    
+    // Form validation
+    const form = document.querySelector('.classification-form');
+    const submitBtn = form.querySelector('.btn-primary');
+    
+    form.addEventListener('submit', function(e) {
+        const questions = document.querySelectorAll('.question-group');
+        let isValid = true;
+        let firstInvalidQuestion = null;
+        
+        questions.forEach(question => {
+            const questionId = question.dataset.questionId;
+            const selectedOption = document.querySelector(`input[name="classification_${questionId}"]:checked`);
+            
+            if (!selectedOption) {
+                isValid = false;
+                if (!firstInvalidQuestion) {
+                    firstInvalidQuestion = question;
+                }
+                question.classList.add('error');
+            } else {
+                question.classList.remove('error');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            showError('Please answer all questions before continuing.');
+            
+            // Scroll to first invalid question
+            if (firstInvalidQuestion) {
+                firstInvalidQuestion.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }
+            return;
+        }
+        
+        // Form is valid, show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
+    });
+    
+    // Option selection animation
+    const optionItems = document.querySelectorAll('.option-item');
+    optionItems.forEach(item => {
+        const input = item.querySelector('.option-input');
+        const label = item.querySelector('.option-label');
+        
+        input.addEventListener('change', function() {
+            // Remove active class from all options in the same question group
+            const questionGroup = this.closest('.question-group');
+            questionGroup.querySelectorAll('.option-label').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            
+            // Add active class to selected option
+            if (this.checked) {
+                label.classList.add('active');
+                
+                // Remove error state from question group
+                questionGroup.classList.remove('error');
+            }
+        });
+        
+        // Click on label to select radio
+        label.addEventListener('click', function() {
+            input.checked = true;
+            input.dispatchEvent(new Event('change'));
+        });
+    });
+    
+    // Real-time validation feedback
+    const radioInputs = document.querySelectorAll('input[type="radio"]');
+    radioInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const questionGroup = this.closest('.question-group');
+            const questionId = questionGroup.dataset.questionId;
+            const selectedOption = document.querySelector(`input[name="classification_${questionId}"]:checked`);
+            
+            if (selectedOption) {
+                questionGroup.classList.remove('error');
+                questionGroup.classList.add('answered');
+            }
+        });
+    });
+    
+    function showError(message) {
+        // Remove existing error
+        const existingError = document.querySelector('.form-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create new error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'form-error';
+        errorDiv.textContent = message;
+        
+        const formHeader = document.querySelector('.form-header');
+        formHeader.appendChild(errorDiv);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Add visual feedback for answered questions
+    function updateProgress() {
+        const totalQuestions = document.querySelectorAll('.question-group').length;
+        const answeredQuestions = document.querySelectorAll('.question-group.answered').length;
+        
+        if (answeredQuestions > 0) {
+            const progressPercent = (answeredQuestions / totalQuestions) * 100;
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = `${25 + (progressPercent * 0.25)}%`;
+            }
+        }
+    }
+    
+    // Update progress when questions are answered
+    radioInputs.forEach(input => {
+        input.addEventListener('change', updateProgress);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Create Study - Step 1b{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+            {{ study_progress_bar('1b', draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid', draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Step 1b: Study Type & Main Question</h1>
+            <p class="step-description">Define the type of study and the main research question</p>
+        </div>
+
+        <form method="POST" class="step-form" data-validate="true" data-loading="true">
+            {{ form.hidden_tag() }}
+            
+            <div class="study-form-group">
+                {{ form.study_type.label(class="study-form-label study-form-label--required") }}
+                {{ form.study_type(class="study-form-control study-form-select") }}
+                {% if form.study_type.errors %}
+                    <div class="form-error">
+                        {% for error in form.study_type.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">Choose whether your study will use images or text elements</small>
+            </div>
+
+            <div class="study-form-group">
+                {{ form.main_question.label(class="study-form-label study-form-label--required") }}
+                {{ form.main_question(class="study-form-control study-form-textarea", placeholder="What is the main question respondents will answer?") }}
+                {% if form.main_question.errors %}
+                    <div class="form-error">
+                        {% for error in form.main_question.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">This question will be displayed to respondents during each task</small>
+            </div>
+
+            <div class="study-form-group">
+                {{ form.orientation_text.label(class="study-form-label study-form-label--required") }}
+                {{ form.orientation_text(class="study-form-control study-form-textarea", placeholder="Provide instructions for respondents") }}
+                {% if form.orientation_text.errors %}
+                    <div class="form-error">
+                        {% for error in form.orientation_text.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">Instructions that will be shown to respondents before they start the study</small>
+            </div>
+
+            <div class="step-actions">
+                <a href="{{ url_for('study_creation.step1a') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                {{ form.submit(class="btn btn--primary step-nav-btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

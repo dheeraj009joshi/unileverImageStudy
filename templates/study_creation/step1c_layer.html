@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Layer Study Category Setup - Study Creation{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <div class="study-creation-header">
+        <h1>Layer Study Category Setup</h1>
+        <p>Configure the number of categories for your layer study</p>
+    </div>
+
+            <!-- DEBUG: Draft object exists: {{ 'Yes' if draft else 'No' }} -->
+            <!-- DEBUG: Draft ID: {{ draft._id if draft else 'N/A' }} -->
+            <!-- DEBUG: Step 1c_layer data: {{ draft.get_step_data('1c_layer') if draft else 'N/A' }} -->
+            <!-- DEBUG: Step 1c_layer complete: {{ draft.is_step_complete('1c_layer') if draft else 'N/A' }} -->
+            
+            {{ study_progress_bar('1c_layer', 'layer', draft) }}
+
+    <div class="form-container">
+        <form method="POST" class="study-form">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-section">
+                <h3>Layer Study Configuration</h3>
+                <p>Layer studies organize elements into categories (A, B, C, D, etc.). Each category will contain multiple elements that respondents will rate.</p>
+                
+                <div class="form-group">
+                    {{ form.num_categories.label(class="form-label") }}
+                    {{ form.num_categories(class="form-input", min="2", max="10") }}
+                    {% if form.num_categories.errors %}
+                        <div class="error-message">
+                            {% for error in form.num_categories.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-help">Choose between 2-10 categories. Each category will be labeled A, B, C, D, etc.</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('study_creation.step1b') }}" class="btn btn--secondary">
+                    <span class="btn-icon">⬅️</span>
+                    Previous
+                </a>
+                {{ form.submit(class="btn btn--primary") }}
+            </div>
+        </form>
+    </div>
+
+    <div class="info-section">
+        <h4>How Layer Studies Work</h4>
+        <ul>
+            <li><strong>Categories:</strong> Elements are organized into logical groups (e.g., A=Brands, B=Products, C=Services)</li>
+            <li><strong>Element Structure:</strong> Each category contains multiple elements that respondents will rate</li>
+            <li><strong>Task Generation:</strong> IPED algorithm will create tasks using elements from different categories</li>
+            <li><strong>Analysis:</strong> You can analyze performance across categories and individual elements</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

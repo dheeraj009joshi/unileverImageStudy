@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block title %}Create Study - Step 3b{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+            {{ study_progress_bar('3b', draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid', draft) }}
+
+    <div class="step-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="step-header">
+            <h1 class="step-title">Step 3b: Study Preview & Launch</h1>
+            <p class="step-description">Review your study and launch it</p>
+        </div>
+
+        <div class="study-preview">
+            <h3 class="section-title">Study Preview</h3>
+            <p class="form-help">Review all the details of your study before launching. Make sure everything is correct.</p>
+                
+                <div class="preview-sections">
+                    <!-- Basic Details -->
+                    <div class="preview-section">
+                        <h4>Basic Details</h4>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <span class="preview-label">Title:</span>
+                                <span class="preview-value">{{ study_data.step1a.title }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Background:</span>
+                                <span class="preview-value">{{ study_data.step1a.background }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Language:</span>
+                                <span class="preview-value">{{ study_data.step1a.language }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Study Configuration -->
+                    <div class="preview-section">
+                        <h4>Study Configuration</h4>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <span class="preview-label">Study Type:</span>
+                                <span class="preview-value">{{ study_data.step1b.study_type }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Main Question:</span>
+                                <span class="preview-value">{{ study_data.step1b.main_question }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Orientation Text:</span>
+                                <span class="preview-value">{{ study_data.step1b.orientation_text }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rating Scale -->
+                    <div class="preview-section">
+                        <h4>Rating Scale</h4>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <span class="preview-label">Scale Range:</span>
+                                <span class="preview-value">{{ study_data.step1c.min_value }} - {{ study_data.step1c.max_value }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Min Label:</span>
+                                <span class="preview-value">{{ study_data.step1c.min_label }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Max Label:</span>
+                                <span class="preview-value">{{ study_data.step1c.max_label }}</span>
+                            </div>
+                            {% if study_data.step1c.middle_label %}
+                            <div class="preview-item">
+                                <span class="preview-label">Middle Label:</span>
+                                <span class="preview-value">{{ study_data.step1c.middle_label }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Study Elements -->
+                    <div class="preview-section">
+                        <h4>Study Elements ({{ study_data.step2a.elements|length if study_data.step2a and study_data.step2a.elements else 0 }})</h4>
+                        
+                        <!-- Debug Information -->
+                        {% if study_data.step2a %}
+                            <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                                <strong>DEBUG:</strong> Step2a data available<br>
+                                <strong>Elements count:</strong> {{ study_data.step2a.elements|length if study_data.step2a.elements else 0 }}<br>
+                                <strong>Raw data:</strong> {{ study_data.step2a|tojson }}
+                            </div>
+                        {% else %}
+                            <div class="debug-info" style="background: #ffebee; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                                <strong>DEBUG:</strong> No Step2a data found
+                            </div>
+                        {% endif %}
+                        
+                        <div class="elements-preview">
+                            {% if study_data.step2a and study_data.step2a.elements %}
+                                {% for element in study_data.step2a.elements %}
+                                <div class="element-preview">
+                                    <div class="element-header">
+                                        <h5>{{ element.name or 'Unnamed Element' }}</h5>
+                                        <span class="element-type">{{ element.element_type or 'unknown' }}</span>
+                                    </div>
+                                    {% if element.description %}
+                                    <p class="element-description">{{ element.description }}</p>
+                                    {% endif %}
+                                    {% if element.element_type == 'text' %}
+                                    <div class="element-content">
+                                        <strong>Text:</strong> {{ element.content or 'No text content' }}
+                                    </div>
+                                    {% elif element.element_type == 'image' %}
+                                    <div class="element-content">
+                                        <strong>Image:</strong> 
+                                        {% if element.content %}
+                                            <div class="image-container">
+                                                <img src="{{ element.content }}" 
+                                                     alt="{{ element.alt_text or 'Study element' }}" 
+                                                     class="element-image"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                <div class="image-error" style="display: none; color: #d32f2f; font-style: italic;">
+                                                    Failed to load image: {{ element.content }}
+                                                </div>
+                                            </div>
+                                            {% if element.alt_text %}
+                                            <br><small class="alt-text">Alt: {{ element.alt_text }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="no-image">No image content available</div>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <div class="element-content">
+                                        <strong>Content:</strong> {{ element.content or 'No content' }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="no-elements">
+                                    <p>No study elements found. Please complete step 2a first.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Classification Questions -->
+                    {% if study_data.step2b.questions %}
+                    <div class="preview-section">
+                        <h4>Classification Questions ({{ study_data.step2b.questions|length }})</h4>
+                        <div class="questions-preview">
+                            {% for question in study_data.step2b.questions %}
+                            <div class="question-preview">
+                                <h5>{{ question.question_text }}</h5>
+                                                            <div class="question-details">
+                                <span class="question-type">Single Choice</span>
+                                {% if question.is_required %}
+                                    <span class="required-badge">Required</span>
+                                {% endif %}
+                            </div>
+                                {% if question.answer_options %}
+                                <div class="answer-options">
+                                    <strong>Options:</strong>
+                                    <ul>
+                                        {% for option in question.answer_options %}
+                                        <li>{{ option }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- IPED Parameters -->
+                    <div class="preview-section">
+                        <h4>IPED Parameters</h4>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <span class="preview-label">Number of Elements:</span>
+                                <span class="preview-value">{{ study_data.step2c.num_elements }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Tasks per Respondent:</span>
+                                <span class="preview-value">{{ study_data.step2c.tasks_per_consumer }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Number of Respondents:</span>
+                                <span class="preview-value">{{ study_data.step2c.number_of_respondents }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Active Elements Range:</span>
+                                <span class="preview-value">{{ study_data.step2c.min_active_elements }} - {{ study_data.step2c.max_active_elements }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Total Tasks:</span>
+                                <span class="preview-value">{{ study_data.step2c.total_tasks }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Task Matrix -->
+                    {% if study_data.step3a.tasks_matrix %}
+                    <div class="preview-section">
+                        <h4>Task Matrix</h4>
+                        <div class="matrix-summary">
+                            <p><strong>Status:</strong> <span class="text-success">Generated Successfully</span></p>
+                            <p><strong>Generated at:</strong> {{ study_data.step3a.generated_at }}</p>
+                            <p><strong>Matrix contains:</strong> {{ study_data.step3a.tasks_matrix.total_tasks }} tasks for {{ study_data.step3a.tasks_matrix.total_respondents }} respondents</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Launch Form -->
+            <div class="launch-section">
+                <h3>Launch Study</h3>
+                <p class="form-help">Once you launch your study, it will be available to respondents and you can start collecting data.</p>
+                
+                <form method="POST" class="study-form">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        <div class="checkbox-wrapper">
+                            {{ form.launch_study(class="form-check-input") }}
+                            {{ form.launch_study.label(class="form-label") }}
+                        </div>
+                        <small class="form-help-text">I confirm that I have reviewed all study details and am ready to launch</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="{{ url_for('study_creation.step3a') }}" class="btn btn-secondary">Previous</a>
+                        {{ form.submit(class="btn btn-success") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.preview-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.preview-section {
+    background: var(--surface-color);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.preview-section h4 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.preview-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.preview-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.preview-value {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.elements-preview, .questions-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.element-preview, .question-preview {
+    background: var(--background-color);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.element-header, .question-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.element-type, .question-type {
+    background: var(--secondary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+.required-badge {
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+.element-description {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 0.5rem;
+}
+
+.element-content {
+    background: var(--background-color);
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--primary-color);
+}
+
+.answer-options ul {
+    margin: 0.5rem 0 0 1rem;
+    padding: 0;
+}
+
+.answer-options li {
+    margin-bottom: 0.25rem;
+}
+
+.matrix-summary {
+    background: var(--success-color);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.launch-section {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--success-color);
+}
+
+.launch-section h3 {
+    color: var(--success-color);
+    margin-bottom: 1rem;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.checkbox-wrapper label {
+    margin: 0;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

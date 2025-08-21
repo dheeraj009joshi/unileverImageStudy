@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Study Completed{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="study-participation-container">
+    <div class="progress-indicator">
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 100%"></div>
+        </div>
+        <div class="progress-text">4/4</div>
+    </div>
+    
+    <div class="completion-section">
+        <div class="completion-header">
+            <div class="completion-icon">✅</div>
+            <h1 class="completion-title">Study Completed!</h1>
+            <p class="completion-subtitle">Thank you for participating in our research study.</p>
+        </div>
+        
+        <div class="completion-content">
+            <div class="completion-message">
+                <h2>Your Response Has Been Recorded</h2>
+                <p>We have successfully received your responses for the study "<strong>{{ study.title }}</strong>". Your participation is greatly appreciated and will contribute valuable insights to our research.</p>
+            </div>
+            
+            <div class="response-summary">
+                <h3>Response Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="summary-label">Response ID:</span>
+                        <span class="summary-value">{{ response._id[:8] }}...</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Completion Time:</span>
+                        <span class="summary-value">{{ response.session_end_time.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Tasks:</span>
+                        <span class="summary-value">{{ response.completed_tasks_count }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="important-notes">
+                <h3>Important Information</h3>
+                <ul>
+                    <li><strong>Anonymous Response:</strong> Your responses are completely anonymous and cannot be traced back to you.</li>
+                    <li><strong>Data Usage:</strong> Your data will be used only for research purposes and in accordance with our privacy policy.</li>
+                    <li><strong>No Personal Information:</strong> We do not collect any personally identifiable information.</li>
+                    <li><strong>Research Impact:</strong> Your participation helps advance our understanding in this field.</li>
+                </ul>
+            </div>
+            
+            <div class="next-steps">
+                <h3>What Happens Next?</h3>
+                <p>You can now close this browser tab. Your responses have been securely stored and will be analyzed as part of our research study. If you have any questions about this study, please contact our research team.</p>
+            </div>
+        </div>
+        
+        <div class="completion-footer">
+            <div class="footer-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <span class="btn-text">Return to Home</span>
+                </a>
+                <button onclick="window.close()" class="btn btn-outline">
+                    <span class="btn-text">Close Tab</span>
+                </button>
+            </div>
+            
+            <div class="footer-text">
+                <p>This study has been approved by our research ethics board. Thank you for your valuable contribution to research!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Study completion page loaded');
+    
+    // Add completion animation
+    const completionSection = document.querySelector('.completion-section');
+    if (completionSection) {
+        completionSection.style.opacity = '0';
+        completionSection.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            completionSection.style.transition = 'all 0.8s ease-out';
+            completionSection.style.opacity = '1';
+            completionSection.style.transform = 'translateY(0)';
+        }, 200);
+    }
+    
+    // Animate completion icon
+    const completionIcon = document.querySelector('.completion-icon');
+    if (completionIcon) {
+        completionIcon.style.transform = 'scale(0) rotate(-180deg)';
+        
+        setTimeout(() => {
+            completionIcon.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            completionIcon.style.transform = 'scale(1) rotate(0deg)';
+        }, 500);
+    }
+    
+    // Animate summary items
+    const summaryItems = document.querySelectorAll('.summary-item');
+    summaryItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-20px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.5s ease-out';
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, 800 + (index * 150));
+    });
+    
+    // Button hover effects
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.02)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+        
+        button.addEventListener('click', function() {
+            this.style.transform = 'translateY(1px) scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'translateY(0) scale(1)';
+            }, 150);
+        });
+    });
+    
+    // Auto-scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Prevent form resubmission
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+});
+</script>
+{% endblock %}

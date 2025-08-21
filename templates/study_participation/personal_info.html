@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Personal Information{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="study-participation-container">
+
+    
+    <div class="form-section">
+        <div class="form-header">
+            <div class="progress-text">1/4</div>
+            <h1 class="form-title">Personal Information</h1>
+            <p class="form-subtitle">Please provide some basic information about yourself. This helps us understand our study participants better.</p>
+        </div>
+        
+        <form method="POST" class="personal-info-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label for="birth_date" class="form-label">Date of Birth *</label>
+                <div class="date-picker-container">
+                    <input type="date" 
+                           id="birth_date" 
+                           name="birth_date" 
+                           class="date-input" 
+                           required 
+                           max="{{ today_date }}"
+                           min="1900-01-01">
+                    <div class="date-picker-icon">📅</div>
+                </div>
+                <small class="form-help">Please enter your birth date. We'll calculate your age automatically.</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Gender *</label>
+                <div class="options-grid">
+                    <div class="option-item">
+                        <input type="radio" id="gender_male" name="gender" value="male" class="option-input" required>
+                        <label for="gender_male" class="option-label">
+                            <span class="option-text">Male</span>
+                        </label>
+                    </div>
+                    
+                    <div class="option-item">
+                        <input type="radio" id="gender_female" name="gender" value="female" class="option-input" required>
+                        <label for="gender_female" class="option-label">
+                            <span class="option-text">Female</span>
+                        </label>
+                    </div>
+                    
+                    <div class="option-item">
+                        <input type="radio" id="gender_other" name="gender" value="other" class="option-input" required>
+                        <label for="gender_other" class="option-label">
+                            <span class="option-text">Other</span>
+                        </label>
+                    </div>
+                    
+                    <div class="option-item">
+                        <input type="radio" id="gender_prefer_not" name="gender" value="prefer_not_to_say" class="option-input" required>
+                        <label for="gender_prefer_not" class="option-label">
+                            <span class="option-text">Prefer not to say</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">Continue</span>
+                    <span class="btn-icon">→</span>
+                </button>
+                
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Personal info page loaded');
+    
+    // Set max date to today
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    document.getElementById('birth_date').setAttribute('max', todayString);
+    
+    // Form validation
+    const form = document.querySelector('.personal-info-form');
+    const submitBtn = form.querySelector('.btn-primary');
+    
+    form.addEventListener('submit', function(e) {
+        const birthDate = document.getElementById('birth_date').value;
+        const gender = document.querySelector('input[name="gender"]:checked');
+        
+        console.log('Form submission - Birth Date:', birthDate);
+        console.log('Form submission - Gender:', gender ? gender.value : 'None selected');
+        
+        if (!birthDate) {
+            e.preventDefault();
+            showError('Please select your date of birth.');
+            return;
+        }
+        
+        if (!gender) {
+            e.preventDefault();
+            showError('Please select your gender.');
+            return;
+        }
+        
+        // Calculate age
+        const birthDateObj = new Date(birthDate);
+        const age = today.getFullYear() - birthDateObj.getFullYear();
+        const monthDiff = today.getMonth() - birthDateObj.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+            age--;
+        }
+        
+        if (age < 13 || age > 120) {
+            e.preventDefault();
+            showError('Please enter a valid date of birth. You must be between 13 and 120 years old.');
+            return;
+        }
+        
+        console.log('Form is valid, submitting...');
+        console.log('Age calculated:', age);
+        
+        // Form is valid, show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
+    });
+    
+    // Option selection animation
+    const optionItems = document.querySelectorAll('.option-item');
+    optionItems.forEach(item => {
+        const input = item.querySelector('.option-input');
+        const label = item.querySelector('.option-label');
+        
+        // Ensure radio button is properly selectable
+        input.addEventListener('change', function() {
+            console.log('Radio button changed:', this.value, this.checked);
+            
+            // Remove active class from all options
+            optionItems.forEach(opt => opt.querySelector('.option-label').classList.remove('active'));
+            
+            // Add active class to selected option
+            if (this.checked) {
+                label.classList.add('active');
+                console.log('Option selected:', this.value);
+            }
+        });
+        
+        // Click on label to select radio
+        label.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Label clicked for:', input.value);
+            
+            // Uncheck all other radio buttons in the same group
+            const name = input.name;
+            document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+                radio.checked = false;
+            });
+            
+            // Check this radio button
+            input.checked = true;
+            console.log('Radio button checked:', input.checked, input.value);
+            
+            // Trigger change event
+            input.dispatchEvent(new Event('change'));
+        });
+        
+        // Also allow direct clicking on the option item
+        item.addEventListener('click', function(e) {
+            if (e.target !== input && e.target !== label) {
+                e.preventDefault();
+                console.log('Option item clicked for:', input.value);
+                
+                // Uncheck all other radio buttons in the same group
+                const name = input.name;
+                document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+                    radio.checked = false;
+                });
+                
+                // Check this radio button
+                input.checked = true;
+                console.log('Radio button checked:', input.checked, input.value);
+                
+                // Trigger change event
+                input.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    
+    // Date picker enhancement
+    const dateInput = document.getElementById('birth_date');
+    const dateContainer = document.querySelector('.date-picker-container');
+    
+    dateContainer.addEventListener('click', function() {
+        dateInput.focus();
+    });
+    
+    dateInput.addEventListener('focus', function() {
+        dateContainer.classList.add('focused');
+    });
+    
+    dateInput.addEventListener('blur', function() {
+        dateContainer.classList.remove('focused');
+    });
+    
+    function showError(message) {
+        // Remove existing error
+        const existingError = document.querySelector('.form-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create new error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'form-error';
+        errorDiv.textContent = message;
+        
+        const formHeader = document.querySelector('.form-header');
+        formHeader.appendChild(errorDiv);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Test function to check form data
+    window.testFormData = function() {
+        const birthDate = document.getElementById('birth_date').value;
+        const gender = document.querySelector('input[name="gender"]:checked');
+        
+        console.log('=== FORM DATA TEST ===');
+        console.log('Birth Date:', birthDate);
+        console.log('Gender Selected:', gender ? gender.value : 'None');
+        console.log('Gender Element:', gender);
+        console.log('All gender inputs:', document.querySelectorAll('input[name="gender"]'));
+        console.log('Checked gender inputs:', document.querySelectorAll('input[name="gender"]:checked'));
+        console.log('=====================');
+        
+        // Show alert with form data
+        alert(`Birth Date: ${birthDate || 'Not set'}\nGender: ${gender ? gender.value : 'Not selected'}`);
+    };
+});
+</script>
+{% endblock %}

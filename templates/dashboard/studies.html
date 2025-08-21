@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}My Studies - UnileverImageStudy{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>My Studies</h1>
+        <p>Manage and monitor your IPED research studies</p>
+    </div>
+
+    <!-- Status Filter Tabs -->
+    <div class="status-filter-tabs">
+        <a href="{{ url_for('dashboard.studies', status='all') }}" 
+           class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+            All Studies <span class="count">{{ status_counts.all }}</span>
+        </a>
+        <a href="{{ url_for('dashboard.studies', status='active') }}" 
+           class="filter-tab {% if status_filter == 'active' %}active{% endif %}">
+            Active <span class="count">{{ status_counts.active }}</span>
+        </a>
+        <a href="{{ url_for('dashboard.studies', status='draft') }}" 
+           class="filter-tab {% if status_filter == 'draft' %}active{% endif %}">
+            Drafts <span class="count">{{ status_counts.draft }}</span>
+        </a>
+        <a href="{{ url_for('dashboard.studies', status='completed') }}" 
+           class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
+            Completed <span class="count">{{ status_counts.completed }}</span>
+        </a>
+        
+        <div class="filter-actions">
+            <a href="{{ url_for('study_creation.index') }}" class="btn btn-primary">
+                Create New Study
+            </a>
+        </div>
+    </div>
+
+    <!-- Studies Grid -->
+    {% if studies %}
+        <div class="studies-grid">
+            {% for study in studies %}
+                <div class="study-card" data-status="{{ study.status }}" data-type="{{ study.study_type }}">
+                    <div class="study-header">
+                        <h3>{{ study.title }}</h3>
+                        <span class="study-status status-{{ study.status }}">{{ study.status|title }}</span>
+                    </div>
+                    
+                    <div class="study-meta">
+                        <span class="study-type">{{ study.study_type|title }} Study</span>
+                        <span class="study-date">{{ study.created_at|format_datetime }}</span>
+                    </div>
+                    
+                    <div class="study-stats">
+                        <div class="stat">
+                            <span class="stat-label">Responses:</span>
+                            <span class="stat-value">{{ study.total_responses }}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Completed:</span>
+                            <span class="stat-value">{{ study.completed_responses }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="study-actions">
+                        <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-small btn-primary">View Details</a>
+                        
+                        {% if study.status == 'draft' %}
+                            <a href="{{ url_for('dashboard.edit_study', study_id=study._id) }}" class="btn btn-small btn-secondary">Edit</a>
+                        {% elif study.status == 'active' %}
+                            <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn-small btn-secondary">Share</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if total > per_page %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('dashboard.studies', status=status_filter, page=page-1) }}" class="page-link">&laquo; Previous</a>
+                {% endif %}
+                
+                <span class="page-info">Page {{ page }} of {{ (total + per_page - 1) // per_page }}</span>
+                
+                {% if page < (total + per_page - 1) // per_page %}
+                    <a href="{{ url_for('dashboard.studies', status=status_filter, page=page+1) }}" class="page-link">Next &raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <h3>No studies found</h3>
+            <p>{% if status_filter == 'all' %}Create your first study to get started{% else %}No {{ status_filter }} studies found{% endif %}</p>
+            <a href="{{ url_for('study_creation.index') }}" class="btn btn-primary">Create New Study</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

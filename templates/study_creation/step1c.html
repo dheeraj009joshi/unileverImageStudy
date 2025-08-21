@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Rating Scale Configuration - Step 1c{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+            {{ study_progress_bar('1c', draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid', draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Step 1c: Rating Scale Configuration</h1>
+            <p class="step-description">Configure the rating scale that respondents will use to evaluate elements</p>
+        </div>
+
+        <form method="POST" class="step-form" data-validate="true" data-loading="true">
+            {{ form.hidden_tag() }}
+            
+            <div class="study-form-group">
+                <h3 class="section-title">Rating Scale Configuration</h3>
+                <p class="form-help">Configure the rating scale that respondents will use to evaluate elements.</p>
+            </div>
+            
+            <div class="study-form-row">
+                <div class="study-form-group">
+                    {{ form.min_value.label(class="study-form-label study-form-label--required") }}
+                    {{ form.min_value(class="study-form-control", placeholder="e.g., 1") }}
+                    {% if form.min_value.errors %}
+                        <div class="form-error">
+                            {% for error in form.min_value.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-help">The minimum value on your rating scale</small>
+                </div>
+                
+                <div class="study-form-group">
+                    {{ form.max_value.label(class="study-form-label study-form-label--required") }}
+                    {{ form.max_value(class="study-form-control", placeholder="e.g., 7") }}
+                    {% if form.max_value.errors %}
+                        <div class="form-error">
+                            {% for error in form.max_value.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-help">The maximum value on your rating scale</small>
+                </div>
+            </div>
+            
+            <div class="study-form-row">
+                <div class="study-form-group">
+                    {{ form.min_label.label(class="study-form-label study-form-label--required") }}
+                    {{ form.min_label(class="study-form-control", placeholder="e.g., Not at all important") }}
+                    {% if form.min_label.errors %}
+                        <div class="form-error">
+                            {% for error in form.min_label.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-help">Label for the minimum value</small>
+                </div>
+                
+                    {{ form.max_label(class="study-form-control", placeholder="e.g., Extremely important") }}
+                    {% if form.max_label.errors %}
+                        <div class="form-error">
+                            {% for error in form.max_label.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-help">Label for the maximum value</small>
+                </div>
+            </div>
+            
+            <div class="study-form-group">
+                {{ form.middle_label.label(class="study-form-label") }}
+                {{ form.middle_label(class="study-form-control", placeholder="e.g., Moderately important") }}
+                {% if form.middle_label.errors %}
+                    <div class="form-error">
+                        {% for error in form.middle_label.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">Optional label for the middle value (if odd-numbered scale)</small>
+            </div>
+            
+            <div class="rating-scale-preview">
+                <h4>Rating Scale Preview</h4>
+                <div class="scale-display" id="scalePreview">
+                    <!-- Dynamic preview will be generated here -->
+                </div>
+            </div>
+            
+            <div class="step-actions">
+                <a href="{{ url_for('study_creation.step1b') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                {{ form.submit(class="btn btn--primary step-nav-btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const minValue = document.getElementById('min_value');
+    const maxValue = document.getElementById('max_value');
+    const minLabel = document.getElementById('min_label');
+    const maxLabel = document.getElementById('max_label');
+    const middleLabel = document.getElementById('middle_label');
+    const scalePreview = document.getElementById('scalePreview');
+    
+    function updateScalePreview() {
+        const min = parseInt(minValue.value) || 1;
+        const max = parseInt(maxValue.value) || 7;
+        const minText = minLabel.value || 'Min';
+        const maxText = maxLabel.value || 'Max';
+        const middleText = middleLabel.value || 'Middle';
+        
+        if (min >= max) {
+            scalePreview.innerHTML = '<p class="text-warning">Please enter valid min/max values</p>';
+            return;
+        }
+        
+        let scaleHTML = '<div class="scale-labels">';
+        scaleHTML += `<span class="scale-min">${min} - ${minText}</span>`;
+        
+        // Add middle label if odd-numbered scale
+        if ((max - min + 1) % 2 === 1) {
+            const middle = Math.floor((min + max) / 2);
+            scaleHTML += `<span class="scale-middle">${middle} - ${middleText}</span>`;
+        }
+        
+        scaleHTML += `<span class="scale-max">${max} - ${maxText}</span>`;
+        scaleHTML += '</div>';
+        
+        // Add visual scale with circular buttons
+        scaleHTML += '<div class="scale-visual">';
+        for (let i = min; i <= max; i++) {
+            scaleHTML += `<button type="button" class="scale-point-circle">${i}</button>`;
+        }
+        scaleHTML += '</div>';
+        
+        scalePreview.innerHTML = scaleHTML;
+    }
+    
+    // Update preview when any field changes
+    [minValue, maxValue, minLabel, maxLabel, middleLabel].forEach(field => {
+        field.addEventListener('input', updateScalePreview);
+    });
+    
+    // Initial preview
+    updateScalePreview();
+});
+</script>
+{% endblock %}

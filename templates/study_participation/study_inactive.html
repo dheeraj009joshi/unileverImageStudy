@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Study Inactive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="study-participation-container">
+    <div class="inactive-section">
+        <div class="inactive-header">
+            <div class="inactive-icon">⏸️</div>
+            <h1 class="inactive-title">Study Currently Unavailable</h1>
+            <p class="inactive-subtitle">This study is not currently accepting participants.</p>
+        </div>
+        
+        <div class="inactive-content">
+            <div class="study-info">
+                <h2>Study: {{ study.title }}</h2>
+                <p>{{ study.description or 'This study is temporarily unavailable for participation.' }}</p>
+            </div>
+            
+            <div class="inactive-reasons">
+                <h3>Possible Reasons:</h3>
+                <ul>
+                    <li>The study has reached its target number of participants</li>
+                    <li>The study is currently being reviewed or updated</li>
+                    <li>The study has been completed and is no longer active</li>
+                    <li>The study is temporarily paused for maintenance</li>
+                </ul>
+            </div>
+            
+            <div class="what-you-can-do">
+                <h3>What You Can Do:</h3>
+                <ul>
+                    <li>Check back later to see if the study becomes available again</li>
+                    <li>Contact the research team for more information</li>
+                    <li>Look for other available studies</li>
+                    <li>Return to our main page to explore other opportunities</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="inactive-footer">
+            <div class="footer-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <span class="btn-text">Return to Home</span>
+                </a>
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                    <span class="btn-text">View Dashboard</span>
+                </a>
+            </div>
+            
+            <div class="footer-text">
+                <p>Thank you for your interest in our research. We appreciate your patience and understanding.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Study inactive page loaded');
+    
+    // Add inactive animation
+    const inactiveSection = document.querySelector('.inactive-section');
+    if (inactiveSection) {
+        inactiveSection.style.opacity = '0';
+        inactiveSection.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            inactiveSection.style.transition = 'all 0.6s ease-out';
+            inactiveSection.style.opacity = '1';
+            inactiveSection.style.transform = 'translateY(0)';
+        }, 200);
+    }
+    
+    // Animate inactive icon
+    const inactiveIcon = document.querySelector('.inactive-icon');
+    if (inactiveIcon) {
+        inactiveIcon.style.transform = 'scale(0)';
+        
+        setTimeout(() => {
+            inactiveIcon.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            inactiveIcon.style.transform = 'scale(1)';
+        }, 400);
+    }
+    
+    // Button hover effects
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.02)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+        
+        button.addEventListener('click', function() {
+            this.style.transform = 'translateY(1px) scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'translateY(0) scale(1)';
+            }, 150);
+        });
+    });
+});
+</script>
+{% endblock %}

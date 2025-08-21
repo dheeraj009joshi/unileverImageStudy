@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Layer Study Categories & Elements - Study Creation{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <div class="study-creation-header">
+        <h1>Layer Study Categories & Elements</h1>
+        <p>Configure categories and elements for your layer study</p>
+    </div>
+
+            <!-- Debug Info -->
+            <!-- Draft ID: {{ draft._id if draft else 'No draft' }} -->
+            <!-- Step 1c_layer data: {{ draft.get_step_data('1c_layer') if draft else 'No draft' }} -->
+            <!-- Step 1c_layer complete: {{ draft.is_step_complete('1c_layer') if draft else 'No draft' }} -->
+            <!-- Step 2a_layer data: {{ draft.get_step_data('2a_layer') if draft else 'No draft' }} -->
+            <!-- Step 2a_layer complete: {{ draft.is_step_complete('2a_layer') if draft else 'No draft' }} -->
+            
+            {{ study_progress_bar('2a_layer', 'layer', draft) }}
+
+    <div class="form-container">
+        <form method="POST" class="study-form" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div class="form-section">
+                <h3>Category Configuration</h3>
+                <p>Configure {{ num_categories }} categories (A, B, C, D, etc.) with their respective elements.</p>
+                
+                {% for i in range(num_categories or 2) %}
+                    {% set category_letter = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'][i] if i < 10 else 'X' %}
+                    {% set category_data = categories_data[i] if categories_data and i < categories_data|length else {} %}
+                    
+                    <div class="category-section">
+                        <h4>Category {{ category_letter }}</h4>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Category Name</label>
+                            <input type="text" 
+                                   name="category_{{ i }}_name" 
+                                   value="{{ category_data.get('category_name', 'Category ' + category_letter) }}"
+                                   class="form-input" 
+                                   placeholder="e.g., Brands, Products, Services">
+                            <small class="form-help">Give this category a descriptive name</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Number of Elements</label>
+                            <input type="number" 
+                                   name="category_{{ i }}_num_elements" 
+                                   value="{{ category_data.get('elements', [])|length or 4 }}"
+                                   class="form-input" 
+                                   min="1" 
+                                   max="20">
+                            <small class="form-help">How many elements in this category (1-20)</small>
+                        </div>
+                        
+                        <div class="elements-container" id="elements_{{ i }}">
+                            {% set num_elements = category_data.get('elements', [])|length or 4 %}
+                            {% for j in range(num_elements) %}
+                                {% set element_data = category_data.get('elements', [])[j] if category_data.get('elements') and j < category_data.get('elements')|length else {} %}
+                                
+                                <div class="element-item" data-element-index="{{ j }}">
+                                    <div class="element-header">
+                                        <h5>Element {{ category_letter }}{{ j + 1 }}</h5>
+                                        <button type="button" class="btn btn--danger btn--sm remove-element-btn" 
+                                                onclick="removeElement({{ i }}, {{ j }})" 
+                                                {% if num_elements <= 1 %}disabled{% endif %}>
+                                            Remove Element
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Element Name</label>
+                                        <input type="text" 
+                                               name="category_{{ i }}_element_{{ j }}_name" 
+                                               value="{{ element_data.get('name', '') }}"
+                                               class="form-input" 
+                                               placeholder="Element name">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Description</label>
+                                        <textarea name="category_{{ i }}_element_{{ j }}_description" 
+                                                  class="form-textarea" 
+                                                  placeholder="Element description">{{ element_data.get('description', '') }}</textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Image File</label>
+                                        {% if element_data.get('content') %}
+                                            <div class="current-image">
+                                                <img src="{{ element_data.get('content') }}" alt="Current image" style="max-width: 80px; max-height: 80px;">
+                                                <input type="hidden" name="category_{{ i }}_element_{{ j }}_current_image" value="{{ element_data.get('content') }}">
+                                                <small>Current image (upload new one to replace)</small>
+                                            </div>
+                                        {% endif %}
+                                        <input type="file" 
+                                               name="category_{{ i }}_element_{{ j }}_image" 
+                                               class="form-file" 
+                                               accept="image/*"
+                                               onchange="previewLayerImage(this, {{ i }}, {{ j }})">
+                                        <small class="form-help">Upload an image for this element (JPG, PNG, GIF, max 16MB)</small>
+                                        
+                                        <!-- Image Preview Container -->
+                                        <div class="image-preview-container" id="layerImagePreview{{ i }}_{{ j }}" style="display: none;">
+                                            <label class="form-label">Image Preview:</label>
+                                            <div class="preview-image-wrapper">
+                                                <img id="layerPreviewImage{{ i }}_{{ j }}" src="" alt="Preview" class="preview-image">
+                                                <button type="button" class="btn btn--sm btn--outline preview-remove-btn" onclick="removeLayerImagePreview({{ i }}, {{ j }})">Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Alt Text</label>
+                                        <input type="text" 
+                                               name="category_{{ i }}_element_{{ j }}_alt_text" 
+                                               value="{{ element_data.get('alt_text', '') }}"
+                                               class="form-input" 
+                                               placeholder="Alternative text for accessibility">
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            <div class="add-element-section">
+                                <button type="button" class="btn btn--outline add-element-btn" onclick="addElement({{ i }})">
+                                    ➕ Add Element to Category {{ category_letter }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('study_creation.step1c_layer') }}" class="btn btn--secondary">
+                    <span class="btn-icon">⬅️</span>
+                    Previous
+                </a>
+                <button type="submit" class="btn btn--primary">
+                    <span class="btn-icon">➡️</span>
+                    Continue to Classification Questions
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-section">
+        <h4>Layer Study Structure</h4>
+        <ul>
+            <li><strong>Categories:</strong> Logical groupings of related elements</li>
+            <li><strong>Elements:</strong> Individual items within each category that respondents will rate</li>
+            <li><strong>Naming Convention:</strong> Elements are labeled A1, A2, B1, B2, etc.</li>
+            <li><strong>Image Requirements:</strong> All elements must have associated images</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+// Global element counters for each category
+const elementCounters = {};
+
+// Initialize element counters
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.elements-container').forEach((container, index) => {
+        const elements = container.querySelectorAll('.element-item');
+        elementCounters[index] = elements.length;
+    });
+});
+
+// Add element to a specific category
+function addElement(categoryIndex) {
+    const container = document.getElementById(`elements_${categoryIndex}`);
+    const categoryLetter = String.fromCharCode(65 + categoryIndex);
+    const elementIndex = elementCounters[categoryIndex] || 0;
+    
+    const elementHtml = `
+        <div class="element-item" data-element-index="${elementIndex}">
+            <div class="element-header">
+                <h5>Element ${categoryLetter}${elementIndex + 1}</h5>
+                <button type="button" class="btn btn--danger btn--sm remove-element-btn" 
+                        onclick="removeElement(${categoryIndex}, ${elementIndex})">
+                    Remove Element
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Element Name</label>
+                <input type="text" name="category_${categoryIndex}_element_${elementIndex}_name" 
+                       class="form-input" placeholder="Element name">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="category_${categoryIndex}_element_${elementIndex}_description" 
+                          class="form-textarea" placeholder="Element description"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Image File</label>
+                <input type="file" name="category_${categoryIndex}_element_${elementIndex}_image" 
+                       class="form-file" accept="image/*" onchange="previewLayerImage(this, ${categoryIndex}, ${elementIndex})">
+                <small class="form-help">Upload an image for this element (JPG, PNG, GIF, max 16MB)</small>
+                
+                <!-- Image Preview Container -->
+                <div class="image-preview-container" id="layerImagePreview${categoryIndex}_${elementIndex}" style="display: none;">
+                    <label class="form-label">Image Preview:</label>
+                    <div class="preview-image-wrapper">
+                        <img id="layerPreviewImage${categoryIndex}_${elementIndex}" src="" alt="Preview" class="preview-image">
+                        <button type="button" class="btn btn--sm btn--outline preview-remove-btn" onclick="removeLayerImagePreview(${categoryIndex}, ${elementIndex})">Remove</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Alt Text</label>
+                <input type="text" name="category_${categoryIndex}_element_${elementIndex}_alt_text" 
+                       class="form-input" placeholder="Alternative text for accessibility">
+            </div>
+        </div>
+    `;
+    
+    // Insert before the add button
+    const addButton = container.querySelector('.add-element-section');
+    container.insertBefore(document.createRange().createContextualFragment(elementHtml), addButton);
+    
+    // Update counter
+    elementCounters[categoryIndex] = (elementCounters[categoryIndex] || 0) + 1;
+    
+    // Update the num_elements input to reflect the new count
+    const numElementsInput = document.querySelector(`input[name="category_${categoryIndex}_num_elements"]`);
+    if (numElementsInput) {
+        numElementsInput.value = elementCounters[categoryIndex];
+    }
+    
+    // Update remove button states
+    updateRemoveButtonStates(categoryIndex);
+}
+
+// Remove element from a specific category
+function removeElement(categoryIndex, elementIndex) {
+    const container = document.getElementById(`elements_${categoryIndex}`);
+    const elementToRemove = container.querySelector(`[data-element-index="${elementIndex}"]`);
+    
+    if (elementToRemove) {
+        elementToRemove.remove();
+        
+        // Update counter
+        elementCounters[categoryIndex] = Math.max(1, (elementCounters[categoryIndex] || 1) - 1);
+        
+        // Update the num_elements input
+        const numElementsInput = document.querySelector(`input[name="category_${categoryIndex}_num_elements"]`);
+        if (numElementsInput) {
+            numElementsInput.value = elementCounters[categoryIndex];
+        }
+        
+        // Renumber remaining elements
+        renumberElements(categoryIndex);
+        
+        // Update remove button states
+        updateRemoveButtonStates(categoryIndex);
+    }
+}
+
+// Renumber elements after removal
+function renumberElements(categoryIndex) {
+    const container = document.getElementById(`elements_${categoryIndex}`);
+    const elements = container.querySelectorAll('.element-item');
+    const categoryLetter = String.fromCharCode(65 + categoryIndex);
+    
+    elements.forEach((element, index) => {
+        // Update data attribute
+        element.setAttribute('data-element-index', index);
+        
+        // Update title
+        const title = element.querySelector('h5');
+        if (title) {
+            title.textContent = `Element ${categoryLetter}${index + 1}`;
+        }
+        
+        // Update form field names
+        const inputs = element.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            const oldName = input.name;
+            if (oldName) {
+                const newName = oldName.replace(/category_\d+_element_\d+/, `category_${categoryIndex}_element_${index}`);
+                input.name = newName;
+            }
+        });
+        
+        // Update onclick for remove button
+        const removeBtn = element.querySelector('.remove-element-btn');
+        if (removeBtn) {
+            removeBtn.setAttribute('onclick', `removeElement(${categoryIndex}, ${index})`);
+        }
+    });
+    
+    // Update counter
+    elementCounters[categoryIndex] = elements.length;
+}
+
+// Update remove button states (disable if only 1 element left)
+function updateRemoveButtonStates(categoryIndex) {
+    const container = document.getElementById(`elements_${categoryIndex}`);
+    const elements = container.querySelectorAll('.element-item');
+    const removeButtons = container.querySelectorAll('.remove-element-btn');
+    
+    removeButtons.forEach(btn => {
+        btn.disabled = elements.length <= 1;
+    });
+}
+
+// Dynamic element count adjustment (keep existing functionality)
+document.querySelectorAll('input[name*="_num_elements"]').forEach(input => {
+    input.addEventListener('change', function() {
+        const categoryIndex = this.name.match(/category_(\d+)_num_elements/)[1];
+        const numElements = parseInt(this.value);
+        const container = document.getElementById(`elements_${categoryIndex}`);
+        
+        // Clear existing elements
+        container.innerHTML = '';
+        
+        // Add new elements
+        for (let j = 0; j < numElements; j++) {
+            const categoryLetter = String.fromCharCode(65 + parseInt(categoryIndex));
+            const elementHtml = `
+                <div class="element-item" data-element-index="${j}">
+                    <div class="element-header">
+                        <h5>Element ${categoryLetter}${j + 1}</h5>
+                        <button type="button" class="btn btn--danger btn--sm remove-element-btn" 
+                                onclick="removeElement(${categoryIndex}, ${j})" 
+                                ${numElements <= 1 ? 'disabled' : ''}>
+                            Remove Element
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Element Name</label>
+                        <input type="text" name="category_${categoryIndex}_element_${j}_name" 
+                               class="form-input" placeholder="Element name">
+                    </div>
+                    
+                    <div class="form-label">Description</label>
+                        <textarea name="category_${categoryIndex}_element_${j}_description" 
+                                  class="form-textarea" placeholder="Element description"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Image File</label>
+                        <input type="file" name="category_${categoryIndex}_element_${j}_image" 
+                               class="form-file" accept="image/*" onchange="previewLayerImage(this, ${categoryIndex}, ${j})">
+                        <small class="form-help">Upload an image for this element (JPG, PNG, GIF, max 16MB)</small>
+                        
+                        <!-- Image Preview Container -->
+                        <div class="image-preview-container" id="layerImagePreview${categoryIndex}_${j}" style="display: none;">
+                            <label class="form-label">Image Preview:</label>
+                            <div class="preview-image-wrapper">
+                                <img id="layerPreviewImage${categoryIndex}_${j}" src="" alt="Preview" class="preview-image">
+                                <button type="button" class="btn btn--sm btn--outline preview-remove-btn" onclick="removeLayerImagePreview(${categoryIndex}, ${j})">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Alt Text</label>
+                        <input type="text" name="category_${categoryIndex}_element_${j}_alt_text" 
+                               class="form-input" placeholder="Alternative text for accessibility">
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', elementHtml);
+        }
+        
+        // Add the add button section back
+        const addButtonSection = `
+            <div class="add-element-section">
+                <button type="button" class="btn btn--outline add-element-btn" onclick="addElement(${categoryIndex})">
+                    ➕ Add Element to Category ${categoryLetter}
+                </button>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', addButtonSection);
+        
+        // Update counter
+        elementCounters[categoryIndex] = numElements;
+        
+        // Update remove button states
+        updateRemoveButtonStates(categoryIndex);
+    });
+});
+
+// Image preview functionality for layer studies
+function previewLayerImage(input, categoryIndex, elementIndex) {
+    const previewContainer = document.getElementById(`layerImagePreview${categoryIndex}_${elementIndex}`);
+    const previewImg = document.getElementById(`layerPreviewImage${categoryIndex}_${elementIndex}`);
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.style.display = 'none';
+    }
+}
+
+function removeLayerImagePreview(categoryIndex, elementIndex) {
+    const previewContainer = document.getElementById(`layerImagePreview${categoryIndex}_${elementIndex}`);
+    const fileInput = document.querySelector(`input[name="category_${categoryIndex}_element_${elementIndex}_image"]`);
+    const previewImg = document.getElementById(`layerPreviewImage${categoryIndex}_${elementIndex}`);
+    
+    // Clear the file input
+    fileInput.value = '';
+    
+    // Hide the preview
+    previewContainer.style.display = 'none';
+    previewImg.src = '';
+}
+</script>
+{% endblock %}

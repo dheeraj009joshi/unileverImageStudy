@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Welcome{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="study-participation-container">
+    <div class="welcome-section">
+        <div class="welcome-header">
+            <h1 class="study-title">{{ study.title }}</h1>
+            <p class="study-description">{{ study.description or 'Thank you for participating in this research study.' }}</p>
+        </div>
+        <div class="start-study-section">
+            <form method="POST" action="{{ url_for('study_participation.personal_info', study_id=study._id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="start-study-btn">
+                    <span class="btn-text">Start Study</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </form>
+        </div>
+        <div class="study-info">
+            <div class="info-item">
+                <span class="info-label">Estimated Time:</span>
+                <span class="info-value">3-5 minutes</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Study Type:</span>
+                <span class="info-value">{{ study.study_type|title }} Study</span>
+            </div>
+            {% if study.iped_parameters %}
+            <div class="info-item">
+                <span class="info-label">Total Vignettes:</span>
+                <span class="info-value">{{ study.iped_parameters.tasks_per_consumer  }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="welcome-message">
+            <h2>Welcome to the Study!</h2>
+            <p>You're about to participate in an important research study. This study will help researchers understand how people evaluate different visual elements.</p>
+            
+            <div class="study-instructions">
+                <h3>What to Expect:</h3>
+                <ul>
+                    <li><strong>Personal Information:</strong> Brief demographic questions</li>
+                    <li><strong>Classification Questions:</strong> A few questions about your preferences</li>
+                    <li><strong>Rating Tasks:</strong> Rate different combinations of visual elements</li>
+                </ul>
+            </div>
+            
+            <div class="important-notes">
+                <h3>Important Notes:</h3>
+                <ul>
+                    <li>Your responses are completely anonymous</li>
+                    <li>There are no right or wrong answers</li>
+                    <li>Please complete the study in one session</li>
+                    <li>You can withdraw at any time</li>
+                </ul>
+            </div>
+        </div>
+        
+        
+        
+        <div class="study-footer">
+            <p class="footer-text">This study has been approved by our research ethics board. Your participation is voluntary and appreciated.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize welcome page
+    console.log('Welcome page loaded for study:', '{{ study._id }}');
+    
+    // Add smooth transitions
+    const welcomeSection = document.querySelector('.welcome-section');
+    if (welcomeSection) {
+        welcomeSection.style.opacity = '0';
+        welcomeSection.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            welcomeSection.style.transition = 'all 0.6s ease-out';
+            welcomeSection.style.opacity = '1';
+            welcomeSection.style.transform = 'translateY(0)';
+        }, 100);
+    }
+    
+    // Start study button animation
+    const startBtn = document.querySelector('.start-study-btn');
+    if (startBtn) {
+        startBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.02)';
+        });
+        
+        startBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+        
+        startBtn.addEventListener('click', function() {
+            this.style.transform = 'translateY(1px) scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'translateY(0) scale(1)';
+            }, 150);
+        });
+    }
+});
+</script>
+{% endblock %}

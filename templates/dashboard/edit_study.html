@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ study.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1>Edit Study</h1>
+            <p class="text-muted">Modify study details and configuration</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-outline-secondary">Back to Study</a>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="content-section">
+            <div class="alert alert-warning">
+                <strong>Note:</strong> Some study properties cannot be changed after creation, including elements, IPED parameters, and task matrix.
+            </div>
+            
+            <form method="POST" class="study-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Study Title *</label>
+                        <input type="text" name="title" class="form-control" value="{{ study.title }}" required>
+                        <small class="form-help-text">A clear, descriptive title for your study</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Study Background *</label>
+                        <textarea name="background" class="form-control" rows="4" required>{{ study.background }}</textarea>
+                        <small class="form-help-text">Provide context and background information for respondents</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Main Research Question *</label>
+                        <textarea name="main_question" class="form-control" rows="3" required>{{ study.main_question }}</textarea>
+                        <small class="form-help-text">The primary question your study aims to answer</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Orientation Text *</label>
+                        <textarea name="orientation_text" class="form-control" rows="4" required>{{ study.orientation_text }}</textarea>
+                        <small class="form-help-text">Instructions and context for respondents before they begin tasks</small>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>Study Configuration</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Study Type</label>
+                            <input type="text" class="form-control" value="{{ study.study_type|title }}-based Study" readonly>
+                            <small class="form-help-text">Cannot be changed after creation</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Language</label>
+                            <input type="text" class="form-control" value="{{ study.language|upper }}" readonly>
+                            <small class="form-help-text">Cannot be changed after creation</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Rating Scale</label>
+                            <input type="text" class="form-control" value="{{ study.rating_scale.min_value }} to {{ study.rating_scale.max_value }}" readonly>
+                            <small class="form-help-text">Cannot be changed after creation</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Elements</label>
+                            <input type="text" class="form-control" value="{{ study.elements|length }} elements" readonly>
+                            <small class="form-help-text">Cannot be changed after creation</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">IPED Parameters</label>
+                            <input type="text" class="form-control" value="{{ study.iped_parameters.tasks_per_consumer }} tasks × {{ study.iped_parameters.number_of_respondents }} respondents" readonly>
+                            <small class="form-help-text">Cannot be changed after creation</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Active Elements Range</label>
+                            <input type="text" class="form-control" value="{{ study.iped_parameters.min_active_elements }}-{{ study.iped_parameters.max_active_elements }} per task" readonly>
+                            <small class="form-help-text">Cannot be changed after creation</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>Study Status</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Current Status</label>
+                        <div class="status-display">
+                            <span class="status-badge status-{{ study.status }}">{{ study.status|title }}</span>
+                        </div>
+                        <small class="form-help-text">Status can be changed from the study detail page</small>
+                    </div>
+                    
+                    {% if study.status == 'active' %}
+                    <div class="alert alert-info">
+                        <strong>Active Study:</strong> This study is currently collecting responses. Consider pausing it before making significant changes.
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

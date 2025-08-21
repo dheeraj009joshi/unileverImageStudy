@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}UnileverImageStudy - Professional IPED Study System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    Professional IPED Study System
+                </h1>
+                <p class="hero-subtitle">
+                    Conduct cutting-edge research with our advanced Individual Parameter Estimation Design platform. 
+                    Create, manage, and analyze studies with enterprise-grade tools.
+                </p>
+                <div class="hero-actions">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn--primary btn--lg">
+                            Go to Dashboard
+                        </a>
+                        <a href="{{ url_for('study_creation.step1a') }}" class="btn btn--outline btn--lg">
+                            Create New Study
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('auth.register') }}" class="btn btn--primary btn--lg">
+                            Get Started Free
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn--outline btn--lg">
+                            Sign In
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Key Features</h2>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">Advanced IPED Algorithm</h3>
+                <p class="feature-description">
+                    Sophisticated Individual Parameter Estimation Design with balanced matrix generation 
+                    for optimal research outcomes.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Real-time Analytics</h3>
+                <p class="feature-description">
+                    Comprehensive analytics and reporting tools to track study progress and analyze results.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3 class="feature-title">Mobile Optimized</h3>
+                <p class="feature-description">
+                    Fully responsive design that works seamlessly across all devices and screen sizes.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

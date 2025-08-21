@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Create Study - Step 2c{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+            {{ study_progress_bar('2c', draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid', draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Step 2c: IPED Algorithm Parameters</h1>
+            <p class="step-description">Configure the parameters that will be used to generate the IPED task matrix</p>
+        </div>
+
+        <form method="POST" class="step-form" data-validate="true" data-loading="true">
+            {{ form.hidden_tag() }}
+            
+            <div class="study-form-group">
+                <h3 class="section-title">IPED Algorithm Parameters</h3>
+                <p class="form-help">Configure the parameters that will be used to generate the IPED task matrix.</p>
+                
+                <div class="study-form-row">
+                    <div class="study-form-group">
+                        {{ form.num_elements.label(class="study-form-label") }}
+                        {{ form.num_elements(class="study-form-control", readonly=true) }}
+                        <small class="form-help">Automatically set based on the elements you added</small>
+                    </div>
+                    
+                    <div class="study-form-group">
+                        {{ form.tasks_per_consumer.label(class="study-form-label") }}
+                        {{ form.tasks_per_consumer(class="study-form-control", placeholder="e.g., 5") }}
+                        {% if form.tasks_per_consumer.errors %}
+                            <div class="form-error">
+                                {% for error in form.tasks_per_consumer.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Number of tasks each respondent will complete</small>
+                    </div>
+                </div>
+                
+                <div class="study-form-row">
+                    <div class="study-form-group">
+                        {{ form.number_of_respondents.label(class="study-form-label") }}
+                        {{ form.number_of_respondents(class="study-form-control", placeholder="e.g., 100") }}
+                        {% if form.number_of_respondents.errors %}
+                            <div class="form-error">
+                                {% for error in form.number_of_respondents.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Total number of respondents for your study</small>
+                    </div>
+                    
+                    <div class="study-form-group">
+                        <label class="study-form-label">Total Tasks</label>
+                        <input type="text" class="study-form-control" id="totalTasks" readonly>
+                        <small class="form-help">Automatically calculated: Tasks per Consumer × Number of Respondents</small>
+                    </div>
+                </div>
+                
+                <div class="study-form-row">
+                    <div class="study-form-group">
+                        {{ form.min_active_elements.label(class="study-form-label") }}
+                        {{ form.min_active_elements(class="study-form-control", placeholder="e.g., 2") }}
+                        {% if form.min_active_elements.errors %}
+                            <div class="form-error">
+                                {% for error in form.min_active_elements.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Minimum number of elements that can be active in a single task</small>
+                    </div>
+                    
+                    <div class="study-form-group">
+                        {{ form.max_active_elements.label(class="study-form-label") }}
+                        {{ form.max_active_elements(class="study-form-control", placeholder="e.g., 4") }}
+                        {% if form.max_active_elements.errors %}
+                            <div class="form-error">
+                                {% for error in form.max_active_elements.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Maximum number of elements that can be active in a single task</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="study-form-group">
+                <h3 class="section-title">Parameter Summary</h3>
+                <div class="parameter-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Elements:</span>
+                        <span class="summary-value" id="summaryElements">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Tasks per Respondent:</span>
+                        <span class="summary-value" id="summaryTasksPerConsumer">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Respondents:</span>
+                        <span class="summary-value" id="summaryRespondents">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Tasks:</span>
+                        <span class="summary-value" id="summaryTotalTasks">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Active Elements Range:</span>
+                        <span class="summary-value" id="summaryActiveRange">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step-actions">
+                <a href="{{ url_for('study_creation.step2b') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                {{ form.submit(class="btn btn--primary step-nav-btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const numElements = document.getElementById('num_elements');
+    const tasksPerConsumer = document.getElementById('tasks_per_consumer');
+    const numberOfRespondents = document.getElementById('number_of_respondents');
+    const minActiveElements = document.getElementById('min_active_elements');
+    const maxActiveElements = document.getElementById('max_active_elements');
+    
+    function updateSummary() {
+        const elements = parseInt(numElements.value) || 0;
+        const tasksPer = parseInt(tasksPerConsumer.value) || 0;
+        const respondents = parseInt(numberOfRespondents.value) || 0;
+        const minActive = parseInt(minActiveElements.value) || 0;
+        const maxActive = parseInt(maxActiveElements.value) || 0;
+        
+        // Update total tasks
+        const totalTasks = tasksPer * respondents;
+        document.getElementById('totalTasks').value = totalTasks;
+        
+        // Update summary
+        document.getElementById('summaryElements').textContent = elements;
+        document.getElementById('summaryTasksPerConsumer').textContent = tasksPer;
+        document.getElementById('summaryRespondents').textContent = respondents;
+        document.getElementById('summaryTotalTasks').textContent = totalTasks;
+        document.getElementById('summaryActiveRange').textContent = `${minActive} - ${maxActive}`;
+        
+        // Validate min/max active elements
+        if (minActive > 0 && maxActive > 0) {
+            if (minActive > maxActive) {
+                maxActiveElements.classList.add('is-invalid');
+            } else {
+                maxActiveElements.classList.remove('is-invalid');
+            }
+            
+            if (minActive > elements) {
+                minActiveElements.classList.add('is-invalid');
+            } else {
+                minActiveElements.classList.remove('is-invalid');
+            }
+        }
+    }
+    
+    // Add event listeners
+    [tasksPerConsumer, numberOfRespondents, minActiveElements, maxActiveElements].forEach(field => {
+        field.addEventListener('input', updateSummary);
+    });
+    
+    // Initial summary
+    updateSummary();
+});
+</script>
+{% endblock %}

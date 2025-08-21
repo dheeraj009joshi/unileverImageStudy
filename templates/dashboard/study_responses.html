@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Responses{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1>Study Responses</h1>
+            <p class="text-muted">{{ study.title }} - Response data and analytics</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-outline-secondary">Back to Study</a>
+            <a href="{{ url_for('dashboard.export_study', study_id=study._id, type='csv') }}" class="btn btn-outline-primary">Export CSV</a>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- Response Summary -->
+        <div class="content-section">
+            <div class="summary-stats">
+                <div class="summary-item">
+                    <span class="summary-label">Total Responses:</span>
+                    <span class="summary-value">{{ total }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Page:</span>
+                    <span class="summary-value">{{ page }} of {{ (total / per_page)|round(0, 'ceil')|int }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Per Page:</span>
+                    <span class="summary-value">{{ per_page }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Responses Table -->
+        <div class="content-section">
+            {% if responses %}
+            <div class="responses-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Respondent ID</th>
+                            <th>Session ID</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Tasks Completed</th>
+                            <th>Completion %</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for response in responses %}
+                        <tr>
+                            <td>
+                                <strong>{{ response.respondent_id }}</strong>
+                            </td>
+                            <td>
+                                <code>{{ response.session_id[:8] }}...</code>
+                            </td>
+                            <td>
+                                {{ response.session_start_time.strftime('%Y-%m-%d %H:%M:%S') if response.session_start_time else 'N/A' }}
+                            </td>
+                            <td>
+                                {{ response.session_end_time.strftime('%Y-%m-%d %H:%M:%S') if response.session_end_time else 'N/A' }}
+                            </td>
+                            <td>
+                                {{ "%.1f"|format(response.total_study_duration) }}s
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ 'completed' if response.is_completed else 'abandoned' }}">
+                                    {{ 'Completed' if response.is_completed else 'Abandoned' }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ response.completed_tasks_count }}/{{ study.iped_parameters.tasks_per_consumer }}
+                            </td>
+                            <td>
+                                <div class="completion-bar">
+                                    <div class="completion-fill" style="width: {{ response.completion_percentage }}%"></div>
+                                    <span class="completion-text">{{ "%.1f"|format(response.completion_percentage) }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-outline-info" onclick="viewResponseDetails('{{ response._id }}')">
+                                        View Details
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total > per_page %}
+            <div class="pagination-container">
+                <nav aria-label="Response pagination">
+                    <ul class="pagination">
+                        {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('dashboard.study_responses', study_id=study._id, page=page-1) }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for p in range(1, (total / per_page)|round(0, 'ceil')|int + 1) %}
+                        <li class="page-item {{ 'active' if p == page else '' }}">
+                            <a class="page-link" href="{{ url_for('dashboard.study_responses', study_id=study._id, page=p) }}">{{ p }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page < (total / per_page)|round(0, 'ceil')|int %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('dashboard.study_responses', study_id=study._id, page=page+1) }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <h3>No Responses Yet</h3>
+                <p>This study hasn't received any responses yet. Share your study to start collecting data!</p>
+                <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn-primary">Share Study</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Response Details Modal -->
+        <div class="modal" id="responseDetailsModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Response Details</h5>
+                        <button type="button" class="btn-close" onclick="closeResponseModal()">&times;</button>
+                    </div>
+                    <div class="modal-body" id="responseDetailsContent">
+                        <!-- Content will be loaded here -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeResponseModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewResponseDetails(responseId) {
+    // This would typically make an AJAX call to get detailed response data
+    // For now, we'll show a placeholder
+    document.getElementById('responseDetailsContent').innerHTML = `
+        <div class="text-center">
+            <p>Loading response details...</p>
+            <p><small>Response ID: ${responseId}</small></p>
+        </div>
+    `;
+    document.getElementById('responseDetailsModal').style.display = 'block';
+}
+
+function closeResponseModal() {
+    document.getElementById('responseDetailsModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('responseDetailsModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

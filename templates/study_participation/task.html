@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Task {{ task_number }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="task-section">
+        <div class="task-content">
+            <div style="
+            text-align: end;
+            " class="progress-text">{{ task_number }}/{{ total_tasks }}</div>
+                          <div class="task-elements">
+                 <span><strong> {{ study.main_question }}{% if not study.main_question.endswith('?') %}?{% endif %}</strong></span>
+                  <div class="elements-grid">
+                    {% if current_task and current_task.elements_shown %}
+                        {% for element_name, element_data in current_task.elements_shown.items() %}
+                            {% if element_name.endswith('_content') and element_data and element_data != '' %}
+                                {% set base_name = element_name.replace('_content', '') %}
+                                {% set element_active = current_task.elements_shown.get(base_name, 0) %}
+                                {% if element_active == 1 %}
+                                  
+                                        <img src="{{ element_data }}" alt="Element" class="task-element-img">
+                                   
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+
+               
+                <div class="rating-instructions">
+                    <p><strong>{{ study.rating_scale.min_value }} = {{ study.rating_scale.min_label }}</strong></p>
+                    {% if study.rating_scale.middle_label %}
+                        <p><strong>{{ (study.rating_scale.min_value + study.rating_scale.max_value) // 2 }} = {{ study.rating_scale.middle_label }}</strong></p>
+                    {% endif %}
+                    <p><strong>{{ study.rating_scale.max_value }} = {{ study.rating_scale.max_label }}</strong></p>
+                </div>
+                
+                <div class="rating-grid">
+                    {% for rating in range(study.rating_scale.min_value, study.rating_scale.max_value + 1) %}
+                    <div class="rating-option" data-rating="{{ rating }}">
+                        <div class="rating-label">
+                            <span class="rating-number">{{ rating }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Task page loaded:', {{ task_number }}, 'of', {{ total_tasks }});
+    
+    // Task timing - record start time when page loads
+    const taskStartTime = new Date();
+    console.log('Task start time:', taskStartTime);
+    
+    // Rating selection and auto-advancement
+    const ratingOptions = document.querySelectorAll('.rating-option');
+    let selectedRating = null;
+    let isRatingSubmitted = false;
+    
+    ratingOptions.forEach(option => {
+        const rating = option.dataset.rating;
+        const label = option.querySelector('.rating-label');
+        
+        // Click on rating option
+        option.addEventListener('click', function() {
+            if (isRatingSubmitted) {
+                console.log('Rating already submitted, ignoring click');
+                return; // Prevent multiple submissions
+            }
+            
+            console.log('Rating clicked, starting submission process...');
+            isRatingSubmitted = true;
+            
+            console.log('Rating selected:', rating);
+            selectedRating = parseInt(rating);
+            
+            // Remove active class from all rating options
+            ratingOptions.forEach(opt => opt.querySelector('.rating-label').classList.remove('active'));
+            
+            // Add active class to selected rating
+            label.classList.add('active');
+            
+            // Lock the rating (disable further clicks)
+            isRatingSubmitted = true;
+            ratingOptions.forEach(opt => opt.style.pointerEvents = 'none');
+            
+            // Calculate task duration
+            const taskEndTime = new Date();
+            const taskDurationSeconds = (taskEndTime - taskStartTime) / 1000;
+            console.log('Task duration:', taskDurationSeconds, 'seconds');
+            
+            // Store rating and timing in session
+            const taskData = {
+                task_number: {{ task_number }},
+                rating: selectedRating,
+                timestamp: taskEndTime.toISOString(),
+                task_start_time: taskStartTime.toISOString(),
+                task_end_time: taskEndTime.toISOString(),
+                task_duration_seconds: taskDurationSeconds,
+                task_data: {
+                    elements_shown: {{ current_task.elements_shown|tojson|safe if current_task.elements_shown else '{}' }}
+                }
+            };
+            
+            console.log('Task data being sent:', taskData);
+            console.log('Task data JSON:', JSON.stringify(taskData));
+            
+            // Send task data to server
+            fetch(`/study/{{ study._id }}/task-complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(taskData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log('Task data stored successfully');
+                    
+                    // Show loading state
+                    label.innerHTML = '<span class="rating-number">✓</span>';
+                    label.style.background = 'var(--participation-success)';
+                    label.style.color = 'white';
+                    
+                    // Auto-advance to next task after successful save
+                    setTimeout(() => {
+                        const currentTask = {{ task_number }};
+                        const totalTasks = {{ total_tasks }};
+                        
+                        if (currentTask < totalTasks) {
+                            // Go to next task
+                            window.location.href = `/study/{{ study._id }}/task/${currentTask + 1}`;
+                        } else {
+                            // All tasks completed, go to completion page
+                            window.location.href = `/study/{{ study._id }}/completed`;
+                        }
+                    }, 1000); // Increased delay to 1 second
+                    
+                } else {
+                    console.error('Error storing task data:', data.error);
+                    // Don't advance if there was an error
+                    alert('Error saving task data. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending task data:', error);
+                console.error('Full error details:', error.message);
+                // Don't advance if there was an error
+                alert('Error sending task data. Please try again.');
+            });
+        });
+        
+        // Hover effects for rating options
+        label.addEventListener('mouseenter', function() {
+            if (!isRatingSubmitted && !this.classList.contains('active')) {
+                this.classList.add('hover');
+            }
+        });
+        
+        label.addEventListener('mouseleave', function() {
+            this.classList.remove('hover');
+        });
+    });
+    
+    // Add smooth transitions for elements
+    const elementItems = document.querySelectorAll('.element-item');
+    elementItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.5s ease-out';
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+        }, 200 + (index * 100));
+    });
+});
+</script>
+{% endblock %}

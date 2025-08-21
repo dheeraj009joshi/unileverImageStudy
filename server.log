@@ -1,0 +1,13 @@
+🚀 Starting UnileverImageStudy...
+✅ Compression enabled
+✅ Database connected
+🌐 Starting Flask development server...
+   Access the application at: http://localhost:51000
+   Dashboard: http://localhost:51000/dashboard
+   Study Creation: http://localhost:51000/study/create
+
+   Press Ctrl+C to stop the server
+ * Serving Flask app 'app'
+ * Debug mode: on
+Address already in use
+Port 50000 is in use by another program. Either identify and stop that program, or start the server with a different port.

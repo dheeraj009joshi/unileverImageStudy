@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: iped_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: iped_system
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - iped_network
+
+  flask_app:
+    build: .
+    container_name: iped_flask
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/iped_system?authSource=admin
+      - SECRET_KEY=your-super-secret-key-change-in-production
+    ports:
+      - "51000:51000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - mongodb
+    networks:
+      - iped_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: iped_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./ssl:/etc/nginx/ssl
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - flask_app
+    networks:
+      - iped_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: iped_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - iped_network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  iped_network:
+    driver: bridge

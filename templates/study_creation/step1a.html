@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Create Study - Step 1a{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+            {{ study_progress_bar('1a', draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid', draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Step 1a: Basic Study Details</h1>
+            <p class="step-description">Provide the fundamental information about your IPED study</p>
+        </div>
+
+        <form method="POST" class="step-form" data-validate="true" data-loading="true">
+            {{ form.hidden_tag() }}
+            
+            <div class="study-form-group">
+                {{ form.title.label(class="study-form-label study-form-label--required") }}
+                {{ form.title(class="study-form-control", placeholder="Enter a descriptive title for your study") }}
+                {% if form.title.errors %}
+                    <div class="form-error">
+                        {% for error in form.title.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">Choose a clear, descriptive title (3-200 characters)</small>
+            </div>
+
+            <div class="study-form-group">
+                {{ form.background.label(class="study-form-label study-form-label--required") }}
+                {{ form.background(class="study-form-control study-form-textarea", placeholder="Describe the background and purpose of your study") }}
+                {% if form.title.errors %}
+                    <div class="form-error">
+                        {% for error in form.background.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">Provide context about your study (max 2000 characters)</small>
+            </div>
+
+            <div class="study-form-group">
+                {{ form.language.label(class="study-form-label study-form-label--required") }}
+                {{ form.language(class="study-form-control study-form-select") }}
+                {% if form.language.errors %}
+                    <div class="form-error">
+                        {% for error in form.language.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <small class="form-help">Select the primary language for your study</small>
+            </div>
+
+            <div class="study-form-group">
+                <div class="form-checkbox">
+                    {{ form.terms_accepted(class="form-checkbox-input") }}
+                    {{ form.terms_accepted.label(class="form-checkbox-label") }}
+                </div>
+                {% if form.terms_accepted.errors %}
+                    <div class="form-error">
+                        {% for error in form.terms_accepted.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">Cancel</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Study Details{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<header class="page-header">
+    <div class="container">
+        <div class="page-header-content">
+            <div class="page-header-text">
+                <h1>{{ study.title }}</h1>
+                <p class="page-header-subtitle">{{ study.study_type|title }}-based IPED Research Study</p>
+            </div>
+            <div class="page-header-actions">
+                {% if study.status == 'draft' %}
+                    <button class="btn btn--success" onclick="changeStudyStatus('{{ study._id }}', 'active')">
+                        🚀 Activate Study
+                    </button>
+                {% elif study.status == 'active' %}
+                    <button class="btn btn--warning" onclick="changeStudyStatus('{{ study._id }}', 'paused')">
+                        ⏸️ Pause Study
+                    </button>
+                {% elif study.status == 'paused' %}
+                    <button class="btn btn--success" onclick="changeStudyStatus('{{ study._id }}', 'active')">
+                        ▶️ Resume Study
+                    </button>
+                {% endif %}
+                
+                {% if study.status in ['active', 'paused'] %}
+                    <button class="btn btn--info" onclick="changeStudyStatus('{{ study._id }}', 'completed')">
+                        ✅ Mark Complete
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Breadcrumb -->
+<nav class="page-breadcrumb">
+    <div class="container">
+        <ul class="breadcrumb-list">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('dashboard.index') }}" class="breadcrumb-link">Dashboard</a>
+                <span class="breadcrumb-separator">/</span>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('dashboard.studies') }}" class="breadcrumb-link">Studies</a>
+                <span class="breadcrumb-separator">/</span>
+            </li>
+            <li class="breadcrumb-item">
+                <span class="breadcrumb-current">{{ study.title }}</span>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Study Detail Header -->
+    <div class="study-detail-header">
+        <div class="study-detail-main">
+            <h2 class="study-detail-title">{{ study.title }}</h2>
+            <div class="study-detail-meta">
+                <div class="study-meta-item">
+                    <span class="study-meta-label">Status</span>
+                    <span class="study-status-badge study-status-badge--{{ study.status }}">{{ study.status|title }}</span>
+                </div>
+                <div class="study-meta-item">
+                    <span class="study-meta-label">Type</span>
+                    <span class="study-meta-value">{{ study.study_type|title }}-based</span>
+                </div>
+                <div class="study-meta-item">
+                    <span class="study-meta-label">Created</span>
+                    <span class="study-meta-value">{{ study.created_at.strftime('%B %d, %Y') }}</span>
+                </div>
+                {% if study.launched_at %}
+                <div class="study-meta-item">
+                    <span class="study-meta-label">Launched</span>
+                    <span class="study-meta-value">{{ study.launched_at.strftime('%B %d, %Y') }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="study-detail-actions">
+                {% if study.status == 'draft' %}
+                    <a href="{{ url_for('dashboard.edit_study', study_id=study._id) }}" class="btn btn--outline">✏️ Edit Study</a>
+                {% endif %}
+                <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn--secondary">🔗 Share</a>
+                <a href="{{ url_for('dashboard.study_preview', study_id=study._id) }}" class="btn btn--info">👁️ Preview</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Overview -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2 class="section-title">Study Overview</h2>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="study-form-row">
+                    <div class="study-form-group">
+                        <label class="study-form-label">Background</label>
+                        <p>{{ study.background }}</p>
+                    </div>
+                    <div class="study-form-group">
+                        <label class="study-form-label">Main Question</label>
+                        <p>{{ study.main_question }}</p>
+                    </div>
+                </div>
+                <div class="study-form-group">
+                    <label class="study-form-label">Orientation Text</label>
+                    <p>{{ study.orientation_text }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Statistics -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2 class="section-title">Response Statistics</h2>
+        </div>
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-number">{{ total_responses }}</div>
+                <div class="analytics-label">Total Responses</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-number">{{ completed_responses }}</div>
+                <div class="analytics-label">Completed</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-number">{{ abandoned_responses }}</div>
+                <div class="analytics-label">Abandoned</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-number">{{ "%.1f"|format(completion_rate) }}%</div>
+                <div class="analytics-label">Completion Rate</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-number">{{ "%.1f"|format(avg_task_time) }}s</div>
+                <div class="analytics-label">Avg Task Time</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Configuration -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2 class="section-title">Study Configuration</h2>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="study-form-row">
+                    <div class="study-form-group">
+                        <label class="study-form-label">Rating Scale</label>
+                        <p>{{ study.rating_scale.min_value }} to {{ study.rating_scale.max_value }}</p>
+                        <small>{{ study.rating_scale.min_label }} - {{ study.rating_scale.max_label }}</small>
+                    </div>
+                    <div class="study-form-group">
+                        <label class="study-form-label">Elements</label>
+                        <p>{{ study.elements|length }} elements</p>
+                        <small>{{ study.study_type|title }}-based</small>
+                    </div>
+                </div>
+                <div class="study-form-row">
+                    <div class="study-form-group">
+                        <label class="study-form-label">IPED Parameters</label>
+                        <p>{{ study.iped_parameters.tasks_per_consumer }} tasks × {{ study.iped_parameters.number_of_respondents }} respondents</p>
+                        <small>{{ study.iped_parameters.min_active_elements }}-{{ study.iped_parameters.max_active_elements }} active elements per task</small>
+                    </div>
+                    <div class="study-form-group">
+                        <label class="study-form-label">Classification Questions</label>
+                        <p>{{ study.classification_questions|length }} questions</p>
+                        <small>Demographic and classification</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Recent Responses -->
+        <div class="content-section">
+            <h2>Recent Responses</h2>
+            {% if recent_responses %}
+            <div class="responses-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Respondent ID</th>
+                            <th>Start Time</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Tasks Completed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for response in recent_responses %}
+                        <tr>
+                            <td>{{ response.respondent_id }}</td>
+                            <td>{{ response.session_start_time.strftime('%Y-%m-%d %H:%M') if response.session_start_time else 'N/A' }}</td>
+                            <td>{{ "%.1f"|format(response.total_study_duration) }}s</td>
+                            <td>
+                                <span class="status-badge status-{{ 'completed' if response.is_completed else 'abandoned' }}">
+                                    {{ 'Completed' if response.is_completed else 'Abandoned' }}
+                                </span>
+                            </td>
+                            <td>{{ response.completed_tasks_count }}/{{ study.iped_parameters.tasks_per_consumer }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="view-all">
+                <a href="{{ url_for('dashboard.study_responses', study_id=study._id) }}" class="btn btn-outline-primary">View All Responses</a>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No responses yet. Share your study to start collecting data!</p>
+                <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn-primary">Share Study</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="content-section">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <a href="{{ url_for('dashboard.study_analytics', study_id=study._id) }}" class="action-card">
+                    <div class="action-icon">📊</div>
+                    <h4>View Analytics</h4>
+                    <p>Detailed timing and interaction data</p>
+                </a>
+                <a href="{{ url_for('dashboard.export_study', study_id=study._id, type='json') }}" class="action-card">
+                    <div class="action-icon">📥</div>
+                    <h4>Export Data</h4>
+                    <p>Download responses as JSON or CSV</p>
+                </a>
+                <a href="{{ url_for('dashboard.study_preview', study_id=study._id) }}" class="action-card">
+                    <div class="action-icon">👁️</div>
+                    <h4>Preview Study</h4>
+                    <p>See how respondents experience your study</p>
+                </a>
+            </div>
+        </div>
+    </div>
+  </div>
+  
+  <script>
+  function changeStudyStatus(studyId, newStatus) {
+      if (!confirm(`Are you sure you want to ${newStatus === 'active' ? 'activate' : newStatus === 'paused' ? 'pause' : 'complete'} this study?`)) {
+          return;
+      }
+      
+      fetch(`/dashboard/studies/${studyId}/status`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          body: JSON.stringify({ status: newStatus })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              // Show success message
+              showNotification(`Study status changed to ${newStatus} successfully!`, 'success');
+              
+              // Reload page to reflect changes
+              setTimeout(() => {
+                  window.location.reload();
+              }, 1500);
+          } else {
+              showNotification(`Error: ${data.error}`, 'error');
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          showNotification('Error changing study status', 'error');
+      });
+  }
+  
+  function showNotification(message, type) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} notification`;
+      notification.textContent = message;
+      
+      // Add to page
+      document.body.appendChild(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+          notification.remove();
+      }, 3000);
+  }
+  </script>
+  {% endblock %}

@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - UnileverImageStudy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <span class="logo-icon">🧠</span>
+                <h1 class="logo-text">UnileverImageStudy</h1>
+            </div>
+            <h2 class="auth-title">Welcome back</h2>
+            <p class="auth-subtitle">Sign in to your account to continue your research</p>
+        </div>
+
+        <form method="POST" class="auth-form" data-validate="true" data-loading="true">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                <label for="{{ form.username_or_email.id }}" class="form-label form-label--required">
+                    Username or Email
+                </label>
+                {{ form.username_or_email(
+                    class="form-control",
+                    placeholder="Enter your username or email",
+                    autocomplete="username",
+                    required=true
+                ) }}
+                {% if form.username_or_email.errors %}
+                    <div class="form-error">
+                        {% for error in form.username_or_email.errors %}
+                            <span class="error-text">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password.id }}" class="form-label form-label--required">
+                    Password
+                </label>
+                <div class="password-field">
+                    {{ form.password(
+                        class="form-control",
+                        placeholder="Enter your password",
+                        autocomplete="current-password",
+                        required=true
+                    ) }}
+                    <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                        <span class="toggle-icon">👁️</span>
+                    </button>
+                </div>
+                {% if form.password.errors %}
+                    <div class="form-error">
+                        {% for error in form.password.errors %}
+                            <span class="error-text">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-options">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="remember-me" name="remember_me" class="form-checkbox-input">
+                    <label for="remember-me" class="form-checkbox-label">Remember me</label>
+                </div>
+                <a href="{{ url_for('auth.reset_password_request') }}" class="forgot-password">
+                    Forgot password?
+                </a>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--full">
+                    <span class="btn-icon">🔑</span>
+                    Sign In
+                </button>
+            </div>
+        </form>
+
+        <div class="auth-divider">
+            <span class="divider-text">or</span>
+        </div>
+
+        <div class="auth-footer">
+            <p class="auth-footer-text">
+                Don't have an account? 
+                <a href="{{ url_for('auth.register') }}" class="auth-footer-link">Sign up for free</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="auth-sidebar">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Why Choose UnileverImageStudy?</h3>
+                <p class="sidebar-subtitle">Professional IPED Study System for Research Excellence</p>
+            </div>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-content">
+                        <h4>Advanced IPED Algorithm</h4>
+                        <p>Sophisticated Individual Parameter Estimation Design with balanced matrix generation</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-content">
+                        <h4>Real-time Analytics</h4>
+                        <p>Monitor study progress with comprehensive dashboards and detailed metrics</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-content">
+                        <h4>Enterprise Security</h4>
+                        <p>Bank-level security with data encryption and privacy compliance</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-content">
+                        <h4>Mobile-First Design</h4>
+                        <p>Responsive interface that works seamlessly across all devices</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-cta">
+                <a href="{{ url_for('auth.register') }}" class="btn btn--outline btn--full">
+                    <span class="btn-icon">🚀</span>
+                    Start Free Trial
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+// Initialize page-specific functionality
+function initializePage() {
+    console.log('Initializing login page...');
+    
+    // Initialize password toggle
+    initializePasswordToggle();
+    
+    // Initialize form validation
+    initializeFormValidation();
+    
+    // Initialize auto-focus
+    initializeAutoFocus();
+}
+
+// Password visibility toggle
+function initializePasswordToggle() {
+    const passwordToggle = document.querySelector('.password-toggle');
+    const passwordInput = document.querySelector('#password');
+    
+    if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', () => {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            
+            const toggleIcon = passwordToggle.querySelector('.toggle-icon');
+            toggleIcon.textContent = type === 'password' ? '👁️' : '🙈';
+            
+            passwordToggle.setAttribute('aria-label', 
+                type === 'password' ? 'Show password' : 'Hide password'
+            );
+        });
+    }
+}
+
+// Form validation
+function initializeFormValidation() {
+    const form = document.querySelector('.auth-form');
+    const inputs = form.querySelectorAll('input[required]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', () => {
+            validateField(input);
+        });
+        
+        input.addEventListener('input', () => {
+            clearFieldError(input);
+        });
+    });
+    
+    form.addEventListener('submit', (e) => {
+        if (!validateForm(form)) {
+            e.preventDefault();
+            showFormErrors(form);
+        }
+    });
+}
+
+// Auto-focus on first input
+function initializeAutoFocus() {
+    const firstInput = document.querySelector('.auth-form input:not([type="hidden"])');
+    if (firstInput) {
+        firstInput.focus();
+    }
+}
+
+// Field validation
+function validateField(field) {
+    const value = field.value.trim();
+    let isValid = true;
+    let errorMessage = '';
+    
+    if (!value) {
+        isValid = false;
+        errorMessage = 'This field is required';
+    } else if (field.name === 'username_or_email') {
+        // For username/email field, check if it looks like an email or username
+        if (value.includes('@') && !isValidEmail(value)) {
+            isValid = false;
+            errorMessage = 'Please enter a valid email address';
+        } else if (value.length < 3) {
+            isValid = false;
+            errorMessage = 'Username must be at least 3 characters long';
+        }
+    }
+    
+    if (!isValid) {
+        showFieldError(field, errorMessage);
+    } else {
+        clearFieldError(field);
+    }
+    
+    return isValid;
+}
+
+// Form validation
+function validateForm(form) {
+    const requiredFields = form.querySelectorAll('input[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!validateField(field)) {
+            isValid = false;
+        }
+    });
+    
+    return isValid;
+}
+
+// Show field error
+function showFieldError(field, message) {
+    clearFieldError(field);
+    
+    field.classList.add('form-control--error');
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'form-error';
+    errorDiv.innerHTML = `<span class="error-text">${message}</span>`;
+    
+    field.parentNode.parentNode.appendChild(errorDiv);
+}
+
+// Clear field error
+function clearFieldError(field) {
+    field.classList.remove('form-control--error');
+    
+    const errorDiv = field.parentNode.parentNode.querySelector('.form-error');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
+}
+
+// Show form errors
+function showFormErrors(form) {
+    const firstError = form.querySelector('.form-control--error');
+    if (firstError) {
+        firstError.focus();
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Email validation
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializePage);
+</script>
+{% endblock %}

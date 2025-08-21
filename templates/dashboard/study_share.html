@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Share Study{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1>Share Study</h1>
+            <p class="text-muted">{{ study.title }} - Share with respondents</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-outline-secondary">Back to Study</a>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- Share Link -->
+        <div class="content-section">
+            <h2>Study Link</h2>
+            <div class="share-link-container">
+                <div class="share-link-box">
+                    <input type="text" id="studyLink" class="form-control" value="{{ study.share_url }}" readonly>
+                    <button class="btn btn-primary" onclick="copyToClipboard()">Copy Link</button>
+                </div>
+                <div class="share-info">
+                    <p><strong>Share this link with your respondents</strong></p>
+                    <p class="text-muted">Anyone with this link can participate in your study</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="content-section">
+            <h2>QR Code</h2>
+            <div class="qr-container">
+                <div class="qr-code" id="qrCode">
+                    <!-- QR code will be generated here -->
+                </div>
+                <div class="qr-info">
+                    <p><strong>Scan to participate</strong></p>
+                    <p class="text-muted">Perfect for in-person studies or printed materials</p>
+                    <button class="btn btn-outline-primary" onclick="downloadQR()">Download QR Code</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Information -->
+        <div class="content-section">
+            <h2>Study Information</h2>
+            <div class="study-info-grid">
+                <div class="info-item">
+                    <h4>Study Title</h4>
+                    <p>{{ study.title }}</p>
+                </div>
+                <div class="info-item">
+                    <h4>Study Type</h4>
+                    <p>{{ study.study_type|title }}-based Study</p>
+                </div>
+                <div class="info-item">
+                    <h4>Expected Duration</h4>
+                    <p>{{ study.iped_parameters.tasks_per_consumer * 2 }}-{{ study.iped_parameters.tasks_per_consumer * 5 }} minutes</p>
+                </div>
+                <div class="info-item">
+                    <h4>Language</h4>
+                    <p>{{ study.language|upper }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sharing Options -->
+        <div class="content-section">
+            <h2>Sharing Options</h2>
+            <div class="sharing-options">
+                <div class="sharing-option">
+                    <h4>Email</h4>
+                    <p>Send the study link directly to participants via email</p>
+                    <a href="mailto:?subject=Participate in Research Study: {{ study.title }}&body=Hi,%0D%0A%0D%0AI'd like to invite you to participate in my research study.%0D%0A%0D%0AStudy: {{ study.title }}%0D%0ALink: {{ study.share_url }}%0D%0A%0D%0AThank you for your participation!" class="btn btn-outline-primary">Send Email</a>
+                </div>
+                
+                <div class="sharing-option">
+                    <h4>Social Media</h4>
+                    <p>Share on social media platforms</p>
+                    <div class="social-buttons">
+                        <a href="https://twitter.com/intent/tweet?text=Participate in my research study: {{ study.title }}&url={{ study.share_url }}" target="_blank" class="btn btn-outline-info">Twitter</a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ study.share_url }}" target="_blank" class="btn btn-outline-primary">Facebook</a>
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ study.share_url }}" target="_blank" class="btn btn-outline-secondary">LinkedIn</a>
+                    </div>
+                </div>
+                
+                <div class="sharing-option">
+                    <h4>Embed</h4>
+                    <p>Embed the study in your website or blog</p>
+                    <div class="embed-code">
+                        <textarea class="form-control" rows="3" readonly><iframe src="{{ study.share_url }}" width="100%" height="600" frameborder="0"></iframe></textarea>
+                        <button class="btn btn-outline-secondary" onclick="copyEmbedCode()">Copy Embed Code</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Status -->
+        <div class="content-section">
+            <h2>Study Status</h2>
+            <div class="status-info">
+                <div class="status-display">
+                    <span class="status-badge status-{{ study.status }}">{{ study.status|title }}</span>
+                    {% if study.status == 'active' %}
+                    <p class="text-success">Your study is currently active and collecting responses</p>
+                    {% elif study.status == 'draft' %}
+                    <p class="text-warning">Your study is in draft mode and not collecting responses</p>
+                    {% elif study.status == 'paused' %}
+                    <p class="text-info">Your study is paused and not collecting new responses</p>
+                    {% elif study.status == 'completed' %}
+                    <p class="text-secondary">Your study has been completed</p>
+                    {% endif %}
+                </div>
+                
+                {% if study.status == 'draft' %}
+                <div class="activate-study">
+                    <p>To start collecting responses, you need to activate your study.</p>
+                    <button class="btn btn-success" onclick="activateStudy()">Activate Study</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+// Generate QR Code
+document.addEventListener('DOMContentLoaded', function() {
+    const qrContainer = document.getElementById('qrCode');
+    const studyUrl = '{{ study.share_url }}';
+    
+    QRCode.toCanvas(qrContainer, studyUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+        }
+    }, function(error) {
+        if (error) {
+            qrContainer.innerHTML = '<p>Error generating QR code</p>';
+        }
+    });
+});
+
+// Copy study link to clipboard
+function copyToClipboard() {
+    const linkInput = document.getElementById('studyLink');
+    linkInput.select();
+    linkInput.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        showToast('Link copied to clipboard!', 'success');
+    } catch (err) {
+        showToast('Failed to copy link', 'error');
+    }
+}
+
+// Copy embed code to clipboard
+function copyEmbedCode() {
+    const embedTextarea = document.querySelector('.embed-code textarea');
+    embedTextarea.select();
+    embedTextarea.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        showToast('Embed code copied to clipboard!', 'success');
+    } catch (err) {
+        showToast('Failed to copy embed code', 'error');
+    }
+}
+
+// Download QR Code
+function downloadQR() {
+    const canvas = document.querySelector('#qrCode canvas');
+    if (canvas) {
+        const link = document.createElement('a');
+        link.download = 'study-qr-code.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+}
+
+// Activate Study
+function activateStudy() {
+    if (confirm('Are you sure you want to activate this study? Once activated, it will start collecting responses.')) {
+        // This would typically make an AJAX call to activate the study
+        showToast('Study activation feature coming soon!', 'info');
+    }
+}
+
+// Simple toast notification
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Add CSS animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

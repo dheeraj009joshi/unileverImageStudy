@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}Study Elements - Step 2a{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <div class="step-header">
+        <h1 class="step-title">Step 2a: Study Elements Configuration</h1>
+        <p class="step-description">Add the elements that respondents will evaluate in your study</p>
+        
+        <!-- Progress Bar -->
+        {{ study_progress_bar('2a', draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid', draft) }}
+    </div>
+
+    <div class="step-content">
+        <form method="POST" enctype="multipart/form-data" class="step-form" data-validate="true" data-loading="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="study-form-group">
+                    <h3 class="section-title">Study Elements</h3>
+                    <p class="form-help">Configure the elements that respondents will evaluate in your study.</p>
+                </div>
+                
+                <div class="study-form-group">
+                    <label class="study-form-label study-form-label--required">Number of Elements</label>
+                    <input type="number" name="num_elements" class="study-form-control" min="4" max="16" value="{{ num_elements }}" required>
+                    <small class="form-help">Choose between 4 and 16 elements for your study.</small>
+                </div>
+                
+                <div class="study-form-group">
+                    <p class="form-help">Configure the elements below:</p>
+                </div>
+                    
+                    <div class="elements-container" id="elementsContainer">
+                        {% for i in range(num_elements) %}
+                        <div class="element-item" data-element-index="{{ i }}">
+                            <div class="element-info">
+                                <div class="element-icon">{{ i + 1 }}</div>
+                                <div class="element-details">
+                                    <h4>Element {{ i + 1 }}</h4>
+                                    <button type="button" class="btn btn--danger btn--sm" onclick="removeElement({{ i }})">Remove</button>
+                                </div>
+                            </div>
+                            
+                            <div class="study-form-row">
+                                <div class="study-form-group">
+                                    <label class="study-form-label study-form-label--required">Element Name</label>
+                                    <input type="text" name="element_{{ i }}_name" class="study-form-control" 
+                                           placeholder="e.g., Product Feature A" required
+                                           value="{{ elements_data[i].name if elements_data and elements_data[i] else '' }}">
+                                </div>
+                                
+                                <!-- Element type is always image - no need for selection -->
+                                <input type="hidden" name="element_{{ i }}_type" value="image">
+                            </div>
+                            
+                            <div class="study-form-group">
+                                <label class="study-form-label">Description</label>
+                                <textarea name="element_{{ i }}_description" class="study-form-control study-form-textarea" rows="2" 
+                                          placeholder="Brief description of this element">{{ elements_data[i].description if elements_data and elements_data[i] else '' }}</textarea>
+                            </div>
+                            
+                            <div class="element-content" id="elementContent{{ i }}">
+                                <!-- All elements are always images -->
+                                <div class="study-form-group">
+                                    <label class="study-form-label study-form-label--required">Image File</label>
+                                    <input type="file" name="element_{{ i }}_image" class="study-form-control" accept="image/*" 
+                                           {% if not (elements_data and elements_data[i] and elements_data[i].content) %}required{% endif %}
+                                           onchange="previewImage(this, {{ i }})">
+                                    <small class="form-help">
+                                        {% if elements_data and elements_data[i] and elements_data[i].content %}
+                                            Leave empty to keep current image, or upload a new one to replace it.
+                                        {% else %}
+                                            Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                
+                                <!-- Image Preview Container -->
+                                <div class="image-preview-container" id="imagePreview{{ i }}" style="display: none;">
+                                    <label class="study-form-label">Image Preview:</label>
+                                    <div class="preview-image-wrapper">
+                                        <img id="previewImage{{ i }}" src="" alt="Preview" class="preview-image">
+                                        <button type="button" class="preview-remove-btn" onclick="removeImagePreview({{ i }})">Remove</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="study-form-group">
+                                    <label class="study-form-label">Alt Text</label>
+                                    <input type="text" name="element_{{ i }}_alt_text" class="study-form-control" 
+                                           placeholder="Description for accessibility" 
+                                           value="{{ elements_data[i].alt_text if elements_data and elements_data[i] else '' }}">
+                                </div>
+                                
+                                                                        {% if elements_data and elements_data[i] and elements_data[i].content %}
+                                        <div class="image-preview">
+                                            <label class="study-form-label">Current Image:</label>
+                                            <img src="{{ elements_data[i].content }}" alt="{{ elements_data[i].alt_text or 'Element image' }}" 
+                                                 style="max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
+                                            <input type="hidden" name="element_{{ i }}_current_image" value="{{ elements_data[i].content }}">
+                                            <div class="current-image-info">
+                                                <small class="text-success">✓ Image already uploaded: {{ elements_data[i].content|truncate(50) }}</small>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="study-form-group">
+                        <button type="button" class="btn btn--outline" onclick="addElement()">➕ Add Another Element</button>
+                    </div>
+                </div>
+                
+                <div class="step-actions">
+                    <a href="{{ url_for('study_creation.step1c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                    <button type="submit" class="btn btn--primary step-nav-btn">Continue to Classification Questions →</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentElementCount = {{ num_elements }};
+
+// Update element count when user changes the input
+document.querySelector('input[name="num_elements"]').addEventListener('change', function() {
+    const newCount = parseInt(this.value);
+    if (newCount >= 4 && newCount <= 16) {
+        const currentElements = document.querySelectorAll('.element-item').length;
+        
+        if (newCount > currentElements) {
+            // Add more elements
+            for (let i = currentElements; i < newCount; i++) {
+                addElement();
+            }
+        } else if (newCount < currentElements) {
+            // Remove excess elements
+            const elementsToRemove = currentElements - newCount;
+            for (let i = 0; i < elementsToRemove; i++) {
+                const lastElement = document.querySelector('.element-item:last-child');
+                if (lastElement) {
+                    lastElement.remove();
+                }
+            }
+            currentElementCount = newCount;
+        }
+    }
+});
+
+// Initialize content for existing elements when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const elements = document.querySelectorAll('.element-item');
+    elements.forEach((element, index) => {
+        const typeSelect = element.querySelector('select[name^="element_"][name$="_type"]');
+        if (typeSelect && typeSelect.value) {
+            toggleElementContent(index, typeSelect.value);
+        }
+    });
+});
+
+// function toggleElementContent(elementIndex, elementType) {
+    const contentDiv = document.getElementById(`elementContent${elementIndex}`);
+    
+    if (elementType === 'text') {
+        contentDiv.innerHTML = `
+            <div class="study-form-group">
+                <label class="study-form-label study-form-label--required">Text Content</label>
+                <textarea name="element_${elementIndex}_content" class="study-form-control study-form-textarea" rows="3" placeholder="Enter the text content for this element" required></textarea>
+            </div>
+        `;
+    } else if (elementType === 'image') {
+        // Check if there's existing image content
+        const existingImageInput = document.querySelector(`input[name="element_${elementIndex}_current_image"]`);
+        const hasExistingImage = existingImageInput && existingImageInput.value;
+        
+        contentDiv.innerHTML = `
+            <div class="study-form-group">
+                <label class="study-form-label study-form-label--required">Image File</label>
+                <input type="file" name="element_${elementIndex}_image" class="study-form-control" accept="image/*" ${!hasExistingImage ? 'required' : ''}>
+                <small class="form-help">
+                    ${hasExistingImage ? 'Leave empty to keep current image, or upload a new one to replace it.' : 'Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.'}
+                </small>
+            </div>
+            <div class="study-form-group">
+                <label class="study-form-label">Alt Text</label>
+                <input type="text" name="element_${elementIndex}_alt_text" class="study-form-control" placeholder="Description for accessibility">
+            </div>
+            ${hasExistingImage ? `
+                <div class="image-preview">
+                    <label class="study-form-label">Current Image:</label>
+                    <img src="${existingImageInput.value}" alt="Element image" style="max-width: 150px; max-height: 150px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
+                    <input type="hidden" name="element_${elementIndex}_current_image" value="${existingImageInput.value}">
+                    <div class="current-image-info">
+                        <small class="text-success">✓ Image already uploaded: ${existingImageInput.value.length > 50 ? existingImageInput.value.substring(0, 50) + '...' : existingImageInput.value}</small>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    } else {
+        contentDiv.innerHTML = '';
+    }
+}
+
+function addElement() {
+    const container = document.getElementById('elementsContainer');
+    const newElement = document.createElement('div');
+    newElement.className = 'element-item';
+    newElement.setAttribute('data-element-index', currentElementCount);
+    
+    // Get the current study type from the first element's select (or default to 'image')
+    const firstTypeSelect = document.querySelector('select[name="element_0_type"]');
+    const studyType = firstTypeSelect ? firstTypeSelect.value : '{{ study_type }}';
+    
+    newElement.innerHTML = `
+        <div class="element-info">
+            <div class="element-icon">${currentElementCount + 1}</div>
+            <div class="element-details">
+                <h4>Element ${currentElementCount + 1}</h4>
+                <button type="button" class="btn btn--danger btn--sm" onclick="removeElement(${currentElementCount})">Remove</button>
+            </div>
+        </div>
+        
+        <div class="study-form-row">
+            <div class="study-form-group">
+                <label class="study-form-label study-form-label--required">Element Name</label>
+                <input type="text" name="element_${currentElementCount}_name" class="study-form-control" placeholder="e.g., Product Feature A" required>
+            </div>
+            
+            <!-- Element type is always image - hidden input -->
+            <input type="hidden" name="element_${currentElementCount}_type" value="image">
+        </div>
+        
+        <div class="study-form-group">
+            <label class="study-form-label">Description</label>
+            <textarea name="element_${currentElementCount}_description" class="study-form-control study-form-textarea" rows="2" placeholder="Brief description of this element"></textarea>
+        </div>
+        
+        <div class="element-content" id="elementContent${currentElementCount}">
+            <!-- All elements are always images -->
+            <div class="study-form-group">
+                <label class="study-form-label study-form-label--required">Image File</label>
+                <input type="file" name="element_${currentElementCount}_image" class="study-form-control" accept="image/*" required onchange="previewImage(this, ${currentElementCount})">
+                <small class="form-help">Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.</small>
+            </div>
+            
+            <!-- Image Preview Container -->
+            <div class="image-preview-container" id="imagePreview${currentElementCount}" style="display: none;">
+                <label class="study-form-label">Image Preview:</label>
+                <div class="preview-image-wrapper">
+                    <img id="previewImage${currentElementCount}" src="" alt="Preview" class="preview-image">
+                                                        <button type="button" class="preview-remove-btn" onclick="removeImagePreview(${currentElementCount})">Remove</button>
+                </div>
+            </div>
+            
+            <div class="study-form-group">
+                <label class="study-form-label">Alt Text</label>
+                <input type="text" name="element_${currentElementCount}_alt_text" class="study-form-control" placeholder="Description for accessibility">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(newElement);
+    
+    // No need to toggle content since all elements are always images
+    
+    currentElementCount++;
+    
+    // Update the num_elements input field to reflect the new count
+    const numElementsInput = document.querySelector('input[name="num_elements"]');
+    if (numElementsInput) {
+        numElementsInput.value = currentElementCount;
+    }
+    
+    // Scroll to the new element
+    newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function removeElement(elementIndex) {
+    const element = document.querySelector(`[data-element-index="${elementIndex}"]`);
+    if (element) {
+        element.remove();
+        // Renumber remaining elements
+        const elements = document.querySelectorAll('.element-item');
+        elements.forEach((el, index) => {
+            el.setAttribute('data-element-index', index);
+            el.querySelector('h4').textContent = `Element ${index + 1}`;
+            el.querySelector('.btn--danger').setAttribute('onclick', `removeElement(${index})`);
+            
+            // Update element icon
+            const elementIcon = el.querySelector('.element-icon');
+            if (elementIcon) elementIcon.textContent = index + 1;
+            
+            // Update form field names
+            const nameInput = el.querySelector('input[name^="element_"][name$="_name"]');
+            const typeHidden = el.querySelector('input[name^="element_"][name$="_type"]');
+            const descTextarea = el.querySelector('textarea[name^="element_"][name$="_description"]');
+            const contentDiv = el.querySelector('.element-content');
+            const imageInput = el.querySelector('input[name^="element_"][name$="_image"]');
+            const altTextInput = el.querySelector('input[name^="element_"][name$="_alt_text"]');
+            
+            if (nameInput) nameInput.name = `element_${index}_name`;
+            if (typeHidden) typeHidden.name = `element_${index}_type`;
+            if (descTextarea) descTextarea.name = `element_${index}_description`;
+            if (contentDiv) contentDiv.id = `elementContent${index}`;
+            if (imageInput) imageInput.name = `element_${index}_image`;
+            if (altTextInput) altTextInput.name = `element_${index}_alt_text`;
+        });
+        currentElementCount = elements.length;
+        
+        // Update the num_elements input to reflect the new count
+        const numElementsInput = document.querySelector('input[name="num_elements"]');
+        if (numElementsInput) {
+            numElementsInput.value = currentElementCount;
+        }
+    }
+}
+
+// Initialize element content for existing elements
+document.addEventListener('DOMContentLoaded', function() {
+    const elements = document.querySelectorAll('.element-item');
+    elements.forEach((element, index) => {
+        const typeSelect = element.querySelector('select[name^="element_"][name$="_type"]');
+        if (typeSelect && typeSelect.value) {
+            toggleElementContent(index, typeSelect.value);
+        }
+        
+        // Pre-populate existing data if available
+        const existingData = {{ elements_data|tojson|safe }};
+        if (existingData[index]) {
+            const data = existingData[index];
+            
+            // Set element name
+            const nameInput = element.querySelector('input[name^="element_"][name$="_name"]');
+            if (nameInput) nameInput.value = data.name || '';
+            
+            // Set description
+            const descInput = element.querySelector('textarea[name^="element_"][name$="_description"]');
+            if (descInput) descInput.value = data.description || '';
+            
+            // Set element type and content
+            if (data.element_type) {
+                typeSelect.value = data.element_type;
+                toggleElementContent(index, data.element_type);
+                
+                if (data.element_type === 'image') {
+                    // Set alt text
+                    const altInput = element.querySelector('input[name^="element_"][name$="_alt_text"]');
+                    if (altInput) altInput.value = data.alt_text || '';
+                    
+                    // Show image preview if content exists
+                    if (data.content) {
+                        const contentDiv = element.querySelector('.element-content');
+                        if (contentDiv) {
+                            contentDiv.innerHTML = `
+                                <div class="study-form-group">
+                                    <label class="study-form-label study-form-label--required">Image File</label>
+                                    <input type="file" name="element_${index}_image" class="study-form-control" accept="image/*">
+                                    <small class="form-help">Leave empty to keep current image, or upload a new one to replace it.</small>
+                                </div>
+                                <div class="study-form-group">
+                                    <label class="study-form-label">Alt Text</label>
+                                    <input type="text" name="element_${index}_alt_text" class="study-form-control" placeholder="Description for accessibility" value="${data.alt_text || ''}">
+                                </div>
+                                <div class="image-preview">
+                                    <label class="study-form-label">Current Image:</label>
+                                    <img src="${data.content}" alt="${data.alt_text || 'Element image'}" style="max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
+                                    <input type="hidden" name="element_${index}_current_image" value="${data.content}">
+                                    <div class="current-image-info">
+                                        <small class="text-success">✓ Image already uploaded: ${data.content.length > 50 ? data.content.substring(0, 50) + '...' : data.content}</small>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                } else if (data.element_type === 'text') {
+                    // Set text content
+                    const contentDiv = element.querySelector('.element-content');
+                    if (contentDiv) {
+                        contentDiv.innerHTML = `
+                            <div class="study-form-group">
+                                <label class="study-form-label study-form-label--required">Text Content</label>
+                                <textarea name="element_${index}_content" class="study-form-control study-form-textarea" rows="3" placeholder="Enter the text content for this element" required>${data.content || ''}</textarea>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        }
+    });
+});
+
+// Image preview functionality
+function previewImage(input, elementIndex) {
+    const previewContainer = document.getElementById(`imagePreview${elementIndex}`);
+    const previewImg = document.getElementById(`previewImage${elementIndex}`);
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.style.display = 'none';
+    }
+}
+
+function removeImagePreview(elementIndex) {
+    const previewContainer = document.getElementById(`imagePreview${elementIndex}`);
+    const fileInput = document.querySelector(`input[name="element_${elementIndex}_image"]`);
+    const previewImg = document.getElementById(`previewImage${elementIndex}`);
+    
+    // Clear the file input
+    fileInput.value = '';
+    
+    // Hide the preview
+    previewContainer.style.display = 'none';
+    previewImg.src = '';
+}
+</script>
+{% endblock %}

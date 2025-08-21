@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - UnileverImageStudy{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="contact-header">
+        <h1>Contact Us</h1>
+        <p class="lead">Get in touch with our team for support, questions, or feedback</p>
+    </div>
+
+    <div class="contact-content">
+        <div class="contact-grid">
+            <!-- Contact Form -->
+            <div class="contact-form-section">
+                <h2>Send us a Message</h2>
+                <form class="contact-form" id="contactForm">
+                    <div class="form-group">
+                        <label for="name" class="form-label">Full Name *</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject" class="form-label">Subject *</label>
+                        <select id="subject" name="subject" class="form-control" required>
+                            <option value="">Select a subject</option>
+                            <option value="general">General Inquiry</option>
+                            <option value="technical">Technical Support</option>
+                            <option value="billing">Billing Question</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="bug">Bug Report</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message" class="form-label">Message *</label>
+                        <textarea id="message" name="message" class="form-control" rows="6" required 
+                                  placeholder="Please describe your inquiry in detail..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" id="newsletter" name="newsletter" class="form-check-input">
+                            <label for="newsletter" class="form-check-label">
+                                Subscribe to our newsletter for updates and new features
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="contact-info-section">
+                <h2>Get in Touch</h2>
+                
+                <div class="contact-methods">
+                    <div class="contact-method">
+                        <div class="method-icon">📧</div>
+                        <div class="method-content">
+                            <h3>Email Support</h3>
+                            <p>support@iped-studies.com</p>
+                            <small>We typically respond within 24 hours</small>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="method-icon">💬</div>
+                        <div class="method-content">
+                            <h3>Live Chat</h3>
+                            <p>Available during business hours</p>
+                            <small>Monday - Friday, 9 AM - 6 PM EST</small>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="method-icon">📚</div>
+                        <div class="method-content">
+                            <h3>Documentation</h3>
+                            <p>Comprehensive guides and tutorials</p>
+                            <small><a href="#" class="text-link">View Documentation</a></small>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="method-icon">🔧</div>
+                        <div class="method-content">
+                            <h3>Technical Support</h3>
+                            <p>For system issues and bugs</p>
+                            <small>tech-support@iped-studies.com</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-hours">
+                    <h3>Business Hours</h3>
+                    <div class="hours-grid">
+                        <div class="day">
+                            <span class="day-name">Monday - Friday</span>
+                            <span class="day-time">9:00 AM - 6:00 PM EST</span>
+                        </div>
+                        <div class="day">
+                            <span class="day-name">Saturday</span>
+                            <span class="day-time">10:00 AM - 4:00 PM EST</span>
+                        </div>
+                        <div class="day">
+                            <span class="day-name">Sunday</span>
+                            <span class="day-time">Closed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="emergency-contact">
+                    <h3>Emergency Support</h3>
+                    <p>For critical system issues affecting active studies, contact our emergency support line:</p>
+                    <div class="emergency-info">
+                        <strong>Emergency: (555) 123-4567</strong>
+                        <small>Available 24/7 for critical issues only</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="content-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <h3>How do I get started with creating my first study?</h3>
+                    <p>Sign up for a free account, then use our step-by-step wizard to design your study. The system will guide you through each step of the process.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>What types of studies can I create?</h3>
+                    <p>Our platform supports both image-based and text-based studies with customizable rating scales, classification questions, and IPED parameters.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>How do I share my study with participants?</h3>
+                    <p>Once your study is created, you'll receive a unique share link and QR code that you can distribute to your participants.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>Can I export my study data?</h3>
+                    <p>Yes! You can export your data in multiple formats including JSON and CSV for further analysis in statistical software.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>Is my data secure and private?</h3>
+                    <p>Absolutely. We use industry-standard security measures and never collect personal information from participants without explicit consent.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Get form data
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Simple validation
+    if (!data.name || !data.email || !data.subject || !data.message) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+    
+    // Show success message (in a real app, this would send the data to a server)
+    alert('Thank you for your message! We will get back to you soon.');
+    
+    // Reset form
+    this.reset();
+});
+</script>
+
+<style>
+.contact-header {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.contact-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.contact-header .lead {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+}
+
+.contact-form-section h2,
+.contact-info-section h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+.contact-form {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-check-input {
+    margin: 0;
+}
+
+.form-actions {
+    margin-top: 2rem;
+}
+
+.contact-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.contact-method {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--radius-sm);
+}
+
+.method-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.method-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.method-content p {
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.method-content small {
+    color: var(--text-secondary);
+}
+
+.business-hours {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.business-hours h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.hours-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.day {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.day:last-child {
+    border-bottom: none;
+}
+
+.day-name {
+    font-weight: 500;
+}
+
+.day-time {
+    color: var(--text-secondary);
+}
+
+.emergency-contact {
+    background: var(--danger-color);
+    color: white;
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.emergency-contact h3 {
+    margin-bottom: 1rem;
+}
+
+.emergency-info {
+    margin-top: 1rem;
+}
+
+.emergency-info strong {
+    display: block;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.faq-item h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.text-link {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.text-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .contact-form {
+        padding: 1.5rem;
+    }
+    
+    .day {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+</style>
+{% endblock %}
