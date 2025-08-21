@@ -108,7 +108,7 @@
                     </div>
                     
                     <div class="study-form-group">
-                        <button type="button" class="btn btn--outline" id="addElementBtn" onclick="addElement()">➕ Add Another Element</button>
+                        <button type="button" class="btn btn--outline" id="addElementBtn">➕ Add Another Element</button>
                         <small class="form-help">Click to add more elements to your study (up to 16 total)</small>
                     </div>
                 </div>
@@ -323,14 +323,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         console.error('Add button not found!');
-    }
-    
-    // Also add onclick handler as backup
-    if (addButton) {
-        addButton.onclick = function() {
-            console.log('Add button clicked via onclick!');
-            addElement();
-        };
     }
     
     console.log('Event listeners set up complete.');
