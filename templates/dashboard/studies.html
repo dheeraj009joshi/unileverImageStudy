@@ -2,99 +2,508 @@
 
 {% block title %}My Studies - UnileverImageStudy{% endblock %}
 
-{% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>My Studies</h1>
-        <p>Manage and monitor your IPED research studies</p>
-    </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/studies.css') }}">
+{% endblock %}
 
-    <!-- Status Filter Tabs -->
-    <div class="status-filter-tabs">
-        <a href="{{ url_for('dashboard.studies', status='all') }}" 
-           class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
-            All Studies <span class="count">{{ status_counts.all }}</span>
-        </a>
-        <a href="{{ url_for('dashboard.studies', status='active') }}" 
-           class="filter-tab {% if status_filter == 'active' %}active{% endif %}">
-            Active <span class="count">{{ status_counts.active }}</span>
-        </a>
-        <a href="{{ url_for('dashboard.studies', status='draft') }}" 
-           class="filter-tab {% if status_filter == 'draft' %}active{% endif %}">
-            Drafts <span class="count">{{ status_counts.draft }}</span>
-        </a>
-        <a href="{{ url_for('dashboard.studies', status='completed') }}" 
-           class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
-            Completed <span class="count">{{ status_counts.completed }}</span>
-        </a>
-        
-        <div class="filter-actions">
-            <a href="{{ url_for('study_creation.index') }}" class="btn btn-primary">
-                Create New Study
-            </a>
+{% block content %}
+<div class="studies-page">
+    <!-- Enhanced Header Section -->
+    <div class="studies-header-section">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>Research Studies</h1>
+                <p>Manage and monitor your IPED research studies with advanced analytics</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('study_creation.index') }}" class="btn btn--primary btn--xl">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Create New Study
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Studies Grid -->
+    <!-- Advanced Filters Section -->
+    <div class="filters-section">
+        <div class="filters-container">
+            <!-- Status Filter Tabs -->
+            <div class="status-filter-tabs">
+                <a href="{{ url_for('dashboard.studies', status='all') }}" 
+                   class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+                    <span class="tab-icon">📊</span>
+                    <span class="tab-text">All Studies</span>
+                    <span class="count-badge">{{ status_counts.all }}</span>
+                </a>
+                <a href="{{ url_for('dashboard.studies', status='active') }}" 
+                   class="filter-tab {% if status_filter == 'active' %}active{% endif %}">
+                    <span class="tab-icon">🟢</span>
+                    <span class="tab-text">Active</span>
+                    <span class="count-badge">{{ status_counts.active }}</span>
+                </a>
+                <a href="{{ url_for('dashboard.studies', status='draft') }}" 
+                   class="filter-tab {% if status_filter == 'draft' %}active{% endif %}">
+                    <span class="tab-icon">📝</span>
+                    <span class="tab-text">Drafts</span>
+                    <span class="count-badge">{{ status_counts.draft }}</span>
+                </a>
+                <a href="{{ url_for('dashboard.studies', status='completed') }}" 
+                   class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
+                    <span class="tab-icon">✅</span>
+                    <span class="tab-text">Completed</span>
+                    <span class="count-badge">{{ status_counts.completed }}</span>
+                </a>
+            </div>
+
+            <!-- Advanced Search and Filters -->
+            <div class="advanced-filters">
+                <div class="search-box">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" id="study-search" placeholder="Search studies by title, type, or description..." class="search-input">
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="study-type-filter" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="classification">Classification</option>
+                        <option value="rating">Rating</option>
+                        <option value="comparison">Comparison</option>
+                    </select>
+                    
+                    <select id="date-filter" class="filter-select">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="quarter">This Quarter</option>
+                        <option value="year">This Year</option>
+                    </select>
+                    
+                    <button id="clear-filters" class="btn btn--secondary btn--sm">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Studies Content -->
     {% if studies %}
-        <div class="studies-grid">
-            {% for study in studies %}
-                <div class="study-card" data-status="{{ study.status }}" data-type="{{ study.study_type }}">
-                    <div class="study-header">
-                        <h3>{{ study.title }}</h3>
-                        <span class="study-status status-{{ study.status }}">{{ study.status|title }}</span>
-                    </div>
-                    
-                    <div class="study-meta">
-                        <span class="study-type">{{ study.study_type|title }} Study</span>
-                        <span class="study-date">{{ study.created_at|format_datetime }}</span>
-                    </div>
-                    
-                    <div class="study-stats">
-                        <div class="stat">
-                            <span class="stat-label">Responses:</span>
-                            <span class="stat-value">{{ study.total_responses }}</span>
+        <div class="studies-content">
+            <!-- Results Summary -->
+            <div class="results-summary">
+                <div class="summary-info">
+                    <span class="results-count">Showing {{ studies|length }} of {{ total }} studies</span>
+                    <span class="filter-info">{% if status_filter != 'all' %}Filtered by: {{ status_filter|title }}{% endif %}</span>
+                </div>
+                <div class="view-controls">
+                    <button class="view-toggle active" data-view="grid" title="Grid View">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                    </button>
+                    <button class="view-toggle" data-view="list" title="List View">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Studies Grid/List -->
+            <div class="studies-container" id="studies-container">
+                {% for study in studies %}
+                    <div class="study-card" data-status="{{ study.status }}" data-type="{{ study.study_type }}" data-title="{{ study.title|lower }}">
+                        <div class="card-header">
+                            <div class="study-status-badge status-{{ study.status }}">
+                                <span class="status-dot"></span>
+                                {{ study.status|title }}
+                            </div>
+                            <div class="study-type-badge">
+                                {{ study.study_type|title }}
+                            </div>
                         </div>
-                        <div class="stat">
-                            <span class="stat-label">Completed:</span>
-                            <span class="stat-value">{{ study.completed_responses }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="study-actions">
-                        <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn-small btn-primary">View Details</a>
                         
-                        {% if study.status == 'draft' %}
-                            <a href="{{ url_for('dashboard.edit_study', study_id=study._id) }}" class="btn btn-small btn-secondary">Edit</a>
-                        {% elif study.status == 'active' %}
-                            <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn-small btn-secondary">Share</a>
+                        <div class="card-body">
+                            <h3 class="study-title">{{ study.title }}</h3>
+                            
+                            <div class="study-meta">
+                                <div class="meta-item">
+                                    <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span>{{ study.created_at|format_datetime }}</span>
+                                </div>
+                                {% if study.background %}
+                                <div class="meta-item">
+                                    <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <span>{{ study.background|truncate(30) }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="study-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value">{{ study.total_responses }}</div>
+                                    <div class="stat-label">Total Responses</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">{{ study.completed_responses }}</div>
+                                    <div class="stat-label">Completed</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">
+                                        {% if study.total_responses > 0 %}
+                                            {{ "%.1f"|format((study.completed_responses / study.total_responses) * 100) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </div>
+                                    <div class="stat-label">Completion Rate</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-actions">
+                            <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn--primary btn--full">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                View Details
+                            </a>
+                            
+                            <div class="secondary-actions">
+                                {% if study.status == 'draft' %}
+                                    <a href="{{ url_for('dashboard.edit_study', study_id=study._id) }}" class="btn btn--secondary btn--sm">
+                                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></svg>
+                                        </svg>
+                                        Edit
+                                    </a>
+                                {% elif study.status == 'active' %}
+                                    <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn--secondary btn--sm">
+                                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                                        </svg>
+                                        Share
+                                    </a>
+                                {% endif %}
+                                
+                                <button class="btn btn--secondary btn--sm" title="More Options">
+                                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Enhanced Pagination -->
+            {% if total > per_page %}
+                <div class="pagination-section">
+                    <div class="pagination-info">
+                        <span>Page {{ page }} of {{ (total + per_page - 1) // per_page }}</span>
+                        <span class="total-studies">Total: {{ total }} studies</span>
+                    </div>
+                    
+                    <div class="pagination-controls">
+                        {% if page > 1 %}
+                            <a href="{{ url_for('dashboard.studies', status=status_filter, page=1) }}" class="page-link" title="First Page">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                                </svg>
+                            </a>
+                            <a href="{{ url_for('dashboard.studies', status=status_filter, page=page-1) }}" class="page-link" title="Previous Page">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </a>
+                        {% endif %}
+                        
+                        <!-- Page Numbers -->
+                        {% set total_pages = (total + per_page - 1) // per_page %}
+                        {% set start_page = [1, page - 2]|max %}
+                        {% set end_page = [total_pages, page + 2]|min %}
+                        
+                        {% for p in range(start_page, end_page + 1) %}
+                            <a href="{{ url_for('dashboard.studies', status=status_filter, page=p) }}" 
+                               class="page-link {% if p == page %}active{% endif %}">
+                                {{ p }}
+                            </a>
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                            <a href="{{ url_for('dashboard.studies', status=status_filter, page=page+1) }}" class="page-link" title="Next Page">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+                            <a href="{{ url_for('dashboard.studies', status=status_filter, page=total_pages) }}" class="page-link" title="Last Page">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
                         {% endif %}
                     </div>
                 </div>
-            {% endfor %}
+            {% endif %}
         </div>
-        
-        <!-- Pagination -->
-        {% if total > per_page %}
-            <div class="pagination">
-                {% if page > 1 %}
-                    <a href="{{ url_for('dashboard.studies', status=status_filter, page=page-1) }}" class="page-link">&laquo; Previous</a>
-                {% endif %}
-                
-                <span class="page-info">Page {{ page }} of {{ (total + per_page - 1) // per_page }}</span>
-                
-                {% if page < (total + per_page - 1) // per_page %}
-                    <a href="{{ url_for('dashboard.studies', status=status_filter, page=page+1) }}" class="page-link">Next &raquo;</a>
-                {% endif %}
-            </div>
-        {% endif %}
     {% else %}
+        <!-- Enhanced Empty State -->
         <div class="empty-state">
-            <div class="empty-icon">📊</div>
-            <h3>No studies found</h3>
-            <p>{% if status_filter == 'all' %}Create your first study to get started{% else %}No {{ status_filter }} studies found{% endif %}</p>
-            <a href="{{ url_for('study_creation.index') }}" class="btn btn-primary">Create New Study</a>
+            <div class="empty-content">
+                <div class="empty-icon">
+                    <svg class="icon-large" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h3>No studies found</h3>
+                <p>
+                    {% if status_filter == 'all' %}
+                        Ready to start your research journey? Create your first study to begin collecting valuable insights.
+                    {% else %}
+                        No {{ status_filter }} studies found. Try adjusting your filters or create a new study.
+                    {% endif %}
+                </p>
+                <div class="empty-actions">
+                    <a href="{{ url_for('study_creation.index') }}" class="btn btn--primary btn--xl">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Create Your First Study
+                    </a>
+                    {% if status_filter != 'all' %}
+                        <a href="{{ url_for('dashboard.studies', status='all') }}" class="btn btn--secondary">
+                            View All Studies
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     {% endif %}
 </div>
+
+<!-- JavaScript for enhanced functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('study-search');
+    const studyCards = document.querySelectorAll('.study-card');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        studyCards.forEach(card => {
+            const title = card.getAttribute('data-title');
+            const type = card.getAttribute('data-type');
+            const status = card.getAttribute('data-status');
+            
+            const matchesSearch = title.includes(searchTerm) || 
+                                type.includes(searchTerm) || 
+                                status.includes(searchTerm);
+            
+            card.style.display = matchesSearch ? 'block' : 'none';
+        });
+    });
+    
+    // View toggle functionality
+    const viewToggles = document.querySelectorAll('.view-toggle');
+    const studiesContainer = document.getElementById('studies-container');
+    
+    viewToggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            
+            // Update active state
+            viewToggles.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update container class
+            studiesContainer.className = `studies-container view-${view}`;
+        });
+    });
+    
+    // Filter functionality
+    const typeFilter = document.getElementById('study-type-filter');
+    const dateFilter = document.getElementById('date-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    
+    function applyFilters() {
+        const selectedType = typeFilter.value;
+        const selectedDate = dateFilter.value;
+        
+        studyCards.forEach(card => {
+            const type = card.getAttribute('data-type');
+            const createdDate = new Date(card.querySelector('.meta-item span').textContent);
+            
+            let showCard = true;
+            
+            if (selectedType && type !== selectedType) {
+                showCard = false;
+            }
+            
+            if (selectedDate) {
+                const now = new Date();
+                const diffTime = Math.abs(now - createdDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                switch(selectedDate) {
+                    case 'today':
+                        if (diffDays > 1) showCard = false;
+                        break;
+                    case 'week':
+                        if (diffDays > 7) showCard = false;
+                        break;
+                    case 'month':
+                        if (diffDays > 30) showCard = false;
+                        break;
+                    case 'quarter':
+                        if (diffDays > 90) showCard = false;
+                        break;
+                    case 'year':
+                        if (diffDays > 365) showCard = false;
+                        break;
+                }
+            }
+            
+            card.style.display = showCard ? 'block' : 'none';
+        });
+    }
+    
+    typeFilter.addEventListener('change', applyFilters);
+    dateFilter.addEventListener('change', applyFilters);
+    
+    clearFiltersBtn.addEventListener('click', function() {
+        typeFilter.value = '';
+        dateFilter.value = '';
+        searchInput.value = '';
+        
+        studyCards.forEach(card => {
+            card.style.display = 'block';
+        });
+    });
+    
+    // Mobile-specific enhancements
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+    
+    // Mobile filter tab scrolling
+    const statusTabs = document.querySelector('.status-filter-tabs');
+    if (statusTabs && isMobile()) {
+        let isScrolling = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        
+        statusTabs.addEventListener('touchstart', function(e) {
+            isScrolling = true;
+            startX = e.touches[0].pageX - statusTabs.offsetLeft;
+            scrollLeft = statusTabs.scrollLeft;
+        });
+        
+        statusTabs.addEventListener('touchmove', function(e) {
+            if (!isScrolling) return;
+            e.preventDefault();
+            const x = e.touches[0].pageX - statusTabs.offsetLeft;
+            const walk = (x - startX) * 2;
+            statusTabs.scrollLeft = scrollLeft - walk;
+        });
+        
+        statusTabs.addEventListener('touchend', function() {
+            isScrolling = false;
+        });
+    }
+    
+    // Mobile search input focus handling
+    if (isMobile()) {
+        searchInput.addEventListener('focus', function() {
+            // Scroll to search input on mobile
+            setTimeout(() => {
+                this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+        
+        // Mobile filter dropdown improvements
+        const filterSelects = document.querySelectorAll('.filter-select');
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                // Add visual feedback for mobile
+                this.style.backgroundColor = 'var(--color-primary-50)';
+                setTimeout(() => {
+                    this.style.backgroundColor = 'white';
+                }, 200);
+            });
+        });
+    }
+    
+    // Touch-friendly interactions
+    if ('ontouchstart' in window) {
+        // Add touch feedback for cards
+        studyCards.forEach(card => {
+            card.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.98)';
+            });
+            
+            card.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Improve button touch targets
+        const buttons = document.querySelectorAll('.btn, .filter-tab, .view-toggle');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.95)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    }
+    
+    // Responsive behavior
+    function handleResize() {
+        if (isMobile()) {
+            // Mobile-specific adjustments
+            studiesContainer.classList.add('mobile-view');
+            
+            // Hide view toggles on very small screens
+            const viewControls = document.querySelector('.view-controls');
+            if (window.innerWidth <= 480 && viewControls) {
+                viewControls.style.display = 'none';
+            } else if (viewControls) {
+                viewControls.style.display = 'flex';
+            }
+        } else {
+            studiesContainer.classList.remove('mobile-view');
+        }
+    }
+    
+    // Initial call and event listener
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    // Mobile performance optimizations
+    if (isMobile()) {
+        // Reduce animation complexity on mobile
+        document.documentElement.style.setProperty('--transition-duration', '0.2s');
+        
+        // Optimize scroll performance
+        const filtersSection = document.querySelector('.filters-section');
+        if (filtersSection) {
+            filtersSection.style.willChange = 'transform';
+        }
+    }
+});
+</script>
 {% endblock %}
