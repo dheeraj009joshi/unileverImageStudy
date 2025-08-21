@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Add Element</title>
+    <style>
+        .element-item {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .element-icon {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #007bff;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn--outline {
+            background: transparent;
+            color: #007bff;
+            border: 2px solid #007bff;
+        }
+        .btn--danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn--sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .study-form-group {
+            margin: 15px 0;
+        }
+        .study-form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .study-form-textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="study-creation-container">
+        <div class="step-header">
+            <h1>Test: Add Element Functionality</h1>
+            <p>Testing the addElement function for study creation</p>
+        </div>
+
+        <div class="step-content">
+            <div class="study-form-group">
+                <label>Number of Elements</label>
+                <input type="number" id="numElements" min="4" max="16" value="4">
+            </div>
+
+            <div class="elements-container" id="elementsContainer">
+                <!-- Initial elements will be added here -->
+            </div>
+
+            <div class="study-form-group">
+                <button type="button" class="btn btn--outline" id="addElementBtn" onclick="addElement()">➕ Add Another Element</button>
+                <small>Click to add more elements to your study (up to 16 total)</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentElementCount = 4;
+
+        // Initialize with 4 elements
+        function initializeElements() {
+            const container = document.getElementById('elementsContainer');
+            for (let i = 0; i < 4; i++) {
+                addElement();
+            }
+        }
+
+        function addElement() {
+            console.log('addElement function called. Current count:', currentElementCount);
+            
+            if (currentElementCount >= 16) {
+                alert('Maximum 16 elements allowed');
+                return;
+            }
+            
+            const container = document.getElementById('elementsContainer');
+            if (!container) {
+                console.error('elementsContainer not found!');
+                return;
+            }
+            
+            const newElement = document.createElement('div');
+            newElement.className = 'element-item';
+            newElement.setAttribute('data-element-index', currentElementCount);
+            
+            newElement.innerHTML = `
+                <div class="element-info">
+                    <div class="element-icon">${currentElementCount + 1}</div>
+                    <div class="element-details">
+                        <h4>Element ${currentElementCount + 1}</h4>
+                        <button type="button" class="btn btn--danger btn--sm" onclick="removeElement(${currentElementCount})">Remove</button>
+                    </div>
+                </div>
+                
+                <div class="study-form-group">
+                    <label>Element Name</label>
+                    <input type="text" name="element_${currentElementCount}_name" class="study-form-control" placeholder="e.g., Product Feature A" required>
+                </div>
+                
+                <div class="study-form-group">
+                    <label>Description</label>
+                    <textarea name="element_${currentElementCount}_description" class="study-form-control study-form-textarea" rows="2" placeholder="Brief description of this element"></textarea>
+                </div>
+                
+                <div class="study-form-group">
+                    <label>Image File</label>
+                    <input type="file" name="element_${currentElementCount}_image" class="study-form-control" accept="image/*" required>
+                    <small>Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.</small>
+                </div>
+                
+                <div class="study-form-group">
+                    <label>Alt Text</label>
+                    <input type="text" name="element_${currentElementCount}_alt_text" class="study-form-control" placeholder="Description for accessibility">
+                </div>
+            `;
+            
+            container.appendChild(newElement);
+            currentElementCount++;
+            
+            // Update the num_elements input field to reflect the new count
+            const numElementsInput = document.getElementById('numElements');
+            if (numElementsInput) {
+                numElementsInput.value = currentElementCount;
+            }
+            
+            // Scroll to the new element
+            newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            console.log(`Added element ${currentElementCount}. Total elements: ${currentElementCount}`);
+        }
+
+        function removeElement(elementIndex) {
+            console.log('removeElement function called for index:', elementIndex);
+            
+            const element = document.querySelector(`[data-element-index="${elementIndex}"]`);
+            if (element) {
+                element.remove();
+                
+                // Renumber remaining elements
+                const elements = document.querySelectorAll('.element-item');
+                elements.forEach((el, index) => {
+                    el.setAttribute('data-element-index', index);
+                    el.querySelector('h4').textContent = `Element ${index + 1}`;
+                    el.querySelector('.btn--danger').setAttribute('onclick', `removeElement(${index})`);
+                    
+                    // Update element icon
+                    const elementIcon = el.querySelector('.element-icon');
+                    if (elementIcon) elementIcon.textContent = index + 1;
+                    
+                    // Update form field names
+                    const nameInput = el.querySelector('input[name^="element_"][name$="_name"]');
+                    const descTextarea = el.querySelector('textarea[name^="element_"][name$="_description"]');
+                    const imageInput = el.querySelector('input[name^="element_"][name$="_image"]');
+                    const altTextInput = el.querySelector('input[name^="element_"][name$="_alt_text"]');
+                    
+                    if (nameInput) nameInput.name = `element_${index}_name`;
+                    if (descTextarea) descTextarea.name = `element_${index}_description`;
+                    if (imageInput) imageInput.name = `element_${index}_image`;
+                    if (altTextInput) altTextInput.name = `element_${index}_alt_text`;
+                });
+                
+                currentElementCount = elements.length;
+                
+                // Update the num_elements input to reflect the new count
+                const numElementsInput = document.getElementById('numElements');
+                if (numElementsInput) {
+                    numElementsInput.value = currentElementCount;
+                }
+                
+                console.log(`Removed element ${elementIndex}. Total elements: ${currentElementCount}`);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded. Initializing elements...');
+            initializeElements();
+            
+            // Add click event listener to the add button for debugging
+            const addButton = document.getElementById('addElementBtn');
+            if (addButton) {
+                console.log('Add button found, adding event listener...');
+                addButton.addEventListener('click', function(e) {
+                    console.log('Add button clicked via event listener!');
+                    addElement();
+                });
+            } else {
+                console.error('Add button not found!');
+            }
+            
+            console.log('Event listeners set up complete.');
+        });
+    </script>
+</body>
+</html>

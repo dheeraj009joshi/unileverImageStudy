@@ -91,24 +91,25 @@
                                            value="{{ elements_data[i].alt_text if elements_data and elements_data[i] else '' }}">
                                 </div>
                                 
-                                                                        {% if elements_data and elements_data[i] and elements_data[i].content %}
-                                        <div class="image-preview">
-                                            <label class="study-form-label">Current Image:</label>
-                                            <img src="{{ elements_data[i].content }}" alt="{{ elements_data[i].alt_text or 'Element image' }}" 
-                                                 style="max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
-                                            <input type="hidden" name="element_{{ i }}_current_image" value="{{ elements_data[i].content }}">
-                                            <div class="current-image-info">
-                                                <small class="text-success">✓ Image already uploaded: {{ elements_data[i].content|truncate(50) }}</small>
-                                            </div>
-                                        </div>
-                                        {% endif %}
+                                {% if elements_data and elements_data[i] and elements_data[i].content %}
+                                <div class="image-preview">
+                                    <label class="study-form-label">Current Image:</label>
+                                    <img src="{{ elements_data[i].content }}" alt="{{ elements_data[i].alt_text or 'Element image' }}" 
+                                         style="max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
+                                    <input type="hidden" name="element_{{ i }}_current_image" value="{{ elements_data[i].content }}">
+                                    <div class="current-image-info">
+                                        <small class="text-success">✓ Image already uploaded: {{ elements_data[i].content|truncate(50) }}</small>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                     
                     <div class="study-form-group">
-                        <button type="button" class="btn btn--outline" onclick="addElement()">➕ Add Another Element</button>
+                        <button type="button" class="btn btn--outline" id="addElementBtn" onclick="addElement()">➕ Add Another Element</button>
+                        <small class="form-help">Click to add more elements to your study (up to 16 total)</small>
                     </div>
                 </div>
                 
@@ -123,6 +124,10 @@
 
 <script>
 let currentElementCount = {{ num_elements }};
+const studyType = '{{ draft.get_step_data("1b").get("study_type", "grid") if draft.get_step_data("1b") else "grid" }}';
+
+console.log('Step 2a loaded. Current element count:', currentElementCount);
+console.log('Study type:', studyType);
 
 // Update element count when user changes the input
 document.querySelector('input[name="num_elements"]').addEventListener('change', function() {
@@ -149,69 +154,18 @@ document.querySelector('input[name="num_elements"]').addEventListener('change', 
     }
 });
 
-// Initialize content for existing elements when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    const elements = document.querySelectorAll('.element-item');
-    elements.forEach((element, index) => {
-        const typeSelect = element.querySelector('select[name^="element_"][name$="_type"]');
-        if (typeSelect && typeSelect.value) {
-            toggleElementContent(index, typeSelect.value);
-        }
-    });
-});
-
-// function toggleElementContent(elementIndex, elementType) {
-    const contentDiv = document.getElementById(`elementContent${elementIndex}`);
-    
-    if (elementType === 'text') {
-        contentDiv.innerHTML = `
-            <div class="study-form-group">
-                <label class="study-form-label study-form-label--required">Text Content</label>
-                <textarea name="element_${elementIndex}_content" class="study-form-control study-form-textarea" rows="3" placeholder="Enter the text content for this element" required></textarea>
-            </div>
-        `;
-    } else if (elementType === 'image') {
-        // Check if there's existing image content
-        const existingImageInput = document.querySelector(`input[name="element_${elementIndex}_current_image"]`);
-        const hasExistingImage = existingImageInput && existingImageInput.value;
-        
-        contentDiv.innerHTML = `
-            <div class="study-form-group">
-                <label class="study-form-label study-form-label--required">Image File</label>
-                <input type="file" name="element_${elementIndex}_image" class="study-form-control" accept="image/*" ${!hasExistingImage ? 'required' : ''}>
-                <small class="form-help">
-                    ${hasExistingImage ? 'Leave empty to keep current image, or upload a new one to replace it.' : 'Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.'}
-                </small>
-            </div>
-            <div class="study-form-group">
-                <label class="study-form-label">Alt Text</label>
-                <input type="text" name="element_${elementIndex}_alt_text" class="study-form-control" placeholder="Description for accessibility">
-            </div>
-            ${hasExistingImage ? `
-                <div class="image-preview">
-                    <label class="study-form-label">Current Image:</label>
-                    <img src="${existingImageInput.value}" alt="Element image" style="max-width: 150px; max-height: 150px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
-                    <input type="hidden" name="element_${elementIndex}_current_image" value="${existingImageInput.value}">
-                    <div class="current-image-info">
-                        <small class="text-success">✓ Image already uploaded: ${existingImageInput.value.length > 50 ? existingImageInput.value.substring(0, 50) + '...' : existingImageInput.value}</small>
-                    </div>
-                </div>
-            ` : ''}
-        `;
-    } else {
-        contentDiv.innerHTML = '';
-    }
-}
-
 function addElement() {
+    console.log('addElement function called. Current count:', currentElementCount);
+    
     const container = document.getElementById('elementsContainer');
+    if (!container) {
+        console.error('elementsContainer not found!');
+        return;
+    }
+    
     const newElement = document.createElement('div');
     newElement.className = 'element-item';
     newElement.setAttribute('data-element-index', currentElementCount);
-    
-    // Get the current study type from the first element's select (or default to 'image')
-    const firstTypeSelect = document.querySelector('select[name="element_0_type"]');
-    const studyType = firstTypeSelect ? firstTypeSelect.value : '{{ study_type }}';
     
     newElement.innerHTML = `
         <div class="element-info">
@@ -250,7 +204,7 @@ function addElement() {
                 <label class="study-form-label">Image Preview:</label>
                 <div class="preview-image-wrapper">
                     <img id="previewImage${currentElementCount}" src="" alt="Preview" class="preview-image">
-                                                        <button type="button" class="preview-remove-btn" onclick="removeImagePreview(${currentElementCount})">Remove</button>
+                    <button type="button" class="preview-remove-btn" onclick="removeImagePreview(${currentElementCount})">Remove</button>
                 </div>
             </div>
             
@@ -262,9 +216,6 @@ function addElement() {
     `;
     
     container.appendChild(newElement);
-    
-    // No need to toggle content since all elements are always images
-    
     currentElementCount++;
     
     // Update the num_elements input field to reflect the new count
@@ -275,12 +226,17 @@ function addElement() {
     
     // Scroll to the new element
     newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    console.log(`Added element ${currentElementCount}. Total elements: ${currentElementCount}`);
 }
 
 function removeElement(elementIndex) {
+    console.log('removeElement function called for index:', elementIndex);
+    
     const element = document.querySelector(`[data-element-index="${elementIndex}"]`);
     if (element) {
         element.remove();
+        
         // Renumber remaining elements
         const elements = document.querySelectorAll('.element-item');
         elements.forEach((el, index) => {
@@ -307,6 +263,7 @@ function removeElement(elementIndex) {
             if (imageInput) imageInput.name = `element_${index}_image`;
             if (altTextInput) altTextInput.name = `element_${index}_alt_text`;
         });
+        
         currentElementCount = elements.length;
         
         // Update the num_elements input to reflect the new count
@@ -314,82 +271,10 @@ function removeElement(elementIndex) {
         if (numElementsInput) {
             numElementsInput.value = currentElementCount;
         }
+        
+        console.log(`Removed element ${elementIndex}. Total elements: ${currentElementCount}`);
     }
 }
-
-// Initialize element content for existing elements
-document.addEventListener('DOMContentLoaded', function() {
-    const elements = document.querySelectorAll('.element-item');
-    elements.forEach((element, index) => {
-        const typeSelect = element.querySelector('select[name^="element_"][name$="_type"]');
-        if (typeSelect && typeSelect.value) {
-            toggleElementContent(index, typeSelect.value);
-        }
-        
-        // Pre-populate existing data if available
-        const existingData = {{ elements_data|tojson|safe }};
-        if (existingData[index]) {
-            const data = existingData[index];
-            
-            // Set element name
-            const nameInput = element.querySelector('input[name^="element_"][name$="_name"]');
-            if (nameInput) nameInput.value = data.name || '';
-            
-            // Set description
-            const descInput = element.querySelector('textarea[name^="element_"][name$="_description"]');
-            if (descInput) descInput.value = data.description || '';
-            
-            // Set element type and content
-            if (data.element_type) {
-                typeSelect.value = data.element_type;
-                toggleElementContent(index, data.element_type);
-                
-                if (data.element_type === 'image') {
-                    // Set alt text
-                    const altInput = element.querySelector('input[name^="element_"][name$="_alt_text"]');
-                    if (altInput) altInput.value = data.alt_text || '';
-                    
-                    // Show image preview if content exists
-                    if (data.content) {
-                        const contentDiv = element.querySelector('.element-content');
-                        if (contentDiv) {
-                            contentDiv.innerHTML = `
-                                <div class="study-form-group">
-                                    <label class="study-form-label study-form-label--required">Image File</label>
-                                    <input type="file" name="element_${index}_image" class="study-form-control" accept="image/*">
-                                    <small class="form-help">Leave empty to keep current image, or upload a new one to replace it.</small>
-                                </div>
-                                <div class="study-form-group">
-                                    <label class="study-form-label">Alt Text</label>
-                                    <input type="text" name="element_${index}_alt_text" class="study-form-control" placeholder="Description for accessibility" value="${data.alt_text || ''}">
-                                </div>
-                                <div class="image-preview">
-                                    <label class="study-form-label">Current Image:</label>
-                                    <img src="${data.content}" alt="${data.alt_text || 'Element image'}" style="max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
-                                    <input type="hidden" name="element_${index}_current_image" value="${data.content}">
-                                    <div class="current-image-info">
-                                        <small class="text-success">✓ Image already uploaded: ${data.content.length > 50 ? data.content.substring(0, 50) + '...' : data.content}</small>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    }
-                } else if (data.element_type === 'text') {
-                    // Set text content
-                    const contentDiv = element.querySelector('.element-content');
-                    if (contentDiv) {
-                        contentDiv.innerHTML = `
-                            <div class="study-form-group">
-                                <label class="study-form-label study-form-label--required">Text Content</label>
-                                <textarea name="element_${index}_content" class="study-form-control study-form-textarea" rows="3" placeholder="Enter the text content for this element" required>${data.content || ''}</textarea>
-                            </div>
-                        `;
-                    }
-                }
-            }
-        }
-    });
-});
 
 // Image preview functionality
 function previewImage(input, elementIndex) {
@@ -423,5 +308,32 @@ function removeImagePreview(elementIndex) {
     previewContainer.style.display = 'none';
     previewImg.src = '';
 }
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded. Setting up event listeners...');
+    
+    // Add click event listener to the add button for debugging
+    const addButton = document.getElementById('addElementBtn');
+    if (addButton) {
+        console.log('Add button found, adding event listener...');
+        addButton.addEventListener('click', function(e) {
+            console.log('Add button clicked via event listener!');
+            addElement();
+        });
+    } else {
+        console.error('Add button not found!');
+    }
+    
+    // Also add onclick handler as backup
+    if (addButton) {
+        addButton.onclick = function() {
+            console.log('Add button clicked via onclick!');
+            addElement();
+        };
+    }
+    
+    console.log('Event listeners set up complete.');
+});
 </script>
 {% endblock %}
