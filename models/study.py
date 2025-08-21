@@ -57,7 +57,7 @@ class Study(Document):
     background = StringField(required=True, max_length=2000)
     language = StringField(required=True, max_length=10, default='en')
     main_question = StringField(required=True, max_length=1000)
-    orientation_text = StringField(required=True, max_length=51000)
+    orientation_text = StringField(required=True, max_length=55000)
     
     # Study Type and Configuration
     study_type = StringField(required=True, choices=['grid', 'layer'])

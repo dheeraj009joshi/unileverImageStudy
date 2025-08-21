@@ -26,15 +26,15 @@ def main():
     
     # Run the application
     print("🌐 Starting Flask development server...")
-    print("   Access the application at: http://localhost:51000")
-    print("   Dashboard: http://localhost:51000/dashboard")
-    print("   Study Creation: http://localhost:51000/study/create")
+    print("   Access the application at: http://localhost:55000")
+    print("   Dashboard: http://localhost:55000/dashboard")
+    print("   Study Creation: http://localhost:55000/study/create")
     print("\n   Press Ctrl+C to stop the server")
     
     app.run(
         debug=True,
         host='0.0.0.0',
-        port=51000,
+        port=55000,
         use_reloader=True
     )
 
