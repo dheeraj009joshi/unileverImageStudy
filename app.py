@@ -44,6 +44,10 @@ def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
+    # Increase request size limits for large forms
+    app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB total request size
+    app.config['MAX_CONTENT_LENGTH_PER_FILE'] = 16 * 1024 * 1024  # 16MB per file
+    
     # Ensure upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     

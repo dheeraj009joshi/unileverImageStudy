@@ -271,67 +271,90 @@ def step2a():
     study_type = draft.get_step_data('1b').get('study_type', 'grid')
     
     if request.method == 'POST':
-        # Handle dynamic form submission
-        elements_data = []
-        num_elements = int(request.form.get('num_elements', 4))
-        
-        for i in range(num_elements):
-            element_data = {
-                'element_id': f"E{i+1}",
-                'name': request.form.get(f'element_{i}_name', ''),
-                'description': request.form.get(f'element_{i}_description', ''),
-                'alt_text': request.form.get(f'element_{i}_alt_text', '')
-            }
+        try:
+            # Check request size before processing
+            content_length = request.content_length
+            if content_length and content_length > 200 * 1024 * 1024:  # 200MB limit
+                flash('Request too large. Please reduce the number of elements or file sizes.', 'error')
+                return render_template('study_creation/step2a.html', 
+                                    study_type=study_type, num_elements=4, 
+                                    elements_data=[], current_step='2a', draft=draft)
             
-            # All elements are always images by default
-            file = request.files.get(f'element_{i}_image')
-            current_image = request.form.get(f'element_{i}_current_image', '')
+            # Handle dynamic form submission
+            elements_data = []
+            num_elements = int(request.form.get('num_elements', 4))
             
-            if file and file.filename:
-                # New image uploaded - upload to Azure and get URL
-                azure_url = save_uploaded_file(file, f"element_{i}")
-                if azure_url:
-                    element_data['content'] = azure_url
+            # Validate number of elements
+            if num_elements < 4 or num_elements > 16:
+                flash('Number of elements must be between 4 and 16.', 'error')
+                return render_template('study_creation/step2a.html', 
+                                    study_type=study_type, num_elements=4, 
+                                    elements_data=[], current_step='2a', draft=draft)
+            
+            for i in range(num_elements):
+                element_data = {
+                    'element_id': f"E{i+1}",
+                    'name': request.form.get(f'element_{i}_name', ''),
+                    'description': request.form.get(f'element_{i}_description', ''),
+                    'alt_text': request.form.get(f'element_{i}_alt_text', '')
+                }
+                
+                # All elements are always images by default
+                file = request.files.get(f'element_{i}_image')
+                current_image = request.form.get(f'element_{i}_current_image', '')
+                
+                if file and file.filename:
+                    # New image uploaded - upload to Azure and get URL
+                    azure_url = save_uploaded_file(file, f"element_{i}")
+                    if azure_url:
+                        element_data['content'] = azure_url
+                        element_data['element_type'] = 'image'
+                        print(f"DEBUG: Uploaded image for element {i+1}: {azure_url}")
+                    else:
+                        flash(f'Failed to upload image for element {i+1}. Please check file type and size.', 'error')
+                        return render_template('study_creation/step2a.html', 
+                                            study_type=study_type, num_elements=num_elements, 
+                                            elements_data=elements_data, current_step='2a', draft=draft)
+                elif current_image:
+                    # No new image, but current image exists - keep the current image
+                    element_data['content'] = current_image
                     element_data['element_type'] = 'image'
-                    print(f"DEBUG: Uploaded image for element {i+1}: {azure_url}")
+                    print(f"DEBUG: Using existing image for element {i+1}: {current_image}")
                 else:
-                    flash(f'Failed to upload image for element {i+1}. Please check file type and size.', 'error')
+                    # No image at all - this is required for all elements
+                    flash(f'Image file is required for element {i+1}', 'error')
                     return render_template('study_creation/step2a.html', 
                                         study_type=study_type, num_elements=num_elements, 
-                                        elements_data=elements_data, current_step='2a')
-            elif current_image:
-                # No new image, but current image exists - keep the current image
-                element_data['content'] = current_image
-                element_data['element_type'] = 'image'
-                print(f"DEBUG: Using existing image for element {i+1}: {current_image}")
-            else:
-                # No image at all - this is required for all elements
-                flash(f'Image file is required for element {i+1}', 'error')
-                return render_template('study_creation/step2a.html', 
-                                    study_type=study_type, num_elements=num_elements, 
-                                    elements_data=elements_data, current_step='2a')
+                                        elements_data=elements_data, current_step='2a', draft=draft)
+                
+                elements_data.append(element_data)
             
-            elements_data.append(element_data)
-        
-        # Debug: Print what we're about to save
-        print(f"DEBUG: Saving elements to draft:")
-        for i, elem in enumerate(elements_data):
-            print(f"DEBUG: Element {i}: {elem}")
-        
-        draft.update_step_data('2a', {
-            'elements': elements_data,
-            'study_type': study_type,
-            'num_elements': num_elements
-        })
-        draft.current_step = '2b'
-        draft.save()
-        
-        # Debug: Verify what was saved
-        saved_data = draft.get_step_data('2a')
-        print(f"DEBUG: Saved data: {saved_data}")
-        
-        flash('Study elements saved successfully!', 'success')
-        return redirect(url_for('study_creation.step2b'))
+            # Debug: Print what we're about to save
+            print(f"DEBUG: Saving elements to draft:")
+            for i, elem in enumerate(elements_data):
+                print(f"DEBUG: Element {i}: {elem}")
+            
+            draft.update_step_data('2a', {
+                'elements': elements_data,
+                'study_type': study_type,
+                'num_elements': num_elements
+            })
+            draft.current_step = '2b'
+            draft.save()
+            
+            # Debug: Verify what was saved
+            saved_data = draft.get_step_data('2a')
+            print(f"DEBUG: Saved data: {saved_data}")
+            
+            flash('Study elements saved successfully!', 'success')
+            return redirect(url_for('study_creation.step2b'))
+            
+        except Exception as e:
+            print(f"ERROR in step2a: {str(e)}")
+            flash(f'An error occurred while saving elements: {str(e)}', 'error')
+            return render_template('study_creation/step2a.html', 
+                                study_type=study_type, num_elements=4, 
+                                elements_data=[], current_step='2a', draft=draft)
     
     # Get number of elements from form or previous data or default
     if request.args.get('num_elements'):

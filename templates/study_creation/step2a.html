@@ -115,7 +115,7 @@
                 
                 <div class="step-actions">
                     <a href="{{ url_for('study_creation.step1c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
-                    <button type="submit" class="btn btn--primary step-nav-btn">Continue to Classification Questions →</button>
+                    <button type="submit" class="btn btn--primary step-nav-btn" onclick="return validateForm()">Continue to Classification Questions →</button>
                 </div>
             </form>
         </div>
@@ -327,5 +327,61 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Event listeners set up complete.');
 });
+
+// Form validation function
+function validateForm() {
+    const form = document.querySelector('.step-form');
+    const formData = new FormData(form);
+    
+    // Check number of elements
+    const numElements = parseInt(document.querySelector('input[name="num_elements"]').value);
+    if (numElements < 4 || numElements > 16) {
+        alert('Number of elements must be between 4 and 16.');
+        return false;
+    }
+    
+    // Check file sizes
+    let totalFileSize = 0;
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    
+    fileInputs.forEach(input => {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            totalFileSize += file.size;
+            
+            // Check individual file size (16MB limit)
+            if (file.size > 16 * 1024 * 1024) {
+                alert(`File "${file.name}" is too large. Maximum size is 16MB.`);
+                return false;
+            }
+        }
+    });
+    
+    // Check total form size (200MB limit)
+    if (totalFileSize > 200 * 1024 * 1024) {
+        alert(`Total file size (${(totalFileSize / (1024 * 1024)).toFixed(1)}MB) exceeds the 200MB limit. Please reduce file sizes or number of elements.`);
+        return false;
+    }
+    
+    // Check if all required fields are filled
+    const requiredInputs = form.querySelectorAll('input[required]');
+    for (let input of requiredInputs) {
+        if (!input.value.trim()) {
+            alert(`Please fill in all required fields. Missing: ${input.name}`);
+            input.focus();
+            return false;
+        }
+    }
+    
+    // Show confirmation for large forms
+    if (numElements > 12) {
+        const confirmSubmit = confirm(`You are about to submit ${numElements} elements. This may take a moment to process. Continue?`);
+        if (!confirmSubmit) {
+            return false;
+        }
+    }
+    
+    return true;
+}
 </script>
 {% endblock %}

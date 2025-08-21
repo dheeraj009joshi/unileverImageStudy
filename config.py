@@ -10,8 +10,13 @@ class Config:
         'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://dlovej009:Dheeraj2006@cluster0.dnu8vna.mongodb.net/iped_system'
     }
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # Increased to 100MB for multiple file uploads
+    MAX_CONTENT_LENGTH_PER_FILE = 16 * 1024 * 1024  # 16MB max per individual file
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    
+    # Request size limits for large forms
+    MAX_CONTENT_LENGTH_TOTAL = 200 * 1024 * 1024  # 200MB total request size
+    MAX_CONTENT_LENGTH_FORMS = 50 * 1024 * 1024  # 50MB for form data
     
     # Azure Blob Storage Configuration
     AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING') or "DefaultEndpointsProtocol=https;AccountName=printxd;AccountKey=CaL/3SmhK8iKVM02i/cIN1VgE3058lyxRnCxeRd2J1k/9Ay6I67GC2CMnW//lJhNl+71WwxYXHnC+AStkbW1Jg==;EndpointSuffix=core.windows.net"
