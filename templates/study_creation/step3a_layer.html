@@ -5,18 +5,14 @@
 {% block content %}
 <div class="study-creation-container">
     <!-- Progress Bar -->
-    {% set study_type = draft.get_step_data('1b').get('study_type', 'grid') if draft.get_step_data('1b') else 'grid' %}
+    {% set study_type = 'layer' %}
     {{ study_progress_bar('3a', study_type, draft) }}
 
     <div class="step-content">
         <div class="step-header">
             <h1 class="step-title">Step 3a: Generate IPED Task Matrix</h1>
             <p class="step-description">
-                {% if study_type == 'grid' %}
-                    Generate the IPED task matrix based on your configuration using the new algorithm
-                {% else %}
-                    Generate the IPED task matrix for your layer study using the new algorithm
-                {% endif %}
+                Generate the IPED task matrix for your layer study using the new algorithm
             </p>
         </div>
 
@@ -44,97 +40,104 @@
                         </div>
                     </div>
                     
-                    {% if study_type == 'grid' %}
-                        <div class="algorithm-info">
-                            <h4>Grid Study Algorithm Details</h4>
-                            <ul>
-                                <li><strong>K Value:</strong> {{ matrix_summary.elements_per_task }} - automatically determined for optimal balance</li>
-                                <li><strong>Exposure Balancing:</strong> Uses soft exposure policy with configurable tolerance</li>
-                                <li><strong>Uniqueness:</strong> Ensures per-respondent uniqueness within capacity limits</li>
-                            </ul>
-                        </div>
-                    {% else %}
-                        <div class="algorithm-info">
-                            <h4>Layer Study Algorithm Details</h4>
-                            <ul>
-                                <li><strong>Structure:</strong> {{ matrix_summary.elements_per_task }} - one element from each category per task</li>
-                                <li><strong>Exposure Balancing:</strong> Within-category balance with configurable tolerance</li>
-                                <li><strong>Uniqueness:</strong> Ensures per-respondent uniqueness of vignette tuples</li>
-                            </ul>
-                        </div>
-                    {% endif %}
+                    <div class="algorithm-info">
+                        <h4>Layer Study Algorithm Details</h4>
+                        <ul>
+                            <li><strong>Structure:</strong> {{ matrix_summary.elements_per_task }} - one element from each category per task</li>
+                            <li><strong>Exposure Balancing:</strong> Within-category balance with configurable tolerance</li>
+                            <li><strong>Uniqueness:</strong> Ensures per-respondent uniqueness of vignette tuples</li>
+                        </ul>
+                    </div>
                 </div>
                 
-                <!-- Matrix Preview Section -->
+                <!-- Vignette Preview Section -->
                 <div class="matrix-preview">
-                    <h4>Task Matrix Preview</h4>
-                    <p class="form-help">Below is a preview of the first few respondents and their tasks. Each respondent receives a unique set of tasks.</p>
+                                         <h4>Vignette Preview</h4>
+                     <p class="form-help">Below is a preview of the first 20 tasks for the first respondent. This shows how the layered images will appear based on z-index.</p>
                     
-                    <div class="respondents-preview">
-                        {% if tasks_matrix %}
-                            {% for respondent_id, tasks in tasks_matrix.items() %}
-                                {% if loop.index <= 3 %}  <!-- Show first 3 respondents -->
-                                <div class="respondent-tasks">
-                                    <h5>Respondent {{ loop.index }}</h5>
-                                    <p class="text-muted">Tasks for this respondent:</p>
-                                    
-                                    <div class="task-list-container">
-                                        <div class="task-list">
-                                            {% for task in tasks %}
-                                            <div class="task-item">
-                                                <span class="task-number">Task {{ loop.index }}</span>
-                                                <div class="task-elements">
-                                                    {% for element_name, is_active in task.elements_shown.items() %}
-                                                        {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
-                                                            {% set content_key = element_name + '_content' %}
-                                                            {% set image_url = task.elements_shown.get(content_key, '') %}
-                                                            {% if image_url and image_url.startswith('http') %}
-                                                                <div class="task-element-image">
-                                                                    <img src="{{ image_url }}" 
-                                                                         alt="{{ element_name }}" 
-                                                                         class="element-thumbnail"
-                                                                         onclick="showImagePreview('{{ image_url }}', '{{ element_name }}')"
-                                                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                                    <div class="image-fallback" style="display: none;">
-                                                                        <span class="element-tag">{{ element_name }}</span>
-                                                                    </div>
-                                                                </div>
-                                                            {% elif image_url and image_url.startswith('data:image') %}
-                                                                <!-- Handle base64 images if they still exist -->
-                                                                <div class="task-element-image">
-                                                                    <img src="{{ image_url }}" 
-                                                                         alt="{{ element_name }}" 
-                                                                         class="element-thumbnail"
-                                                                         onclick="showImagePreview('{{ image_url }}', '{{ element_name }}')"
-                                                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                                    <div class="image-fallback" style="display: none;">
-                                                                        <span class="element-tag">{{ element_name }}</span>
-                                                                    </div>
-                                                                </div>
-                                                            {% else %}
-                                                                <!-- Fallback to element name if no image content -->
-                                                                <span class="element-tag">{{ element_name }}</span>
-                                                            {% endif %}
-                                                        {% endif %}
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                            
-                            {% if tasks_matrix|length > 3 %}
-                            <div class="more-respondents">
-                                <p class="text-muted">... and {{ tasks_matrix|length - 3 }} more respondents with similar task structures</p>
-                            </div>
-                            {% endif %}
-                        {% else %}
-                            <p class="text-muted">No task matrix generated yet.</p>
-                        {% endif %}
-                    </div>
+                                         <div class="respondents-preview">
+                         {% if tasks_matrix %}
+                             {% set first_respondent_id = tasks_matrix.keys()|list|first %}
+                             {% set first_respondent_tasks = tasks_matrix[first_respondent_id] %}
+                             <div class="respondent-tasks">
+                                 <h5>Respondent 1</h5>
+                                 <p class="text-muted">Vignette tasks for this respondent:</p>
+                                 
+                                 <div class="vignette-grid-scrollable">
+                                     {% if first_respondent_tasks and first_respondent_tasks|length > 0 %}
+                                     {% for task in first_respondent_tasks %}
+                                     <div class="vignette-card">
+                                         <div class="vignette-header">
+                                             <span class="vignette-task-number">Task {{ loop.index }}</span>
+                                             <div class="layer-indicators">
+                                                 {% if task.elements_shown_content %}
+                                                     {% for element_name, content in task.elements_shown_content.items() %}
+                                                         {% if content and content.url %}
+                                                             <span class="layer-badge active">
+                                                                 {{ content.layer_name or element_name.split('_')[0] }}
+                                                             </span>
+                                                          {% endif %}
+                                                     {% endfor %}
+                                                 {% endif %}
+                                             </div>
+                                         </div>
+                                         
+                                         <div class="vignette-preview">
+                                             {% if task.elements_shown_content %}
+                                                 {% set has_content = false %}
+                                                 {% for element_name, content in task.elements_shown_content.items() %}
+                                                     {% if content and content.url %}
+                                                         {% set has_content = true %}
+                                                         <div class="layer-image" style="z-index: {{ content.z_index or 0 }};">
+                                                             <img src="{{ content.url }}" 
+                                                                  alt="{{ content.name or element_name }}" 
+                                                                  title="{{ content.layer_name or element_name }}: {{ content.name or element_name }}"
+                                                                  class="vignette-layer-img">
+                                                         </div>
+                                                      {% endif %}
+                                                 {% endfor %}
+                                                 
+                                                 {% if not has_content %}
+                                                 
+                                                 {% endif %}
+                                             {% else %}
+                                                 <div class="no-content-placeholder">
+                                                     <i class="fas fa-exclamation-triangle fa-3x text-muted"></i>
+                                                     <p class="text-muted mt-2">No vignette data</p>
+                                                 </div>
+                                             {% endif %}
+                                         </div>
+                                         
+                                         <div class="vignette-footer">
+                                             <small class="text-muted">
+                                                 {% if task.elements_shown_content %}
+                                                     {% set active_layers = 0 %}
+                                                     {% for element_name, content in task.elements_shown_content.items() %}
+                                                         {% if content and content.url %}
+                                                             {% set active_layers = active_layers + 1 %}
+                                                         {% endif %}
+                                                     {% endfor %}
+                                                     {{ active_layers }} layer{{ 's' if active_layers != 1 else '' }} active
+                                                 {% else %}
+                                                     0 layers active
+                                                 {% endif %}
+                                             </small>
+                                         </div>
+                                     </div>
+                                     {% endfor %}
+                                     {% endif %}
+                                 </div>
+                                 
+                                 {% if tasks_matrix|length > 1 %}
+                                 <div class="more-respondents">
+                                     <p class="text-muted">... and {{ tasks_matrix|length - 1 }} more respondents with similar vignette structures</p>
+                                 </div>
+                                 {% endif %}
+                             </div>
+                         {% else %}
+                             <p class="text-muted">No vignette matrix generated yet.</p>
+                         {% endif %}
+                     </div>
                 </div>
                 
                 <!-- Matrix Actions -->
@@ -158,13 +161,8 @@
                 </div>
                 
                 <div class="step-actions">
-                    {% if draft.get_step_data('1b').get('study_type') == 'layer' %}
-                        <a href="{{ url_for('study_creation.layer_iped') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
-                        <a href="{{ url_for('study_creation.step3b') }}" class="btn btn--primary step-nav-btn">Continue to Preview →</a>
-                    {% else %}
-                        <a href="{{ url_for('study_creation.step2c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
-                        <a href="{{ url_for('study_creation.step3b') }}" class="btn btn--primary step-nav-btn">Continue to Preview →</a>
-                    {% endif %}
+                    <a href="{{ url_for('study_creation.layer_iped') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                    <a href="{{ url_for('study_creation.step3b') }}" class="btn btn--primary step-nav-btn">Continue to Preview →</a>
                 </div>
             </div>
         {% else %}
@@ -172,13 +170,8 @@
             <div class="study-form-group">
                 <h3 class="section-title">Generate IPED Task Matrix</h3>
                 <p class="form-help">
-                    {% if study_type == 'grid' %}
-                        Click the button below to generate the IPED task matrix using the new algorithm. 
-                        This will create a balanced distribution of tasks with optimal exposure balancing and uniqueness constraints.
-                    {% else %}
-                        Click the button below to generate the IPED task matrix for your layer study. 
-                        The algorithm will automatically calculate optimal tasks per consumer and ensure balanced exposure.
-                    {% endif %}
+                    Click the button below to generate the IPED task matrix for your layer study. 
+                    The algorithm will automatically calculate optimal tasks per consumer and ensure balanced exposure.
                 </p>
                 
                 <form method="POST" class="step-form" data-validate="true" data-loading="true">
@@ -191,13 +184,8 @@
                     </div>
                     
                     <div class="step-actions">
-                        {% if draft.get_step_data('1b').get('study_type') == 'layer' %}
-                            <a href="{{ url_for('study_creation.layer_iped') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
-                            {{ form.submit(class="btn btn--primary step-nav-btn") }}
-                        {% else %}
-                            <a href="{{ url_for('study_creation.step2c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
-                            {{ form.submit(class="btn btn--primary step-nav-btn") }}
-                        {% endif %}
+                        <a href="{{ url_for('study_creation.layer_iped') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                        {{ form.submit(class="btn btn--primary step-nav-btn") }}
                     </div>
                 </form>
             </div>
@@ -207,14 +195,14 @@
 
 <!-- Matrix Statistics Modal -->
 <div class="modal-overlay" id="matrixStatsModal">
-    <div class="modal-container">
+    <div class="modal-container modal-large">
         <div class="modal-header">
             <h3 class="modal-title">Matrix Statistics</h3>
             <button type="button" class="modal-close" onclick="closeMatrixStats()">
                 <span>&times;</span>
             </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body modal-scrollable">
             <div id="matrixStatsContent">
                 <!-- Statistics will be loaded here -->
             </div>
@@ -407,10 +395,10 @@ function showMatrixStats() {
     
     const tasksPerRespondent = totalRespondents > 0 ? Math.round(totalTasks / totalRespondents) : 0;
     
-    // Get step2c data for additional context
-    const step2cData = {{ step2c_data|tojson|safe }};
-    const minElements = step2cData.min_active_elements || 0;
-    const maxElements = step2cData.max_active_elements || 0;
+    // Get layer_iped data for additional context
+    const layerIpedData = {{ layer_iped_data|tojson|safe }};
+    const minElements = layerIpedData.min_active_elements || 0;
+    const maxElements = layerIpedData.max_active_elements || 0;
     
     // Generate statistics HTML
     let statsHTML = `

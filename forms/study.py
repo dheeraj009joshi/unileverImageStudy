@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, IntegerField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError
+from wtforms import StringField, TextAreaField, SelectField, IntegerField, BooleanField, SubmitField, FloatField
+from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError, Optional
 
 class Step1aBasicDetailsForm(FlaskForm):
     """Step 1a: Basic Study Details Form."""
@@ -74,38 +74,46 @@ class Step1cRatingScaleForm(FlaskForm):
             raise ValidationError('Maximum value must be greater than minimum value.')
 
 class Step2cIPEDParametersForm(FlaskForm):
-    """Step 2c: IPED Parameters Form."""
-    num_elements = IntegerField('Number of Elements', validators=[
-        DataRequired(message='Number of elements is required'),
-        NumberRange(min=4, max=16, message='Number of elements must be between 4 and 16')
-    ])
-    tasks_per_consumer = IntegerField('Tasks per Consumer', validators=[
-        DataRequired(message='Tasks per consumer is required'),
-        NumberRange(min=1, max=100, message='Tasks per consumer must be between 1 and 100')
-    ])
+    """Step 2c: IPED Parameters Form for Grid Studies."""
     number_of_respondents = IntegerField('Number of Respondents', validators=[
         DataRequired(message='Number of respondents is required'),
         NumberRange(min=1, max=10000, message='Number of respondents must be between 1 and 10,000')
     ])
-    min_active_elements = IntegerField('Minimum Active Elements per Task', validators=[
-        DataRequired(message='Minimum active elements is required'),
-        NumberRange(min=1, max=20, message='Minimum active elements must be between 1 and 20')
-    ])
-    max_active_elements = IntegerField('Maximum Active Elements per Task', validators=[
-        DataRequired(message='Maximum active elements is required'),
-        NumberRange(min=1, max=20, message='Maximum active elements must be between 1 and 20')
-    ])
     submit = SubmitField('Continue to Task Generation')
     
-    def validate_max_active_elements(self, max_active_elements):
-        """Ensure max_active_elements is greater than min_active_elements."""
-        if self.min_active_elements.data and max_active_elements.data <= self.min_active_elements.data:
-            raise ValidationError('Maximum active elements must be greater than minimum active elements.')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These will be auto-calculated or use defaults from the script
+        self.num_elements = None  # Will come from step2a
+        self.tasks_per_consumer = None  # Will be auto-calculated
+        self.exposure_tolerance_cv = 1.0  # Default from script
+        self.seed = None  # Optional, will use None if not provided
+
+class LayerConfigForm(FlaskForm):
+    """Form for configuring layers in a layer study (without IPED parameters)."""
+    submit = SubmitField('Save Layers & Continue')
     
-    def validate_min_active_elements(self, min_active_elements):
-        """Ensure min_active_elements is less than or equal to num_elements."""
-        if self.num_elements.data and min_active_elements.data > self.num_elements.data:
-            raise ValidationError('Minimum active elements cannot exceed the total number of elements.')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These will be auto-calculated
+        self.tasks_per_consumer = None
+        self.total_layers = None
+
+class LayerIPEDForm(FlaskForm):
+    """Form for IPED parameters after layers are configured."""
+    number_of_respondents = IntegerField('Number of Respondents', validators=[
+        DataRequired(message='Number of respondents is required'),
+        NumberRange(min=1, max=10000, message='Number of respondents must be between 1 and 10,000')
+    ])
+    # Exposure tolerance is fixed at 2.0% as per original layers_config.py logic
+    # Random seed is not used in original logic
+    submit = SubmitField('Generate Tasks')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These will be auto-calculated
+        self.tasks_per_consumer = None
+        self.total_layers = None
 
 class Step3aTaskGenerationForm(FlaskForm):
     """Step 3a: IPED Task Matrix Generation Form."""

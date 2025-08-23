@@ -1,0 +1,1368 @@
+{% extends "base.html" %}
+
+{% block title %}Layer Configuration - Study Creation{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+    {{ study_progress_bar('layer_config', 'layer', draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Layer Configuration</h1>
+            <p class="step-description">Configure layers, upload images, and preview your layer study</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="layer-config-form" enctype="multipart/form-data" data-validate="true" id="layerConfigForm">
+            {{ form.hidden_tag() }}
+            
+            <!-- Layer Management Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>🏗️ Layer Management</h3>
+                    <button type="button" class="btn btn--primary" onclick="openLayerModal()" id="addLayerBtn">
+                        ➕ Add New Layer
+                    </button>
+                </div>
+                
+                <!-- Layers List -->
+                <div class="layers-list-container" id="layersListContainer">
+                    <div class="layers-list" id="layersList">
+                        <!-- Layers will be displayed here as draggable items -->
+                    </div>
+                    <div class="no-layers-message" id="noLayersMessage">
+                        <p>No layers configured yet. Click "Add New Layer" to get started.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer Preview Section -->
+            <div class="form-section">
+                <h3>🎭 Layer Preview</h3>
+                <div class="preview-container">
+                    <div class="vignette-preview" id="vignettePreview">
+                        <div class="vignette-placeholder">
+                            <p>Add layers and images to see preview</p>
+                        </div>
+                    </div>
+                    <div class="layer-stack-info">
+                        <h4>Layer Stack (Z-Index)</h4>
+                        <p class="form-help">Drag layers up/down to reorder. Lower numbers appear on top.</p>
+                        <button type="button" class="btn btn--sm btn--outline" onclick="forceUpdateZIndexList()" style="margin-bottom: 10px; margin-right: 10px;">
+                            🔄 Refresh Z-Index List
+                        </button>
+                        <button type="button" class="btn btn--sm btn--outline" onclick="debugZIndexState()" style="margin-bottom: 10px;">
+                            🐛 Debug Z-Index State
+                        </button>
+                        <div class="z-index-list" id="zIndexList">
+                            <!-- Z-index information will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto-calculated parameters display -->
+            <div class="form-section">
+                <h3>📊 Layer Summary</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Total Layers:</strong> 
+                        <span id="total-layers-display">0</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Total Images:</strong> 
+                        <span id="total-images-display">0</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Estimated Tasks per Consumer:</strong> 
+                        <span id="tasks-per-consumer-display">Calculating...</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Uniqueness Capacity:</strong> 
+                        <span id="uniqueness-capacity-display">Calculating...</span>
+                    </div>
+                </div>
+                <small class="form-help">
+                    These values are automatically calculated based on your layer configuration. 
+                    You'll set IPED parameters in the next step.
+                </small>
+            </div>
+            
+            <div class="step-actions">
+                <a href="{{ url_for('study_creation.step2b') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                {{ form.submit(class="btn btn--primary step-nav-btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Layer Configuration Modal -->
+<div class="layer-modal-overlay" id="layerModalOverlay">
+    <div class="layer-modal-container" id="layerModal">
+        <div class="layer-modal-header">
+            <h3 id="modalTitle">Add New Layer</h3>
+            <button type="button" class="layer-modal-close" onclick="closeLayerModal()">×</button>
+        </div>
+        
+        <div class="layer-modal-body">
+            <div class="layer-modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Layer Name</label>
+                        <input type="text" id="layerNameInput" class="form-input" placeholder="e.g., Background, Foreground, Overlay">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label form-label--optional">Description (Optional)</label>
+                        <textarea id="layerDescriptionInput" class="form-textarea" placeholder="Describe what this layer contains (optional)"></textarea>
+                    </div>
+                </div>
+                
+                <div class="images-section">
+                    <label class="form-label">Images</label>
+                    <div class="image-upload-area">
+                        <div class="drag-drop-area" id="modalDragDropArea">
+                            <div class="upload-prompt">
+                                <span class="upload-icon">📁</span>
+                                <p>Drag & drop images here or <button type="button" class="btn btn--sm btn--outline browse-btn" onclick="triggerFileInput()">Browse Files</button></p>
+                            </div>
+                            <input type="file" id="modalFileInput" multiple accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                    
+                    <!-- Scrollable Images Container -->
+                    <div class="images-scroll-container" id="imagesScrollContainer">
+                        <div class="images-grid" id="modalImagesGrid">
+                            <!-- Images will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layer-modal-footer">
+            <button type="button" class="btn btn--secondary" onclick="closeLayerModal()">Cancel</button>
+            <button type="button" class="btn btn--primary" onclick="saveLayer()">Save Layer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables - MUST be declared in global scope
+window.layers = window.layers || [];
+window.layerCounter = window.layerCounter || 1;
+window.currentEditingLayer = window.currentEditingLayer || null;
+window.draggedLayer = window.draggedLayer || null;
+
+// Local references for easier access
+let layers = window.layers;
+let layerCounter = window.layerCounter;
+let currentEditingLayer = window.currentEditingLayer;
+let draggedLayer = window.draggedLayer;
+
+// ========================================
+// GLOBAL FUNCTION DEFINITIONS
+// ========================================
+
+// Function to sync local and global variables
+function syncLayersVariables() {
+    window.layers = layers;
+    window.layerCounter = layerCounter;
+    window.currentEditingLayer = currentEditingLayer;
+    window.draggedLayer = draggedLayer;
+    
+    // Also sync back to local variables
+    layers = window.layers;
+    layerCounter = window.layerCounter;
+    currentEditingLayer = window.currentEditingLayer;
+    draggedLayer = window.draggedLayer;
+    
+    console.log('Variables synced. Global layers:', window.layers);
+    console.log('Local layers:', layers);
+}
+
+// Test that functions are defined immediately
+console.log('🔧 Defining global functions...');
+console.log('openLayerModal defined:', typeof window.openLayerModal);
+console.log('closeLayerModal defined:', typeof window.closeLayerModal);
+console.log('saveLayer defined:', typeof window.saveLayer);
+
+// Open layer modal - MUST be defined first for onclick to work
+window.openLayerModal = function(layerId = null) {
+    console.log('Opening modal for layer:', layerId);
+    const modal = document.getElementById('layerModalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const nameInput = document.getElementById('layerNameInput');
+    const descriptionInput = document.getElementById('layerDescriptionInput');
+    const imagesGrid = document.getElementById('modalImagesGrid');
+    
+    console.log('Modal element found:', !!modal);
+    console.log('Modal title found:', !!modalTitle);
+    console.log('Name input found:', !!nameInput);
+    console.log('Description input found:', !!descriptionInput);
+    console.log('Images grid found:', !!imagesGrid);
+    
+    if (!modal) {
+        console.error('Modal element not found!');
+        alert('Modal not found! Please refresh the page and try again.');
+        return;
+    }
+    
+    // Clear previous images
+    if (imagesGrid) {
+        imagesGrid.innerHTML = '';
+    }
+    
+    if (layerId) {
+        // Editing existing layer
+        currentEditingLayer = layers.find(l => l.id === layerId);
+        if (currentEditingLayer) {
+            modalTitle.textContent = 'Edit Layer';
+            nameInput.value = currentEditingLayer.name;
+            descriptionInput.value = currentEditingLayer.description || '';
+            
+            // Render existing images
+            if (currentEditingLayer.images && currentEditingLayer.images.length > 0) {
+                renderModalImages(currentEditingLayer.images);
+            }
+        }
+    } else {
+        // Adding new layer - create temporary layer object
+        const defaultName = `Layer_${layers.length + 1}`;
+        currentEditingLayer = {
+            id: null, // Will be assigned when saved
+            name: defaultName,
+            description: '',
+            order: layers.length,
+            z_index: layers.length,
+            images: []
+        };
+        
+        modalTitle.textContent = 'Add New Layer';
+        nameInput.value = defaultName;
+        descriptionInput.value = '';
+    }
+    
+    console.log('About to show modal...');
+    console.log('Modal current display:', modal.style.display);
+    console.log('Modal current classes:', modal.className);
+    
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    console.log('After setting display and class:');
+    console.log('Modal display:', modal.style.display);
+    console.log('Modal classes:', modal.className);
+    console.log('Modal opened successfully - should be visible now');
+    
+    // Focus on name input after modal is shown
+    setTimeout(() => {
+        if (nameInput) {
+            nameInput.focus();
+            nameInput.select(); // Select the default name for easy editing
+        }
+    }, 100);
+};
+
+// Close layer modal - MUST be defined for onclick to work
+window.closeLayerModal = function() {
+    console.log('Closing modal');
+    const modal = document.getElementById('layerModalOverlay');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        // Don't set currentEditingLayer to null here as it might cause data loss
+        // currentEditingLayer = null;
+    }
+};
+
+// Save layer - MUST be defined for onclick to work
+window.saveLayer = function() {
+    const name = document.getElementById('layerNameInput').value.trim();
+    const description = document.getElementById('layerDescriptionInput').value.trim();
+    
+    if (!name) {
+        showMobileAlert('Please enter a layer name');
+        return;
+    }
+    
+    // Validate layer has images
+    if (!currentEditingLayer.images || currentEditingLayer.images.length === 0) {
+        showMobileAlert('Please add at least one image to the layer.');
+        return;
+    }
+    
+    // Images will be uploaded to Azure when the form is submitted
+    // For now, just validate that images exist
+    
+    if (currentEditingLayer) {
+        if (currentEditingLayer.id === null) {
+            // Creating new layer
+            const layerId = `layer_${layers.length + 1}`;
+            currentEditingLayer.id = layerId;
+            currentEditingLayer.name = name;
+            currentEditingLayer.description = description;
+            currentEditingLayer.order = layers.length;
+            currentEditingLayer.z_index = layers.length; // Set z-index based on order
+            
+            // Add the new layer to the layers array
+            layers.push(currentEditingLayer);
+            console.log('New layer added:', currentEditingLayer);
+        } else {
+            // Update existing layer
+            currentEditingLayer.name = name;
+            currentEditingLayer.description = description;
+            
+            // Find and update the layer in the layers array
+            const existingLayerIndex = layers.findIndex(l => l.id === currentEditingLayer.id);
+            if (existingLayerIndex !== -1) {
+                layers[existingLayerIndex] = { ...currentEditingLayer };
+                console.log('Existing layer updated in array:', layers[existingLayerIndex]);
+            } else {
+                console.error('Could not find existing layer in array:', currentEditingLayer.id);
+            }
+        }
+    }
+    
+    closeLayerModal();
+    renderLayersList();
+    updateLayerOrdering();
+    updateCalculatedParameters();
+    updatePreview(); // This should now work properly
+    showMobileSuccess('Layer saved successfully!');
+    
+    // Debug: Log the current state
+    console.log('=== AFTER SAVING LAYER ===');
+    console.log('Total layers:', layers.length);
+    console.log('Layers array:', layers);
+    console.log('Current editing layer:', currentEditingLayer);
+    layers.forEach((layer, index) => {
+        console.log(`Layer ${index}: ${layer.name}, images: ${layer.images.length}, z_index: ${layer.z_index}`);
+        console.log(`  - Layer object:`, layer);
+    });
+    console.log('=== END DEBUG ===');
+    
+    // Sync variables to ensure consistency
+    syncLayersVariables();
+};
+
+// Trigger file input - MUST be defined for onclick to work
+window.triggerFileInput = function() {
+    document.getElementById('modalFileInput').click();
+};
+
+// Remove image from modal - MUST be defined for onclick to work
+window.removeImage = function(imageId) {
+    if (currentEditingLayer) {
+        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.id !== imageId);
+        renderModalImages(currentEditingLayer.images);
+    }
+};
+
+// Update image name - MUST be defined for onclick to work
+window.updateImageName = function(imageId, name) {
+    if (currentEditingLayer) {
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        if (image) {
+            image.name = name.trim() || `Image_${Date.now()}`;
+            console.log(`Updated image name to: ${image.name}`);
+        }
+    }
+};
+
+// Update image alt - MUST be defined for onclick to work
+window.updateImageAlt = function(imageId, alt) {
+    if (currentEditingLayer) {
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        if (image) {
+            image.alt = alt.trim() || image.name;
+            console.log(`Updated image alt to: ${image.alt}`);
+        }
+    }
+};
+
+// Remove layer - MUST be defined for onclick to work
+window.removeLayer = function(layerId) {
+    if (confirm('Are you sure you want to remove this layer? This action cannot be undone.')) {
+        layers = layers.filter(l => l.id !== layerId);
+        renderLayersList();
+        updateLayerOrdering();
+        updateCalculatedParameters();
+        updatePreview();
+    }
+};
+
+// Change z-index - MUST be defined for onclick to work
+window.changeZIndex = function(layerId, change) {
+    const layer = layers.find(l => l.id === layerId);
+    if (layer) {
+        const oldZIndex = layer.z_index;
+        layer.z_index += change;
+        
+        // Ensure Z-index stays within valid range
+        if (layer.z_index < 0) layer.z_index = 0;
+        if (layer.z_index >= layers.length) layer.z_index = layers.length - 1;
+        
+        console.log(`Changed Z-index for layer ${layer.name}: ${oldZIndex} → ${layer.z_index}`);
+        
+        // Update the layer order to match the new Z-index
+        updateLayerOrderFromDOM();
+        updateLayerOrdering();
+        updateCalculatedParameters();
+        updatePreview();
+    }
+};
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+    initializeLayers();
+    renderLayersList();
+    updateCalculatedParameters();
+    updatePreview();
+    setupDragAndDrop();
+    
+    // Force update Z-index list after a short delay to ensure layers are loaded
+    setTimeout(() => {
+        console.log('Delayed Z-index list update...');
+        updateLayerOrdering();
+    }, 500);
+    
+    // Debug: Check if modal elements exist
+    const modal = document.getElementById('layerModalOverlay');
+    const addButton = document.querySelector('button[onclick="openLayerModal()"]');
+    console.log('Modal element:', modal);
+    console.log('Add button:', addButton);
+});
+
+// Initialize with existing data if available
+function initializeLayers() {
+    console.log('Initializing layers...');
+    {% if draft and draft.layer_config_data and draft.layer_config_data.layers %}
+        const existingLayers = {{ draft.layer_config_data.layers | tojson }};
+        console.log('Found existing layers:', existingLayers);
+        existingLayers.forEach((layerData, index) => {
+            console.log(`Processing layer ${index}:`, layerData);
+            addLayerFromData(layerData);
+        });
+        
+        // Ensure Z-index values are properly set
+        layers.forEach((layer, index) => {
+            if (layer.z_index === undefined || layer.z_index === null) {
+                layer.z_index = index;
+                console.log(`Fixed Z-index for layer ${layer.name}: ${layer.z_index}`);
+            }
+        });
+        
+        console.log('Final layers array:', layers);
+    {% else %}
+        console.log('No existing layers found');
+        // No default layer - user must add manually
+    {% endif %}
+}
+
+// Add layer from existing data
+function addLayerFromData(layerData) {
+    const layer = {
+        id: layerData.id || `layer_${layerCounter++}`,
+        name: layerData.name || `Layer_${layers.length + 1}`,
+        description: layerData.description || '',
+        order: layerData.order || layers.length,
+        z_index: layerData.z_index !== undefined ? layerData.z_index : (layers.length),
+        images: layerData.images || []
+    };
+    
+    layers.push(layer);
+    console.log(`Added layer from data: ${layer.name}, z_index: ${layer.z_index}`);
+}
+
+// Close modal when clicking outside
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('layerModalOverlay');
+    if (modal && e.target === modal) {
+        closeLayerModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeLayerModal();
+    }
+});
+
+// Setup drag and drop for layers list
+function setupDragAndDrop() {
+    const layersList = document.getElementById('layersList');
+    if (!layersList) return;
+    
+    layersList.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const draggedItem = document.querySelector('.dragging');
+        if (draggedItem) {
+            const afterElement = getDragAfterElement(layersList, e.clientY);
+            if (afterElement) {
+                layersList.insertBefore(draggedItem, afterElement);
+            } else {
+                layersList.appendChild(draggedItem);
+            }
+        }
+    });
+    
+    layersList.addEventListener('drop', function(e) {
+        e.preventDefault();
+        updateLayerOrderFromDOM();
+    });
+}
+
+// Get the element after which to insert the dragged item
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.layer-list-item:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Update layer order based on DOM position
+function updateLayerOrderFromDOM() {
+    const layerItems = document.querySelectorAll('.layer-list-item');
+    layerItems.forEach((item, index) => {
+        const layerId = item.dataset.layerId;
+        const layer = layers.find(l => l.id === layerId);
+        if (layer) {
+            layer.order = index;
+            // Z-index: 0 is bottom (background), higher numbers are on top
+            layer.z_index = index;
+            console.log(`Updated layer ${layer.name}: order=${index}, z_index=${layer.z_index}`);
+        }
+    });
+    updateLayerOrdering();
+    updateCalculatedParameters();
+    updatePreview();
+}
+
+// Trigger file input - make sure it's in global scope
+window.triggerFileInput = function() {
+    document.getElementById('modalFileInput').click();
+};
+
+// Handle file selection
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('modalFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    addImageToModal(file);
+                }
+            });
+        });
+    }
+});
+
+// Add image to modal
+function addImageToModal(file) {
+    console.log('Adding image to modal:', file.name);
+    
+    if (!currentEditingLayer) {
+        console.error('No current editing layer available');
+        showMobileAlert('Please try again - layer not properly initialized');
+        return;
+    }
+    
+    // Create a temporary image data object with data URL for immediate preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const imageData = {
+            id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            name: file.name.replace(/\.[^/.]+$/, ""),
+            alt: file.name.replace(/\.[^/.]+$/, ""),
+            file: file, // Keep the file object for later upload
+            dataUrl: e.target.result, // Use data URL for immediate preview
+            url: null, // Will be set after Azure upload
+            isUploading: false // Not uploading yet
+        };
+        
+        console.log('Created image data:', imageData);
+        
+        // Add to current editing layer immediately for UI feedback
+        currentEditingLayer.images.push(imageData);
+        renderModalImages(currentEditingLayer.images);
+        updatePreview();
+    };
+    
+    reader.onerror = function(error) {
+        console.error('Error reading file:', error);
+        showMobileAlert('Error reading file. Please try again.');
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Upload image to Azure (called when form is submitted)
+function uploadImageToAzure(file, imageId) {
+    console.log('Uploading image to Azure:', file.name, 'for image ID:', imageId);
+    
+    return new Promise((resolve, reject) => {
+        // Create FormData for the upload
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Add CSRF token
+        const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+        if (!csrfTokenInput) {
+            console.error('CSRF token input not found!');
+            console.log('Available inputs:', document.querySelectorAll('input'));
+            reject(new Error('CSRF token not found'));
+            return;
+        }
+        
+        const csrfToken = csrfTokenInput.value;
+        if (!csrfToken) {
+            console.error('CSRF token value is empty!');
+            reject(new Error('CSRF token is empty'));
+            return;
+        }
+        
+        formData.append('csrf_token', csrfToken);
+        console.log('Uploading with CSRF token:', csrfToken ? 'Present' : 'Missing');
+        
+        // Upload to our backend endpoint
+        fetch('/study/create/upload-image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('Upload response status:', response.status);
+            console.log('Upload response headers:', response.headers);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.url) {
+                console.log('Image uploaded successfully to Azure:', data.url);
+                
+                // Find the image in the layers and update its URL
+                layers.forEach(layer => {
+                    const imageIndex = layer.images.findIndex(img => img.id === imageId);
+                    if (imageIndex !== -1) {
+                        layer.images[imageIndex].url = data.url;
+                        console.log(`Updated image ${imageId} with Azure URL: ${data.url}`);
+                    }
+                });
+                
+                resolve(data.url);
+            } else {
+                console.error('Upload failed:', data.error);
+                reject(new Error(data.error || 'Upload failed'));
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            reject(error);
+        });
+    });
+}
+
+// Render images in modal
+function renderModalImages(images) {
+    console.log('Rendering modal images:', images.length);
+    const imagesGrid = document.getElementById('modalImagesGrid');
+    if (!imagesGrid) {
+        console.error('Images grid not found');
+        return;
+    }
+    
+    imagesGrid.innerHTML = '';
+    
+    if (!images || images.length === 0) {
+        console.log('No images to render');
+        return;
+    }
+    
+    images.forEach((image, index) => {
+        console.log(`Rendering image ${index}:`, image.name, image.dataUrl ? 'with data' : 'no data');
+        
+        const imageItem = document.createElement('div');
+        imageItem.className = 'image-item';
+        imageItem.dataset.imageId = image.id;
+        
+        // Ensure we have proper values for name and alt
+        const imageName = image.name || `Image_${index + 1}`;
+        const imageAlt = image.alt || imageName;
+        const imageUrl = image.url || image.dataUrl || '';
+        
+        // Show image (either data URL for preview or Azure URL if available)
+        const imageContent = `<img src="${imageUrl}" alt="${imageAlt}" onerror="console.error('Failed to load image:', this.src)">`;
+        
+        imageItem.innerHTML = `
+            <div class="image-preview">
+                ${imageContent}
+                <div class="image-overlay">
+                    <button type="button" class="btn btn--danger btn--sm" onclick="removeImage('${image.id}')">🗑️</button>
+                </div>
+            </div>
+            <div class="image-info">
+                <input type="text" class="image-name-input" placeholder="Image name" value="${imageName}" onchange="updateImageName('${image.id}', this.value)">
+                <input type="text" class="image-alt-input" placeholder="Alt text" value="${imageAlt}" onchange="updateImageAlt('${image.id}', this.value)">
+            </div>
+        `;
+        
+        imagesGrid.appendChild(imageItem);
+    });
+    
+    console.log('Finished rendering images');
+}
+
+// Remove image from modal - make sure it's in global scope
+window.removeImage = function(imageId) {
+    if (currentEditingLayer) {
+        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.id !== imageId);
+        renderModalImages(currentEditingLayer.images);
+    }
+}
+
+// Update image name - make sure it's in global scope
+window.updateImageName = function(imageId, name) {
+    if (currentEditingLayer) {
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        if (image) {
+            image.name = name.trim() || `Image_${Date.now()}`;
+            console.log(`Updated image name to: ${image.name}`);
+        }
+    }
+}
+
+// Update image alt - make sure it's in global scope
+window.updateImageAlt = function(imageId, alt) {
+    if (currentEditingLayer) {
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        if (image) {
+            image.alt = alt.trim() || image.name;
+            console.log(`Updated image alt to: ${image.alt}`);
+        }
+    }
+}
+
+// Mobile-friendly alert function
+
+// Mobile-friendly alert function
+function showMobileAlert(message) {
+    // Create mobile alert
+    const alert = document.createElement('div');
+    alert.className = 'mobile-alert mobile-alert--error';
+    alert.innerHTML = `
+        <div class="mobile-alert-content">
+            <span class="mobile-alert-icon">⚠️</span>
+            <span class="mobile-alert-text">${message}</span>
+            <button class="mobile-alert-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.remove();
+        }
+    }, 4000);
+}
+
+// Mobile-friendly success function
+function showMobileSuccess(message) {
+    const alert = document.createElement('div');
+    alert.className = 'mobile-alert mobile-alert--success';
+    alert.innerHTML = `
+        <div class="mobile-alert-content">
+            <span class="mobile-alert-icon">✅</span>
+            <span class="mobile-alert-text">${message}</span>
+            <button class="mobile-alert-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+// Render layers list
+function renderLayersList() {
+    const layersList = document.getElementById('layersList');
+    const noLayersMessage = document.getElementById('noLayersMessage');
+    
+    if (!layersList || !noLayersMessage) return;
+    
+    if (layers.length === 0) {
+        layersList.innerHTML = '';
+        noLayersMessage.style.display = 'block';
+        return;
+    }
+    
+    noLayersMessage.style.display = 'none';
+    layersList.innerHTML = '';
+    
+    // Sort layers by order
+    const sortedLayers = [...layers].sort((a, b) => a.order - b.order);
+    
+    sortedLayers.forEach(layer => {
+        const layerItem = document.createElement('div');
+        layerItem.className = 'layer-list-item';
+        layerItem.draggable = true;
+        layerItem.dataset.layerId = layer.id;
+        
+        layerItem.innerHTML = `
+            <div class="layer-item-content">
+                <div class="layer-item-info">
+                    <h4 class="layer-item-title">${layer.name}</h4>
+                    <p class="layer-item-description">${layer.description || 'No description'}</p>
+                    <span class="layer-item-images">${layer.images.length} images</span>
+                </div>
+                <div class="layer-item-controls">
+                    <button type="button" class="btn btn--sm btn--secondary" onclick="openLayerModal('${layer.id}')" title="Edit Layer">✏️</button>
+                    <button type="button" class="btn btn--sm btn--danger" onclick="removeLayer('${layer.id}')" title="Remove Layer">🗑️</button>
+                </div>
+            </div>
+        `;
+        
+        // Add drag event listeners
+        layerItem.addEventListener('dragstart', function(e) {
+            this.classList.add('dragging');
+            draggedLayer = layer;
+        });
+        
+        layerItem.addEventListener('dragend', function(e) {
+            this.classList.remove('dragging');
+            draggedLayer = null;
+        });
+        
+        layersList.appendChild(layerItem);
+    });
+}
+
+// Remove layer
+window.removeLayer = function(layerId) {
+    if (confirm('Are you sure you want to remove this layer? This action cannot be undone.')) {
+        layers = layers.filter(l => l.id !== layerId);
+        renderLayersList();
+        updateLayerOrdering();
+        updateCalculatedParameters();
+        updatePreview();
+    }
+}
+
+// Update layer ordering display
+function updateLayerOrdering() {
+    console.log('updateLayerOrdering called with layers:', layers);
+    const zIndexList = document.getElementById('zIndexList');
+    if (!zIndexList) {
+        console.error('zIndexList element not found!');
+        return;
+    }
+    
+    console.log('Found zIndexList element, clearing content...');
+    zIndexList.innerHTML = '';
+    
+    if (layers.length === 0) {
+        console.log('No layers to display in Z-index list');
+        zIndexList.innerHTML = '<p class="no-layers-message">No layers added yet</p>';
+        return;
+    }
+    
+    const sortedLayers = [...layers].sort((a, b) => a.z_index - b.z_index);
+    console.log('Sorted layers for Z-index display:', sortedLayers.map(l => ({ name: l.name, z_index: l.z_index, images: l.images.length })));
+    
+    sortedLayers.forEach((layer, index) => {
+        console.log(`Creating Z-index item for layer: ${layer.name}, z_index: ${layer.z_index}`);
+        const zIndexItem = document.createElement('div');
+        zIndexItem.className = 'z-index-item';
+        zIndexItem.dataset.layerId = layer.id;
+        
+        zIndexItem.innerHTML = `
+            <div class="z-index-label">
+                <span class="z-index-badge">z-${layer.z_index}</span>
+            </div>
+            <div class="layer-name">${layer.name}</div>
+            <div class="image-count">${layer.images.length} images</div>
+            <div class="z-index-controls">
+                <button type="button" class="btn btn--sm btn--outline z-index-up" title="Increase z-index" onclick="changeZIndex('${layer.id}', -1)">▲</button>
+                <button type="button" class="btn btn--sm btn--outline z-index-down" title="Decrease z-index" onclick="changeZIndex('${layer.id}', 1)">▼</button>
+            </div>
+        `;
+        
+        zIndexList.appendChild(zIndexItem);
+        console.log(`Added Z-index item for layer: ${layer.name}`);
+    });
+    
+    console.log(`Z-index list updated with ${sortedLayers.length} layers`);
+}
+
+// Force update Z-index list (for manual refresh)
+window.forceUpdateZIndexList = function() {
+    console.log('Manual Z-index list refresh triggered');
+    console.log('Current layers state:', layers);
+    updateLayerOrdering();
+};
+
+// Debug function to show current Z-index state
+window.debugZIndexState = function() {
+    console.log('=== Z-INDEX DEBUG STATE ===');
+    console.log('Layers array:', layers);
+    console.log('Layers with Z-index values:');
+    layers.forEach((layer, index) => {
+        console.log(`  Layer ${index}: ${layer.name}`);
+        console.log(`    - ID: ${layer.id}`);
+        console.log(`    - Z-index: ${layer.z_index}`);
+        console.log(`    - Order: ${layer.order}`);
+        console.log(`    - Images: ${layer.images.length}`);
+    });
+    console.log('=== END Z-INDEX DEBUG ===');
+};
+
+// Change z-index
+window.changeZIndex = function(layerId, change) {
+    console.log(`changeZIndex called for layer ${layerId} with change ${change}`);
+    const layer = layers.find(l => l.id === layerId);
+    if (layer) {
+        const oldZIndex = layer.z_index;
+        layer.z_index += change;
+        
+        // Ensure Z-index stays within valid range
+        if (layer.z_index < 0) layer.z_index = 0;
+        if (layer.z_index >= layers.length) layer.z_index = layers.length - 1;
+        
+        console.log(`Changed Z-index for layer ${layer.name}: ${oldZIndex} → ${layer.z_index}`);
+        
+        // Update all related displays
+        updateLayerOrdering();
+        updateCalculatedParameters();
+        updatePreview();
+        
+        // Log the updated layers array to confirm changes
+        console.log('Updated layers array after Z-index change:', layers.map(l => ({ name: l.name, z_index: l.z_index })));
+    } else {
+        console.error(`Layer with ID ${layerId} not found`);
+    }
+}
+
+// Update calculated parameters
+function updateCalculatedParameters() {
+    const totalLayers = layers.length;
+    const totalImages = layers.reduce((sum, layer) => sum + layer.images.length, 0);
+    
+    const totalLayersDisplay = document.getElementById('total-layers-display');
+    const totalImagesDisplay = document.getElementById('total-images-display');
+    const tasksPerConsumerDisplay = document.getElementById('tasks-per-consumer-display');
+    const uniquenessCapacityDisplay = document.getElementById('uniqueness-capacity-display');
+    
+    if (totalLayersDisplay) totalLayersDisplay.textContent = totalLayers;
+    if (totalImagesDisplay) totalImagesDisplay.textContent = totalImages;
+    
+    if (totalLayers > 0 && totalImages > 0) {
+        const tasksPerConsumer = Math.min(totalImages, Math.floor(totalImages / totalLayers));
+        const uniquenessCapacity = totalImages;
+        
+        if (tasksPerConsumerDisplay) tasksPerConsumerDisplay.textContent = tasksPerConsumer;
+        if (uniquenessCapacityDisplay) uniquenessCapacityDisplay.textContent = uniquenessCapacity;
+    } else {
+        if (tasksPerConsumerDisplay) tasksPerConsumerDisplay.textContent = '0';
+        if (uniquenessCapacityDisplay) uniquenessCapacityDisplay.textContent = '0';
+    }
+}
+
+// Update preview
+function updatePreview() {
+    console.log('Updating preview with layers:', layers.length);
+    const preview = document.getElementById('vignettePreview');
+    if (!preview) {
+        console.error('Preview element not found');
+        return;
+    }
+    
+    if (layers.length === 0) {
+        preview.innerHTML = '<div class="vignette-placeholder"><p>Add layers and images to see preview</p></div>';
+        return;
+    }
+    
+    const sortedLayers = [...layers].sort((a, b) => a.z_index - b.z_index);
+    console.log('Sorted layers for preview:', sortedLayers.map(l => ({ name: l.name, z_index: l.z_index, images: l.images.length })));
+    
+    preview.innerHTML = '<div class="vignette-stack"></div>';
+    const stack = preview.querySelector('.vignette-stack');
+    
+    sortedLayers.forEach((layer, index) => {
+        if (layer.images && layer.images.length > 0) {
+            console.log(`Creating preview for layer: ${layer.name} with ${layer.images.length} images`);
+            
+            const layerPreview = document.createElement('div');
+            layerPreview.className = 'layer-preview';
+            layerPreview.style.zIndex = layer.z_index;
+            layerPreview.style.transform = `translate(-50%, -50%) translate(${index * 2}px, ${index * 2}px)`;
+            
+            const img = document.createElement('img');
+            // Try to get image source from different possible properties
+            const imageSource = layer.images[0].dataUrl || layer.images[0].url || layer.images[0].src;
+            if (imageSource) {
+                img.src = imageSource;
+                img.alt = layer.images[0].alt || layer.images[0].name || `Layer ${layer.name}`;
+                console.log(`Image source found: ${imageSource}`);
+            } else {
+                console.error(`No image source found for layer ${layer.name}:`, layer.images[0]);
+                return; // Skip this layer if no image source
+            }
+            
+            layerPreview.appendChild(img);
+            stack.appendChild(layerPreview);
+            console.log(`Preview added for layer: ${layer.name}`);
+        } else {
+            console.log(`Layer ${layer.name} has no images, skipping preview`);
+        }
+    });
+    
+    console.log('Preview update completed');
+}
+
+// Handle drag and drop for images
+document.addEventListener('DOMContentLoaded', function() {
+    const dragDropArea = document.getElementById('modalDragDropArea');
+    if (dragDropArea) {
+        dragDropArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('drag-over');
+        });
+        
+        dragDropArea.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('drag-over');
+        });
+        
+        dragDropArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only remove drag-over if we're leaving the drag area completely
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('drag-over');
+            }
+        });
+        
+        dragDropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('drag-over');
+            
+            const files = Array.from(e.dataTransfer.files);
+            console.log('Files dropped:', files.length);
+            
+            files.forEach(file => {
+                console.log('Processing file:', file.name, file.type);
+                if (file.type.startsWith('image/')) {
+                    addImageToModal(file);
+                } else {
+                    console.log('Skipping non-image file:', file.name);
+                    showMobileAlert(`File "${file.name}" is not an image and will be skipped.`);
+                }
+            });
+        });
+    }
+});
+
+// Add backup event listener for the Add Layer button
+document.addEventListener('DOMContentLoaded', function() {
+    const addLayerBtn = document.getElementById('addLayerBtn');
+    if (addLayerBtn) {
+        console.log('Adding backup event listener to Add Layer button');
+        addLayerBtn.addEventListener('click', function(e) {
+            console.log('Add Layer button clicked via event listener');
+            e.preventDefault();
+            e.stopPropagation();
+            openLayerModal();
+        });
+    } else {
+        console.error('Add Layer button not found!');
+    }
+    
+    // Add a test function to the global scope for debugging
+    window.testModal = function() {
+        console.log('Testing modal...');
+        const modal = document.getElementById('layerModalOverlay');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            console.log('Modal should be visible now');
+        } else {
+            console.error('Modal not found in test');
+        }
+    };
+    
+    console.log('Modal test function added. You can call window.testModal() in the console to test.');
+    
+    // Test that all required functions are properly defined
+    const requiredFunctions = ['openLayerModal', 'closeLayerModal', 'saveLayer', 'triggerFileInput', 'removeImage', 'updateImageName', 'updateImageAlt', 'removeLayer', 'changeZIndex'];
+    const missingFunctions = requiredFunctions.filter(fn => typeof window[fn] !== 'function');
+    
+    if (missingFunctions.length > 0) {
+        console.error('❌ Missing functions:', missingFunctions);
+        console.error('This will cause onclick errors!');
+    } else {
+        console.log('✅ All required functions are properly defined in global scope');
+        console.log('🎉 onclick attributes should now work properly!');
+    }
+    
+    // Test modal elements
+    const modal = document.getElementById('layerModalOverlay');
+    const addButton = document.getElementById('addLayerBtn');
+    
+    console.log('Modal element found:', !!modal);
+    console.log('Add button found:', !!addButton);
+    
+    if (modal) {
+        console.log('Modal display style:', modal.style.display);
+        console.log('Modal classes:', modal.className);
+    }
+    
+    if (addButton) {
+        console.log('Add button onclick:', addButton.onclick);
+        console.log('Add button HTML:', addButton.outerHTML);
+    }
+});
+
+// Handle form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('layerConfigForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate that we have at least one layer with images
+            console.log('=== FORM SUBMISSION START ===');
+            console.log('Layers array:', layers);
+            console.log('Layers length:', layers.length);
+            console.log('Layers type:', typeof layers);
+            console.log('Layers constructor:', layers.constructor.name);
+            console.log('Window layers:', window.layers);
+            console.log('Global layers variable:', typeof layers !== 'undefined' ? layers : 'UNDEFINED');
+            
+            // Sync variables before form submission
+            syncLayersVariables();
+            console.log('After sync - Layers array:', layers);
+            console.log('After sync - Layers length:', layers.length);
+            
+            if (layers.length === 0) {
+                console.error('No layers found');
+                alert('Please add at least one layer.');
+                return;
+            }
+            
+            // Check each layer for images
+            layers.forEach((layer, index) => {
+                console.log(`Layer ${index}:`, layer);
+                console.log(`  - ID: ${layer.id}`);
+                console.log(`  - Name: ${layer.name}`);
+                console.log(`  - Images count: ${layer.images ? layer.images.length : 'undefined'}`);
+                console.log(`  - Images:`, layer.images);
+            });
+            
+            const hasImages = layers.some(layer => layer.images && layer.images.length > 0);
+            console.log('Has images:', hasImages);
+            
+            if (!hasImages) {
+                console.error('No layers with images found');
+                alert('Please add images to at least one layer.');
+                return;
+            }
+            
+            // Prepare form data for submission
+            const formData = new FormData();
+            
+            // Add each layer's data
+            layers.forEach((layer, index) => {
+                console.log(`Adding layer ${index} to form:`, layer);
+                
+                formData.append(`layer_${index}_id`, layer.id);
+                formData.append(`layer_${index}_name`, layer.name);
+                formData.append(`layer_${index}_description`, layer.description || '');
+                formData.append(`layer_${index}_order`, layer.order || index);
+                formData.append(`layer_${index}_z_index`, layer.z_index || index);
+                
+                // Add images data as JSON string
+                const imagesData = JSON.stringify(layer.images);
+                console.log(`Layer ${index} images data:`, imagesData);
+                formData.append(`layer_${index}_images_data`, imagesData);
+            });
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            formData.append('csrf_token', csrfToken);
+            
+            // Debug: Log form data
+            console.log('Submitting layers data:', layers);
+            console.log('FormData entries:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            
+            // First, upload all images to Azure
+            console.log('Starting Azure upload for all images...');
+            console.log('Layers array before upload:', layers);
+            console.log('Layers length before upload:', layers.length);
+            
+            const uploadPromises = [];
+            const imageFileMap = new Map(); // Map image ID to file object
+            
+            // Collect all files that need to be uploaded
+            layers.forEach(layer => {
+                console.log(`Processing layer for upload: ${layer.name} with ${layer.images.length} images`);
+                layer.images.forEach(image => {
+                    if (image.file && !image.url) {
+                        imageFileMap.set(image.id, image.file);
+                        uploadPromises.push(uploadImageToAzure(image.file, image.id));
+                    }
+                });
+            });
+            
+            if (uploadPromises.length > 0) {
+                console.log(`Uploading ${uploadPromises.length} images to Azure...`);
+                
+                // Show loading message
+                showMobileAlert('Uploading images to Azure... Please wait.');
+                
+                // Wait for all uploads to complete
+                Promise.all(uploadPromises)
+                    .then(() => {
+                        console.log('All images uploaded successfully');
+                        showMobileAlert('Images uploaded! Now saving layer configuration...');
+                        
+                        // Now submit the form with Azure URLs
+                        submitFormWithAzureUrls();
+                    })
+                    .catch(error => {
+                        console.error('Error uploading images:', error);
+                        showMobileAlert('Error uploading images. Please try again.');
+                    });
+            } else {
+                // No images to upload, submit form directly
+                submitFormWithAzureUrls();
+            }
+            
+            function submitFormWithAzureUrls() {
+                // Create new FormData with Azure URLs
+                const finalFormData = new FormData();
+                
+                layers.forEach((layer, index) => {
+                    console.log(`Adding layer ${index} to form: ${layer.name}, z_index: ${layer.z_index}`);
+                    finalFormData.append(`layer_${index}_id`, layer.id);
+                    finalFormData.append(`layer_${index}_name`, layer.name);
+                    finalFormData.append(`layer_${index}_description`, layer.description || '');
+                    finalFormData.append(`layer_${index}_order`, layer.order || index);
+                    finalFormData.append(`layer_${index}_z_index`, layer.z_index !== undefined ? layer.z_index : index);
+                    
+                    // Log the actual value being appended
+                    console.log(`  - Z-index value appended: ${layer.z_index !== undefined ? layer.z_index : index}`);
+                    
+                    // Use Azure URLs instead of data URLs
+                    const imagesWithUrls = layer.images.map(img => ({
+                        id: img.id,
+                        name: img.name,
+                        alt: img.alt,
+                        url: img.url || img.dataUrl // Use Azure URL if available, fallback to data URL
+                    }));
+                    
+                    const imagesData = JSON.stringify(imagesWithUrls);
+                    finalFormData.append(`layer_${index}_images_data`, imagesData);
+                });
+                
+                // Debug: Log what we're about to submit
+                console.log('=== SUBMIT FORM DEBUG ===');
+                console.log('Layers array at submission:', layers);
+                console.log(layers);
+                console.log('Layers length:', layers.length);
+                console.log('Final FormData contents:');
+                for (let pair of finalFormData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                finalFormData.append('csrf_token', csrfToken);
+                
+                console.log('Submitting form with Azure URLs...');
+                
+                // Submit the form
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: finalFormData
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response redirected:', response.redirected);
+                    console.log('data text:', finalFormData);
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    return response.text();
+                })
+                .then(html => {
+                    if (html) {
+                        console.log('Received HTML response, updating page');
+                        // Replace the page content with the response
+                        document.documentElement.innerHTML = html;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting form:', error);
+                    showMobileAlert('An error occurred while saving. Please try again.');
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Test</title>
+    <link rel="stylesheet" href="static/css/utilities.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Modal Test Page</h1>
+    <p>Click the button below to test the modal:</p>
+    
+    <button class="test-button" onclick="openTestModal()">Open Test Modal</button>
+    
+    <!-- Test Modal -->
+    <div class="layer-modal-overlay" id="testModalOverlay">
+        <div class="layer-modal-container" id="testModal">
+            <div class="layer-modal-header">
+                <h3>Test Modal</h3>
+                <button type="button" class="layer-modal-close" onclick="closeTestModal()">×</button>
+            </div>
+            
+            <div class="layer-modal-body">
+                <div class="layer-modal-form">
+                    <div class="form-group">
+                        <label class="form-label">Test Input</label>
+                        <input type="text" class="form-input" placeholder="Test input field">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Test Textarea</label>
+                        <textarea class="form-textarea" placeholder="Test textarea field"></textarea>
+                    </div>
+                    
+                    <div class="images-section">
+                        <label class="form-label">Test Images Section</label>
+                        <div class="image-upload-area">
+                            <div class="drag-drop-area">
+                                <div class="upload-prompt">
+                                    <span class="upload-icon">📁</span>
+                                    <p>Test drag & drop area</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="layer-modal-footer">
+                <button type="button" class="btn btn--secondary" onclick="closeTestModal()">Cancel</button>
+                <button type="button" class="btn btn--primary" onclick="closeTestModal()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTestModal() {
+            console.log('Opening test modal...');
+            const modal = document.getElementById('testModalOverlay');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                console.log('Modal opened successfully');
+            } else {
+                console.error('Modal element not found!');
+            }
+        }
+        
+        function closeTestModal() {
+            console.log('Closing test modal...');
+            const modal = document.getElementById('testModalOverlay');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+                console.log('Modal closed successfully');
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('testModalOverlay');
+            if (modal && e.target === modal) {
+                closeTestModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeTestModal();
+            }
+        });
+        
+        console.log('Test page loaded successfully');
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Create Study - Step 2c{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+    {{ study_progress_bar('2c', 'layer', draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Step 2c: IPED Algorithm Parameters</h1>
+            <p class="step-description">Configure the parameters that will be used to generate the IPED task matrix for your layer study</p>
+        </div>
+
+        <form method="POST" class="step-form" data-validate="true" data-loading="true">
+            {{ form.hidden_tag() }}
+            
+            <div class="study-form-group">
+                <h3 class="section-title">IPED Algorithm Parameters</h3>
+                <p class="form-help">Configure the parameters that will be used to generate the IPED task matrix.</p>
+                
+                <div class="study-form-row">
+                    <div class="study-form-col">
+                        <div class="study-form-group">
+                            {{ form.number_of_respondents.label(class="study-form-label study-form-label--required") }}
+                            {{ form.number_of_respondents(class="study-form-control") }}
+                            {% if form.number_of_respondents.errors %}
+                                <div class="error-message">
+                                    {% for error in form.number_of_respondents.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-help">Number of respondents who will participate in your study</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="study-form-row">
+                    <div class="study-form-col">
+                        <div class="study-form-group">
+                            {{ form.exposure_tolerance_pct.label(class="study-form-label study-form-label--required") }}
+                            {{ form.exposure_tolerance_pct(class="study-form-control") }}
+                            {% if form.exposure_tolerance_pct.errors %}
+                                <div class="error-message">
+                                    {% for error in form.exposure_tolerance_pct.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-help">Maximum allowed variation in element exposure within each category (default: 2.0%)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="study-form-row">
+                    <div class="study-form-col">
+                        <div class="study-form-group">
+                            {{ form.seed.label(class="study-form-label") }}
+                            {{ form.seed(class="study-form-control") }}
+                            {% if form.seed.errors %}
+                                <div class="error-message">
+                                    {% for error in form.seed.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-help">Optional random seed for reproducible task generation</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auto-calculated parameters display -->
+                <div class="study-form-group">
+                    <h4 class="section-subtitle">Auto-calculated Parameters</h4>
+                    <div class="info-box">
+                        <div class="info-item">
+                            <strong>Tasks per Consumer:</strong> 
+                            <span id="tasks-per-consumer-display">Calculating...</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Total Tasks:</strong> 
+                            <span id="total-tasks-display">Calculating...</span>
+                        </div>
+                        <small class="form-help">
+                            These values are automatically calculated based on your category configuration to ensure 
+                            per-respondent uniqueness and optimal exposure balance.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step-actions">
+                <a href="{{ url_for('study_creation.layer_iped') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                {{ form.submit(class="btn btn--primary step-nav-btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate and display auto-calculated parameters
+    function updateCalculatedParameters() {
+        const numRespondents = parseInt(document.getElementById('{{ form.number_of_respondents.id }}').value) || 0;
+        
+        if (numRespondents > 0) {
+            // For layer studies, tasks per consumer is typically 24 or less based on category capacity
+            // This is a simplified calculation - the actual algorithm will determine the exact value
+            const estimatedTasksPerConsumer = Math.min(24, 24); // Will be calculated by algorithm
+            const totalTasks = numRespondents * estimatedTasksPerConsumer;
+            
+            document.getElementById('tasks-per-consumer-display').textContent = `${estimatedTasksPerConsumer} (estimated)`;
+            document.getElementById('total-tasks-display').textContent = totalTasks.toLocaleString();
+        } else {
+            document.getElementById('tasks-per-consumer-display').textContent = 'Enter number of respondents';
+            document.getElementById('total-tasks-display').textContent = 'Enter number of respondents';
+        }
+    }
+    
+    // Update when number of respondents changes
+    document.getElementById('{{ form.number_of_respondents.id }}').addEventListener('input', updateCalculatedParameters);
+    
+    // Initial calculation
+    updateCalculatedParameters();
+});
+</script>
+{% endblock %}

@@ -20,7 +20,7 @@
             <h2>Study Link</h2>
             <div class="share-link-container">
                 <div class="share-link-box">
-                    <input type="text" id="studyLink" class="form-control" value="{{ study.share_url }}" readonly>
+                    <input type="text" id="studyLink" class="form-control" value="{{ study.share_url or 'Study URL not available' }}" readonly>
                     <button class="btn btn-primary" onclick="copyToClipboard()">Copy Link</button>
                 </div>
                 <div class="share-info">
@@ -55,15 +55,37 @@
                 </div>
                 <div class="info-item">
                     <h4>Study Type</h4>
-                    <p>{{ study.study_type|title }}-based Study</p>
+                    <p>
+                        {% if study.study_type %}
+                            {{ study.study_type|title }}-based Study
+                        {% else %}
+                            Study
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="info-item">
                     <h4>Expected Duration</h4>
-                    <p>{{ study.iped_parameters.tasks_per_consumer * 2 }}-{{ study.iped_parameters.tasks_per_consumer * 5 }} minutes</p>
+                    <p>
+                        {% if study.iped_parameters and study.iped_parameters.tasks_per_consumer %}
+                            {{ study.iped_parameters.tasks_per_consumer * 2 }}-{{ study.iped_parameters.tasks_per_consumer * 5 }} minutes
+                        {% elif study.study_type == 'layer' and study.study_layers %}
+                            {% set total_layers = study.study_layers|length %}
+                            {% set estimated_tasks = total_layers * 3 %}
+                            {{ estimated_tasks * 2 }}-{{ estimated_tasks * 5 }} minutes
+                        {% else %}
+                            Estimated 10-25 minutes
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="info-item">
                     <h4>Language</h4>
-                    <p>{{ study.language|upper }}</p>
+                    <p>
+                        {% if study.language %}
+                            {{ study.language|upper }}
+                        {% else %}
+                            English
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
@@ -134,18 +156,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const qrContainer = document.getElementById('qrCode');
     const studyUrl = '{{ study.share_url }}';
     
-    QRCode.toCanvas(qrContainer, studyUrl, {
+    if (studyUrl && studyUrl !== 'Study URL not available') {
+        QRCode.toCanvas(qrContainer, studyUrl, {
         width: 200,
         margin: 2,
         color: {
             dark: '#000000',
             light: '#FFFFFF'
         }
-    }, function(error) {
-        if (error) {
-            qrContainer.innerHTML = '<p>Error generating QR code</p>';
-        }
-    });
+        }, function(error) {
+            if (error) {
+                qrContainer.innerHTML = '<p>Error generating QR code</p>';
+            }
+        });
+    } else {
+        qrContainer.innerHTML = '<p>QR code not available - no study URL</p>';
+    }
 });
 
 // Copy study link to clipboard

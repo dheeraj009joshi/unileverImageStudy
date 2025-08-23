@@ -98,6 +98,238 @@
     margin-bottom: 0.75rem;
 }
 
+/* Vignette Styles for Layer Studies */
+.vignette-container {
+    width: 100%;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.vignette-preview {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 520px;
+    margin: 0 auto;
+   
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.layer-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Ensure z-index works properly */
+    pointer-events: none; /* Allow clicking through to lower layers */
+}
+
+/* Ensure proper z-index stacking */
+.layer-image:nth-child(1) { z-index: 1; }
+.layer-image:nth-child(2) { z-index: 2; }
+.layer-image:nth-child(3) { z-index: 3; }
+.layer-image:nth-child(4) { z-index: 4; }
+.layer-image:nth-child(5) { z-index: 5; }
+
+.vignette-layer-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.vignette-layer-img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.vignette-info {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.vignette-description {
+    font-size: 1.1rem;
+    color: #374151;
+    font-weight: 500;
+    margin: 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.no-vignette-data {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    color: #64748b;
+}
+
+.no-vignette-data p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Task Elements Styling */
+.task-elements {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.main-question {
+    display: block;
+    font-size: 1.5rem;
+    color: #1f2937;
+    margin-bottom: 2rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 12px;
+    border: 2px solid #0ea5e9;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+}
+
+.elements-grid {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.task-element-img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 12px;
+    border: 3px solid #3b82f6;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.task-element-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+}
+
+/* Rating Section */
+.rating-section {
+    margin: 3rem 0;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Responsiveness for Vignettes */
+@media (max-width: 768px) {
+    .vignette-container {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+    
+    .vignette-preview {
+       
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    
+    .vignette-layer-img {
+        border-radius: 6px;
+    }
+    
+    .vignette-description {
+        font-size: 1rem;
+        padding: 0.75rem;
+    }
+    
+    .main-question {
+        font-size: 1.25rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .task-element-img {
+        max-width: 150px;
+        max-height: 150px;
+    }
+    
+    .rating-section {
+        margin: 2rem 0;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+   
+    
+    .vignette-container {
+        padding: 0.75rem;
+    }
+    
+    .main-question {
+        font-size: 1.1rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* Additional Vignette Elements */
+.vignette-layers-info {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.layers-used {
+    color: #1e40af;
+    font-size: 0.9rem;
+}
+
+.debug-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #92400e;
+    word-break: break-all;
+}
+
+/* Progress Text Styling */
+.progress-text {
+    text-align: end;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--participation-primary);
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
 .form-help {
     display: block;
     font-size: 0.875rem;
@@ -434,6 +666,7 @@
 }
 
 .elements-grid {
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
@@ -914,6 +1147,7 @@
     }
     
     .elements-grid {
+        width: 100%;
         gap: 0.75rem;
     }
     
@@ -946,7 +1180,7 @@
     .rating-section {
         padding: 0.75rem;
         margin-top: 0.75rem;
-        max-width: 350px;
+
     }
     
     .rating-section h3 {
@@ -1014,6 +1248,7 @@
     }
     
     .elements-grid {
+        width: 100%;
         gap: 0.5rem;
     }
     
@@ -1033,7 +1268,7 @@
     
     .rating-section {
         padding: 0.5rem;
-        max-width: 250px;
+      
     }
 }
 

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Create Study - Step 3a{% endblock %}
+
+{% block content %}
+<div class="study-creation-container">
+    <!-- Progress Bar -->
+    {% set study_type = 'grid' %}
+    {{ study_progress_bar('3a', study_type, draft) }}
+
+    <div class="step-content">
+        <div class="step-header">
+            <h1 class="step-title">Step 3a: Generate IPED Task Matrix</h1>
+            <p class="step-description">
+                Generate the IPED task matrix for your grid study using the new algorithm
+            </p>
+        </div>
+
+        {% if tasks_matrix %}
+            <!-- Task Matrix Summary -->
+            <div class="study-form-group">
+                <h3 class="section-title">Task Matrix Generated Successfully!</h3>
+                <div class="matrix-summary">
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Tasks:</span>
+                            <span class="summary-value">{{ matrix_summary.total_tasks }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Respondents:</span>
+                            <span class="summary-value">{{ matrix_summary.total_respondents }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Tasks per Respondent:</span>
+                            <span class="summary-value">{{ matrix_summary.tasks_per_respondent }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Elements per Task:</span>
+                            <span class="summary-value">{{ matrix_summary.elements_per_task }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="algorithm-info">
+                        <h4>Grid Study Algorithm Details</h4>
+                        <ul>
+                            <li><strong>K Value:</strong> {{ matrix_summary.elements_per_task }} - automatically determined for optimal balance</li>
+                            <li><strong>Exposure Balancing:</strong> Uses soft exposure policy with configurable tolerance</li>
+                            <li><strong>Uniqueness:</strong> Ensures per-respondent uniqueness within capacity limits</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Vignette Preview Section -->
+                <div class="matrix-preview">
+                    <h4>Element Preview</h4>
+                    <p class="form-help">Below is a preview of the first 20 tasks for the first respondent. This shows how the elements will appear in each task.</p>
+                    
+                    <div class="respondents-preview">
+                        {% if tasks_matrix %}
+                            {% set first_respondent_id = tasks_matrix.keys()|list|first %}
+                            {% set first_respondent_tasks = tasks_matrix[first_respondent_id] %}
+                            <div class="respondent-tasks">
+                                <h5>Respondent 1</h5>
+                                <p class="text-muted">Element tasks for this respondent:</p>
+                                
+                                <div class="vignette-grid-scrollable">
+                                    {% if first_respondent_tasks and first_respondent_tasks|length > 0 %}
+                                        {% for task in first_respondent_tasks %}
+                                            {% if task and task.elements_shown %}
+                                            <div class="vignette-card">
+                                                <div class="vignette-header">
+                                                    <span class="vignette-task-number">Task {{ loop.index }}</span>
+                                                    <div class="layer-indicators">
+                                                        {% for element_name, is_active in task.elements_shown.items() %}
+                                                            {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
+                                                                <span class="layer-badge active">
+                                                                    {{ element_name }}
+                                                                </span>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="vignette-preview">
+                                                    {% set has_content = false %}
+                                                    {% for element_name, is_active in task.elements_shown.items() %}
+                                                        {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
+                                                            {% set content_key = element_name + '_content' %}
+                                                            {% set image_url = task.elements_shown.get(content_key, '') %}
+                                                            {% if image_url and (image_url.startswith('http') or image_url.startswith('data:image')) %}
+                                                                {% set has_content = true %}
+                                                                <div class="image-container" style="display: flex;">
+                                                                    <img src="{{ image_url }}" 
+                                                                         alt="{{ element_name }}" 
+                                                                         title="{{ element_name }}"
+                                                                         class="vignette-layer-img"
+                                                                         onclick="showImagePreview('{{ image_url }}', '{{ element_name }}')">
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    
+                                                    
+                                                </div>
+                                                
+                                                
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="no-content-placeholder">
+                                            <i class="fas fa-tasks fa-3x text-muted"></i>
+                                            <p class="text-muted mt-2">No tasks generated yet. Click "Generate Matrix" to create tasks.</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if tasks_matrix|length > 1 %}
+                                <div class="more-respondents">
+                                    <p class="text-muted">... and {{ tasks_matrix|length - 1 }} more respondents with similar element structures</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No element matrix generated yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Matrix Actions -->
+                <div class="matrix-actions">
+                    <h4>Matrix Actions</h4>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn--outline" onclick="downloadMatrix()">
+                            📥 Download Matrix (CSV)
+                        </button>
+                        <button type="button" class="btn btn--outline" onclick="showMatrixStats()">
+                            📊 View Matrix Statistics
+                        </button>
+                        <form method="POST" style="display: inline;">
+                            {{ form.hidden_tag() }}
+                            {{ form.regenerate_matrix(class="form-check-input", style="display: none;") }}
+                            <button type="submit" class="btn btn--outline">
+                                🔄 Regenerate Matrix
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="step-actions">
+                    <a href="{{ url_for('study_creation.step2c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                    <a href="{{ url_for('study_creation.step3b') }}" class="btn btn--primary step-nav-btn">Continue to Preview →</a>
+                </div>
+            </div>
+        {% else %}
+            <!-- Generate Matrix Form -->
+            <div class="study-form-group">
+                <h3 class="section-title">Generate IPED Task Matrix</h3>
+                <p class="form-help">
+                    Click the button below to generate the IPED task matrix for your grid study. 
+                    The algorithm will automatically calculate optimal tasks per consumer and ensure balanced exposure.
+                </p>
+                
+                <form method="POST" class="step-form" data-validate="true" data-loading="true">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="study-form-group">
+                        {{ form.regenerate_matrix.label(class="study-form-label") }}
+                        {{ form.regenerate_matrix(class="form-check-input") }}
+                        <small class="form-help">Check this if you want to regenerate with a different random seed</small>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <a href="{{ url_for('study_creation.step2c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                        {{ form.submit(class="btn btn--primary step-nav-btn") }}
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Matrix Statistics Modal -->
+<div class="modal-overlay" id="matrixStatsModal">
+    <div class="modal-container modal-large modal-scrollable">
+        <div class="modal-header">
+            <h3>Matrix Statistics</h3>
+            <button type="button" class="modal-close" onclick="closeMatrixStats()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="matrixStatsContent">
+                <!-- Matrix statistics will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal-overlay" id="imagePreviewModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 id="imagePreviewTitle">Image Preview</h3>
+            <button type="button" class="modal-close" onclick="closeImagePreview()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <img id="imagePreviewImg" src="" alt="Preview" style="max-width: 100%; height: auto;">
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal-overlay" id="errorModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Error</h3>
+            <button type="button" class="modal-close" onclick="closeErrorModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="errorMessage"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn--primary" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <p>Generating task matrix...</p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global functions for modals and actions
+window.downloadMatrix = function() {
+    // Implementation for downloading matrix as CSV
+    console.log('Download matrix functionality');
+};
+
+window.showMatrixStats = function() {
+    // Implementation for showing matrix statistics
+    console.log('Show matrix stats functionality');
+    document.getElementById('matrixStatsModal').style.display = 'flex';
+};
+
+window.closeMatrixStats = function() {
+    document.getElementById('matrixStatsModal').style.display = 'none';
+};
+
+window.showImagePreview = function(imageUrl, elementName) {
+    document.getElementById('imagePreviewImg').src = imageUrl;
+    document.getElementById('imagePreviewTitle').textContent = elementName;
+    document.getElementById('imagePreviewModal').style.display = 'flex';
+};
+
+window.closeImagePreview = function() {
+    document.getElementById('imagePreviewModal').style.display = 'none';
+};
+
+window.showErrorModal = function(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').style.display = 'flex';
+};
+
+window.closeErrorModal = function() {
+    document.getElementById('errorModal').style.display = 'none';
+};
+
+// Close modals when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.style.display = 'none';
+        }
+    });
+    
+    // Form validation and loading states
+    const forms = document.querySelectorAll('form[data-validate="true"]');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+        });
+    });
+    
+    // Check for flash messages
+    checkFlashMessages();
+});
+
+// Flash message handling
+function checkFlashMessages() {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(message => {
+        setTimeout(() => {
+            message.style.opacity = '0';
+            setTimeout(() => {
+                message.remove();
+            }, 300);
+        }, 5000);
+    });
+}
+</script>
+{% endblock %}
+

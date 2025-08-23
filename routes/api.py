@@ -364,7 +364,62 @@ def regenerate_tasks(study_id):
     
     try:
         # Regenerate task matrix
-        new_tasks = study.generate_tasks()
+        from utils.task_generation import generate_grid_tasks, generate_layer_tasks
+        
+        if study.study_type == 'grid':
+            # Regenerate grid study tasks
+            result = generate_grid_tasks(
+                num_elements=study.iped_parameters.num_elements,
+                tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
+                number_of_respondents=study.iped_parameters.number_of_respondents,
+                exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+                seed=getattr(study.iped_parameters, 'seed', None),
+                elements=study.elements
+            )
+            study.tasks = result['tasks']
+        elif study.study_type == 'layer':
+            # Regenerate layer study tasks using new study_layers structure
+            if not study.study_layers:
+                return jsonify({'error': 'Layer study configuration not found'}), 400
+            
+            # Convert study_layers to the format expected by generate_layer_tasks
+            category_info = {}
+            elements_dict = {}
+            
+            for layer in study.study_layers:
+                # Use layer name as category name
+                category_name = layer.name
+                # Extract element names and full element data
+                element_names = [img.name for img in layer.images]
+                elements = []
+                
+                for img in layer.images:
+                    # Convert LayerImage to StudyElement format for compatibility
+                    element = {
+                        'name': img.name,
+                        'description': f"Layer: {layer.name}",
+                        'element_type': 'image',
+                        'content': img.url,
+                        'alt_text': img.alt_text,
+                        'layer_name': layer.name,
+                        'z_index': layer.z_index
+                    }
+                    elements.append(element)
+                
+                category_info[category_name] = element_names
+                elements_dict[category_name] = elements
+            
+            result = generate_layer_tasks(
+                category_info=category_info,
+                number_of_respondents=study.iped_parameters.number_of_respondents,
+                exposure_tolerance_pct=getattr(study.iped_parameters, 'exposure_tolerance_pct', 2.0),
+                seed=getattr(study.iped_parameters, 'seed', None),
+                elements=elements_dict
+            )
+            study.tasks = result['tasks']
+        else:
+            return jsonify({'error': f'Unsupported study type: {study.study_type}'}), 400
+        
         study.save()
         
         return jsonify({

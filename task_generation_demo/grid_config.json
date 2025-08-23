@@ -1,0 +1,7 @@
+{
+  "baseline": 24,
+  "minT": 12,
+  "maxT": 32,
+  "seed": 42,
+  "out_dir": "designs"
+}

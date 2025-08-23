@@ -97,69 +97,91 @@
                     
                     <!-- Study Elements -->
                     <div class="preview-section">
-                        <h4>Study Elements ({{ study_data.step2a.elements|length if study_data.step2a and study_data.step2a.elements else 0 }})</h4>
+                        <h4>Study Elements</h4>
                         
-                        <!-- Debug Information -->
-                        {% if study_data.step2a %}
-                            <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px;">
-                                <strong>DEBUG:</strong> Step2a data available<br>
-                                <strong>Elements count:</strong> {{ study_data.step2a.elements|length if study_data.step2a.elements else 0 }}<br>
-                                <strong>Raw data:</strong> {{ study_data.step2a|tojson }}
-                            </div>
-                        {% else %}
-                            <div class="debug-info" style="background: #ffebee; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px;">
-                                <strong>DEBUG:</strong> No Step2a data found
-                            </div>
-                        {% endif %}
-                        
-                        <div class="elements-preview">
-                            {% if study_data.step2a and study_data.step2a.elements %}
-                                {% for element in study_data.step2a.elements %}
-                                <div class="element-preview">
-                                    <div class="element-header">
-                                        <h5>{{ element.name or 'Unnamed Element' }}</h5>
-                                        <span class="element-type">{{ element.element_type or 'unknown' }}</span>
-                                    </div>
-                                    {% if element.description %}
-                                    <p class="element-description">{{ element.description }}</p>
-                                    {% endif %}
-                                    {% if element.element_type == 'text' %}
-                                    <div class="element-content">
-                                        <strong>Text:</strong> {{ element.content or 'No text content' }}
-                                    </div>
-                                    {% elif element.element_type == 'image' %}
-                                    <div class="element-content">
-                                        <strong>Image:</strong> 
-                                        {% if element.content %}
-                                            <div class="image-container">
-                                                <img src="{{ element.content }}" 
-                                                     alt="{{ element.alt_text or 'Study element' }}" 
-                                                     class="element-image"
-                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                <div class="image-error" style="display: none; color: #d32f2f; font-style: italic;">
-                                                    Failed to load image: {{ element.content }}
-                                                </div>
-                                            </div>
-                                            {% if element.alt_text %}
-                                            <br><small class="alt-text">Alt: {{ element.alt_text }}</small>
-                                            {% endif %}
-                                        {% else %}
-                                            <div class="no-image">No image content available</div>
+                        {% if study_data.layer_config and study_data.layer_config.layers %}
+                            <!-- New Layer Structure -->
+                            <div class="layers-preview">
+                                <h5>Layers Configuration ({{ study_data.layer_config.layers|length }} layers)</h5>
+                                <div class="layers-grid">
+                                    {% for layer in study_data.layer_config.layers %}
+                                    <div class="layer-preview-card">
+                                        <div class="layer-header">
+                                            <h6>{{ layer.name }}</h6>
+                                            <span class="layer-order">z-{{ layer.z_index }}</span>
+                                        </div>
+                                        {% if layer.description %}
+                                        <p class="layer-description">{{ layer.description }}</p>
                                         {% endif %}
+                                        <div class="layer-images">
+                                            <strong>Images ({{ layer.images|length }}):</strong>
+                                            <div class="images-preview-grid">
+                                                {% for image in layer.images %}
+                                                <div class="image-preview-item">
+                                                    <img src="{{ image.url }}" alt="{{ image.alt_text }}" class="preview-thumbnail">
+                                                    <div class="image-info">
+                                                        <span class="image-name">{{ image.name }}</span>
+                                                        {% if image.alt_text %}
+                                                        <small class="alt-text">Alt: {{ image.alt_text }}</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
                                     </div>
-                                    {% else %}
-                                    <div class="element-content">
-                                        <strong>Content:</strong> {{ element.content or 'No content' }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% elif study_data.step2a and study_data.step2a.elements %}
+                            <!-- Grid Study Elements -->
+                            <div class="elements-preview">
+                                <h5>Study Elements ({{ study_data.step2a.elements|length }})</h5>
+                                <div class="elements-scrollable-container">
+                                    <div class="elements-simple-grid">
+                                        {% for element in study_data.step2a.elements %}
+                                        <div class="element-simple-card">
+                                            <div class="element-name">{{ element.name or 'Unnamed Element' }}</div>
+                                            {% if element.content %}
+                                                <img src="{{ element.content }}" 
+                                                     alt="{{ element.alt_text or element.name }}" 
+                                                     class="element-simple-image"
+                                                     onerror="this.style.display='none';">
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
                                     </div>
+                                </div>
+                            </div>
+                        {% elif study_data.layer_config and study_data.layer_config.layers %}
+                            <!-- New Layer Structure -->
+                            <div class="layers-preview">
+                                <h5>Layers ({{ study_data.layer_config.layers|length }} layers)</h5>
+                                {% for layer in study_data.layer_config.layers %}
+                                <div class="layer-preview">
+                                    <h6>{{ layer.name }}</h6>
+                                    {% if layer.description %}
+                                    <p>{{ layer.description }}</p>
                                     {% endif %}
+                                    <div class="layer-images">
+                                        <strong>Images ({{ layer.images|length }}):</strong>
+                                        <ul>
+                                            {% for image in layer.images %}
+                                            <li>{{ image.name }}: {{ image.alt_text or 'No alt text' }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    <div class="layer-properties">
+                                        <small><strong>Z-Index:</strong> {{ layer.z_index }} | <strong>Order:</strong> {{ layer.order }}</small>
+                                    </div>
                                 </div>
                                 {% endfor %}
-                            {% else %}
-                                <div class="no-elements">
-                                    <p>No study elements found. Please complete step 2a first.</p>
-                                </div>
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% else %}
+                            <div class="no-elements">
+                                <p>No study elements found. Please complete the elements configuration first.</p>
+                            </div>
+                        {% endif %}
                     </div>
                     
                     <!-- Classification Questions -->
@@ -260,142 +282,572 @@
 </div>
 
 <style>
+/* Professional Study Preview Styling */
 .preview-sections {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 2.5rem;
 }
 
 .preview-section {
-    background: var(--surface-color);
-    padding: 1.5rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #0056b3, #007bff);
+}
+
+.preview-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .preview-section h4 {
-    margin-bottom: 1rem;
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 700;
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 0.75rem;
+    position: relative;
+}
+
+.preview-section h4::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #28a745, #20c997);
 }
 
 .preview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
 }
 
 .preview-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    background: white;
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.preview-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
 }
 
 .preview-label {
     font-weight: 600;
-    color: var(--text-secondary);
+    color: #6c757d;
     font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .preview-value {
-    color: var(--text-primary);
-    font-size: 1rem;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
+/* Enhanced Elements Preview */
 .elements-preview, .questions-preview {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .element-preview, .question-preview {
-    background: var(--background-color);
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.element-preview:hover, .question-preview:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
 }
 
 .element-header, .question-details {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f8f9fa;
 }
 
 .element-type, .question-type {
-    background: var(--secondary-color);
+    background: linear-gradient(135deg, #6c757d, #495057);
     color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
     font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .required-badge {
-    background: var(--success-color);
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
     font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .element-description {
-    color: var(--text-secondary);
+    color: #6c757d;
     font-style: italic;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
 }
 
 .element-content {
-    background: var(--background-color);
-    padding: 0.5rem;
-    border-radius: var(--radius-sm);
-    border-left: 3px solid var(--primary-color);
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    margin-top: 1rem;
+}
+
+.element-content strong {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.text-content {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.image-container {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.element-image {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.element-image:hover {
+    transform: scale(1.05);
+}
+
+.alt-text {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.no-image {
+    background: #f8f9fa;
+    padding: 2rem;
+    text-align: center;
+    border-radius: 8px;
+    color: #6c757d;
+    border: 2px dashed #dee2e6;
+}
+
+/* Enhanced Answer Options */
+.answer-options {
+    margin-top: 1rem;
+}
+
+.answer-options strong {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .answer-options ul {
-    margin: 0.5rem 0 0 1rem;
+    margin: 0.5rem 0 0 0;
     padding: 0;
+    list-style: none;
 }
 
 .answer-options li {
-    margin-bottom: 0.25rem;
+    background: white;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+    padding-left: 2.5rem;
 }
 
+.answer-options li::before {
+    content: '✓';
+    position: absolute;
+    left: 1rem;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.answer-options li:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    transform: translateX(5px);
+}
+
+/* Enhanced Matrix Summary */
 .matrix-summary {
-    background: var(--success-color);
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
-    padding: 1rem;
-    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+    text-align: center;
 }
 
+.matrix-summary p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.matrix-summary .text-success {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Enhanced Launch Section */
 .launch-section {
-    margin-top: 2rem;
-    padding: 2rem;
-    background: var(--surface-color);
-    border-radius: var(--radius-lg);
-    border: 2px solid var(--success-color);
+    margin-top: 3rem;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border-radius: 20px;
+    border: 3px solid #28a745;
+    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.launch-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #28a745, #20c997, #28a745);
 }
 
 .launch-section h3 {
-    color: var(--success-color);
-    margin-bottom: 1rem;
+    color: #28a745;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    position: relative;
+}
+
+.launch-section h3::after {
+    content: '🚀';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
 }
 
 .checkbox-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.checkbox-wrapper:hover {
+    border-color: #28a745;
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.1);
 }
 
 .checkbox-wrapper input[type="checkbox"] {
-    width: auto;
+    width: 24px;
+    height: 24px;
     margin: 0;
+    accent-color: #28a745;
+    cursor: pointer;
 }
 
 .checkbox-wrapper label {
     margin: 0;
     font-weight: 600;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+.form-help-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-left: 2.5rem;
+}
+
+/* Enhanced Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #495057, #343a40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #20c997, #28a745);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+}
+
+/* Enhanced Layers Preview */
+.layers-preview {
+    margin-top: 1rem;
+}
+
+.layers-preview h5 {
+    color: #495057;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #007bff;
+}
+
+.layers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.layer-preview-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.layer-preview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.layer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.layer-header h6 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.layer-order {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.layer-description {
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.layer-images {
+    margin-top: 1rem;
+}
+
+.layer-images strong {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.images-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.image-preview-item {
+    text-align: center;
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.image-preview-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.preview-thumbnail {
+    max-width: 100%;
+    max-height: 80px;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.preview-thumbnail:hover {
+    transform: scale(1.1);
+}
+
+.image-info {
+    text-align: center;
+}
+
+.image-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.alt-text {
+    color: #6c757d;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .preview-section {
+        padding: 1.5rem;
+    }
+    
+    .preview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .layers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .images-preview-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 </style>
 {% endblock %}

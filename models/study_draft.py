@@ -16,9 +16,13 @@ class StudyDraft(Document):
     step1c_layer_data = DictField(default={})  # For layer study category setup
     step2a_data = DictField(default={})
     step2a_layer_data = DictField(default={})  # For layer study categories and elements
+    layer_config_data = DictField(default={})  # New unified layer configuration
+    layer_iped_data = DictField(default={})  # For layer study IPED parameters
     step2b_data = DictField(default={})
     step2c_data = DictField(default={})
     step3a_data = DictField(default={})
+    step3a_grid_data = DictField(default={})  # For grid study task generation
+    step3a_layer_data = DictField(default={})  # For layer study task generation
     step3b_data = DictField(default={})
     
     # Metadata
@@ -37,28 +41,65 @@ class StudyDraft(Document):
     
     def update_step_data(self, step, data):
         """Update data for a specific step."""
-        step_field = f'step{step}_data'
+        # Handle special cases for layer-specific steps
+        if step == 'layer_config':
+            step_field = 'layer_config_data'
+        elif step == 'layer_iped':
+            step_field = 'layer_iped_data'
+        elif step == '3a_grid':
+            step_field = 'step3a_grid_data'
+        elif step == '3a_layer':
+            step_field = 'step3a_layer_data'
+        else:
+            step_field = f'step{step}_data'
+        
         if hasattr(self, step_field):
             setattr(self, step_field, data)
             self.updated_at = datetime.utcnow()
             self.save()
+        else:
+            # Log error to console since we can't use current_app in models
+            print(f"ERROR: Field '{step_field}' not found for step '{step}'")
     
     def get_step_data(self, step):
         """Get data for a specific step."""
-        step_field = f'step{step}_data'
-        return getattr(self, step_field, {})
+        if step == 'layer_config':
+            return self.layer_config_data
+        elif step == 'layer_iped':
+            # For layer_iped, return the IPED parameters from layer_iped_data
+            return self.layer_iped_data or {}
+        elif step == '3a_grid':
+            return self.step3a_grid_data or {}
+        elif step == '3a_layer':
+            return self.step3a_layer_data or {}
+        else:
+            step_field = f'step{step}_data'
+            return getattr(self, step_field, {})
     
     def is_step_complete(self, step):
         """Check if a specific step is complete."""
         step_data = self.get_step_data(step)
         
         # For layer-specific steps, check if they have meaningful data
-        if step == '1c_layer':
-            # Check if num_categories is set
-            return bool(step_data.get('num_categories'))
-        elif step == '2a_layer':
-            # Check if categories data exists
-            return bool(step_data.get('categories'))
+        if step == 'layer_config':
+            # Check if layers data exists and has at least one layer
+            layers = step_data.get('layers', [])
+            return len(layers) > 0 and all(len(layer.get('images', [])) > 0 for layer in layers)
+        elif step == 'layer_iped':
+            # Check if IPED parameters are set
+            return (step_data.get('number_of_respondents') and 
+                   step_data.get('exposure_tolerance_pct') is not None)
+        elif step == '3a':
+            # Check if task matrix has been generated
+            # For grid studies, check 3a_grid data
+            grid_data = self.get_step_data('3a_grid')
+            if grid_data and grid_data.get('tasks_matrix'):
+                return True
+            # For layer studies, check 3a_layer data
+            layer_data = self.get_step_data('3a_layer')
+            if layer_data and layer_data.get('tasks_matrix'):
+                return True
+            return False
         else:
             # For other steps, check if any data exists
             return bool(step_data)
@@ -69,9 +110,9 @@ class StudyDraft(Document):
         study_type = self.get_step_data('1b').get('study_type', 'grid')
         
         if study_type == 'layer':
-            step_order = ['1a', '1b', '1c', '1c_layer', '2a_layer', '2b', '2c', '3a', '3b']
+            step_order = ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b']
         else:
-            step_order = ['1a', '1b', '1c', '2a', '2b', '2c', '3a', '3b']
+            step_order = ['1a', '1b', '1c', '2b', '2a', '2c', '3a', '3b']
             
         if target_step not in step_order:
             return False
@@ -80,7 +121,9 @@ class StudyDraft(Document):
         
         # For forward navigation, require previous steps to be complete
         for i in range(target_index):
-            if not self.is_step_complete(step_order[i]):
+            step_to_check = step_order[i]
+            if not self.is_step_complete(step_to_check):
+                print(f"DEBUG: Cannot proceed to {target_step} - step {step_to_check} is not complete")
                 return False
         return True
     
@@ -90,9 +133,9 @@ class StudyDraft(Document):
         study_type = self.get_step_data('1b').get('study_type', 'grid')
         
         if study_type == 'layer':
-            step_order = ['1a', '1b', '1c', '1c_layer', '2a_layer', '2b', '2c', '3a', '3b']
+            step_order = ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b']
         else:
-            step_order = ['1a', '1b', '1c', '2a', '2b', '2c', '3a', '3b']
+            step_order = ['1a', '1b', '1c', '2b', '2a', '2c', '3a', '3b']
             
         if target_step not in step_order:
             return False
@@ -106,18 +149,34 @@ class StudyDraft(Document):
             return self.is_step_complete('1a')
         elif target_step == '1c':  # step1c (Rating Scale) - common for both study types
             return self.is_step_complete('1a') and self.is_step_complete('1b')
-        elif target_step == '1c_layer':  # step1c_layer (Categories) - only for layer studies
+        elif target_step == '2b':  # step2b (Classification Questions) - common for both study types
             return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c')
-        elif target_step in ['2a', '2a_layer']:  # Elements step (varies by study type)
+        elif target_step in ['2a', 'layer_config']:  # Content setup step (varies by study type)
             if target_step == '2a':  # Grid study elements
-                return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c')
-            else:  # Layer study categories & elements
-                return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('1c_layer')
-        else:  # steps 2b and beyond
-            return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
-                   self.is_step_complete('1c') and
-                   (self.is_step_complete('1c_layer') or True) and  # 1c_layer only required for layer studies
-                   (self.is_step_complete('2a') or self.is_step_complete('2a_layer')))
+                return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+            else:  # Layer study configuration
+                return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+        else:  # steps 2c, layer_iped, 3a, 3b
+            if target_step in ['2c', 'layer_iped']:  # IPED parameters
+                if target_step == '2c':  # Grid study IPED
+                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                           self.is_step_complete('1c') and self.is_step_complete('2b') and 
+                           self.is_step_complete('2a'))
+                else:  # Layer study IPED
+                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                           self.is_step_complete('1c') and self.is_step_complete('2b') and 
+                           self.is_step_complete('layer_config'))
+            else:  # steps 3a, 3b
+                if study_type == 'layer':
+                    # For layer studies, check layer_config and layer_iped
+                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                           self.is_step_complete('1c') and self.is_step_complete('2b') and
+                           self.is_step_complete('layer_config') and self.is_step_complete('layer_iped'))
+                else:
+                    # For grid studies, check step2a and step2c
+                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                           self.is_step_complete('1c') and self.is_step_complete('2b') and
+                           self.is_step_complete('2a') and self.is_step_complete('2c'))
     
     def get_all_data(self):
         """Get all collected data as a dictionary."""
@@ -125,9 +184,10 @@ class StudyDraft(Document):
             'step1a': self.step1a_data,
             'step1b': self.step1b_data,
             'step1c': self.step1c_data,
-            'step1c_layer': self.step1c_layer_data,
+            'step1c_layer_data': self.step1c_layer_data,
             'step2a': self.step2a_data,
-            'step2a_layer': self.step2a_layer_data,
+            'step2a_layer_data': self.step2a_layer_data,
+            'layer_config_data': self.layer_config_data,
             'step2b': self.step2b_data,
             'step2c': self.step2c_data,
             'step3a': self.step3a_data,
@@ -151,6 +211,7 @@ class StudyDraft(Document):
             'step1c_layer_data': self.step1c_layer_data,
             'step2a_data': self.step2a_data,
             'step2a_layer_data': self.step2a_layer_data,
+            'layer_config_data': self.layer_config_data,
             'step2b_data': self.step2b_data,
             'step2c_data': self.step2c_data,
             'step3a_data': self.step3a_data,

@@ -15,318 +15,652 @@
     <div class="step-content">
         <form method="POST" enctype="multipart/form-data" class="step-form" data-validate="true" data-loading="true">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
                 <div class="study-form-group">
                     <h3 class="section-title">Study Elements</h3>
                     <p class="form-help">Configure the elements that respondents will evaluate in your study.</p>
                 </div>
                 
+            <!-- Hidden field for number of elements - will be auto-calculated -->
+            <input type="hidden" name="num_elements" id="num_elements" value="{{ num_elements }}">
+
+            <!-- Simple Drag & Drop Area -->
                 <div class="study-form-group">
-                    <label class="study-form-label study-form-label--required">Number of Elements</label>
-                    <input type="number" name="num_elements" class="study-form-control" min="4" max="16" value="{{ num_elements }}" required>
-                    <small class="form-help">Choose between 4 and 16 elements for your study.</small>
+                <h4 class="section-subtitle">Quick Setup</h4>
+                <div class="simple-drag-area" id="simpleDragArea">
+                    <div class="drag-content">
+                        <div class="drag-icon">📁</div>
+                        <h5>Drag & Drop Images Here</h5>
+                        <p>Drop multiple images and they'll be automatically assigned to elements</p>
+                        <small>Supports JPG, PNG, GIF (max 16MB each)</small>
+                        <div class="drag-actions">
+                            <button type="button" class="btn btn--outline" onclick="document.getElementById('fileInput').click()">
+                                📂 Browse Files
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="study-form-group">
-                    <p class="form-help">Configure the elements below:</p>
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(this.files)">
+                <div class="drag-status" id="dragStatus"></div>
                 </div>
                     
-                    <div class="elements-container" id="elementsContainer">
-                        {% for i in range(num_elements) %}
-                        <div class="element-item" data-element-index="{{ i }}">
-                            <div class="element-info">
-                                <div class="element-icon">{{ i + 1 }}</div>
-                                <div class="element-details">
-                                    <h4>Element {{ i + 1 }}</h4>
-                                    <button type="button" class="btn btn--danger btn--sm" onclick="removeElement({{ i }})">Remove</button>
+            <!-- Elements List - Hidden until images are selected -->
+            <div class="study-form-group" id="elementsSection" style="display: {% if elements_data %}block{% else %}none{% endif %};">
+                <h4 class="section-subtitle">Elements</h4>
+                <p class="section-hint">💡 Drag and drop elements to reorder them. The order will be preserved in your study.</p>
+                <div id="elementsList" class="elements-grid">
+                    {% if elements_data %}
+                        <!-- Display existing elements -->
+                        {% for element in elements_data %}
+                        <div class="element-card" data-element-index="{{ loop.index0 }}">
+                            <div class="element-header">
+                                <div class="drag-handle">⋮⋮</div>
+                                <h5>Element {{ loop.index }}</h5>
+                                <div class="element-actions">
+                                    <button type="button" class="btn btn--sm btn--danger" onclick="removeElement({{ loop.index0 }})">
+                                        🗑️ Remove
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div class="study-form-row">
-                                <div class="study-form-group">
-                                    <label class="study-form-label study-form-label--required">Element Name</label>
-                                    <input type="text" name="element_{{ i }}_name" class="study-form-control" 
-                                           placeholder="e.g., Product Feature A" required
-                                           value="{{ elements_data[i].name if elements_data and elements_data[i] else '' }}">
-                                </div>
-                                
-                                <!-- Element type is always image - no need for selection -->
-                                <input type="hidden" name="element_{{ i }}_type" value="image">
+                            <div class="element-content">
+                                <div class="element-image">
+                                    {% if element.content %}
+                                        <img src="{{ element.content }}" alt="{{ element.name }}" class="element-preview">
+                                        <div class="image-actions">
+                                            <button type="button" class="btn btn--sm btn--outline" onclick="replaceExistingImage({{ loop.index0 }})">
+                                                🔄 Replace
+                                            </button>
                             </div>
-                            
-                            <div class="study-form-group">
-                                <label class="study-form-label">Description</label>
-                                <textarea name="element_{{ i }}_description" class="study-form-control study-form-textarea" rows="2" 
-                                          placeholder="Brief description of this element">{{ elements_data[i].description if elements_data and elements_data[i] else '' }}</textarea>
-                            </div>
-                            
-                            <div class="element-content" id="elementContent{{ i }}">
-                                <!-- All elements are always images -->
-                                <div class="study-form-group">
-                                    <label class="study-form-label study-form-label--required">Image File</label>
-                                    <input type="file" name="element_{{ i }}_image" class="study-form-control" accept="image/*" 
-                                           {% if not (elements_data and elements_data[i] and elements_data[i].content) %}required{% endif %}
-                                           onchange="previewImage(this, {{ i }})">
-                                    <small class="form-help">
-                                        {% if elements_data and elements_data[i] and elements_data[i].content %}
-                                            Leave empty to keep current image, or upload a new one to replace it.
                                         {% else %}
-                                            Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.
+                                        <div class="no-image">No image</div>
                                         {% endif %}
-                                    </small>
+                                </div>
+                                <div class="element-info">
+                                    <div class="form-group">
+                                        <label class="form-label">Element Name</label>
+                                        <input type="text" 
+                                               name="element_{{ loop.index0 }}_name" 
+                                               value="{{ element.name }}"
+                                               class="form-input element-name-input" 
+                                               placeholder="Element name"
+                                               onchange="updateElementName({{ loop.index0 }}, this.value)">
+                                        <small class="form-help">Give this element a descriptive name</small>
                                 </div>
                                 
-                                <!-- Image Preview Container -->
-                                <div class="image-preview-container" id="imagePreview{{ i }}" style="display: none;">
-                                    <label class="study-form-label">Image Preview:</label>
-                                    <div class="preview-image-wrapper">
-                                        <img id="previewImage{{ i }}" src="" alt="Preview" class="preview-image">
-                                        <button type="button" class="preview-remove-btn" onclick="removeImagePreview({{ i }})">Remove</button>
+                                    <div class="form-group">
+                                        <label class="form-label">Description</label>
+                                        <textarea name="element_{{ loop.index0 }}_description" 
+                                                  class="form-input" 
+                                                  placeholder="Element description"
+                                                  onchange="updateElementDescription({{ loop.index0 }}, this.value)">{{ element.description or '' }}</textarea>
+                                        <small class="form-help">Describe what this element represents</small>
+                                </div>
+                                
+                                    <div class="form-group">
+                                        <label class="form-label">Alt Text</label>
+                                        <input type="text" 
+                                               name="element_{{ loop.index0 }}_alt_text" 
+                                               value="{{ element.alt_text or '' }}"
+                                               class="form-input" 
+                                               placeholder="Alternative text for accessibility"
+                                               onchange="updateElementAltText({{ loop.index0 }}, this.value)">
+                                        <small class="form-help">Alternative text for screen readers</small>
                                     </div>
                                 </div>
-                                
-                                <div class="study-form-group">
-                                    <label class="study-form-label">Alt Text</label>
-                                    <input type="text" name="element_{{ i }}_alt_text" class="study-form-control" 
-                                           placeholder="Description for accessibility" 
-                                           value="{{ elements_data[i].alt_text if elements_data and elements_data[i] else '' }}">
-                                </div>
-                                
-                                {% if elements_data and elements_data[i] and elements_data[i].content %}
-                                <div class="image-preview">
-                                    <label class="study-form-label">Current Image:</label>
-                                    <img src="{{ elements_data[i].content }}" alt="{{ elements_data[i].alt_text or 'Element image' }}" 
-                                         style="max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid var(--color-neutral-200);">
-                                    <input type="hidden" name="element_{{ i }}_current_image" value="{{ elements_data[i].content }}">
-                                    <div class="current-image-info">
-                                        <small class="text-success">✓ Image already uploaded: {{ elements_data[i].content|truncate(50) }}</small>
-                                    </div>
-                                </div>
-                                {% endif %}
                             </div>
+                            <input type="hidden" name="element_{{ loop.index0 }}_current_image" value="{{ element.content or '' }}">
+                            <input type="file" name="element_{{ loop.index0 }}_image_file" accept="image/*" style="display: none;">
+                            <input type="hidden" name="element_{{ loop.index0 }}_has_file" value="false">
+                            <!-- Hidden field to indicate this is an existing element -->
+                            <input type="hidden" name="element_{{ loop.index0 }}_is_existing" value="true">
                         </div>
                         {% endfor %}
-                    </div>
-                    
-                    <div class="study-form-group">
-                        <button type="button" class="btn btn--outline" id="addElementBtn">➕ Add Another Element</button>
-                        <small class="form-help">Click to add more elements to your study (up to 16 total)</small>
+                    {% else %}
+                        <!-- Elements will be populated here when images are uploaded -->
+                    {% endif %}
                     </div>
                 </div>
                 
                 <div class="step-actions">
-                    <a href="{{ url_for('study_creation.step1c') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
-                    <button type="submit" class="btn btn--primary step-nav-btn" onclick="return validateForm()">Continue to Classification Questions →</button>
+                    <a href="{{ url_for('study_creation.step2b') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
+                    <button type="submit" class="btn btn--primary step-nav-btn" onclick="return validateForm()">Continue to IPED Parameters →</button>
                 </div>
             </form>
-        </div>
     </div>
 </div>
 
 <script>
+let elements = [];
 let currentElementCount = {{ num_elements }};
-const studyType = '{{ draft.get_step_data("1b").get("study_type", "grid") if draft.get_step_data("1b") else "grid" }}';
 
-console.log('Step 2a loaded. Current element count:', currentElementCount);
-console.log('Study type:', studyType);
+// Initialize elements
+function initializeElements() {
+    // Don't show elements until images are selected
+    // Elements will be created when images are dropped
+}
 
-// Update element count when user changes the input
-document.querySelector('input[name="num_elements"]').addEventListener('change', function() {
-    const newCount = parseInt(this.value);
-    if (newCount >= 4 && newCount <= 16) {
-        const currentElements = document.querySelectorAll('.element-item').length;
-        
-        if (newCount > currentElements) {
-            // Add more elements
-            for (let i = currentElements; i < newCount; i++) {
-                addElement();
-            }
-        } else if (newCount < currentElements) {
-            // Remove excess elements
-            const elementsToRemove = currentElements - newCount;
-            for (let i = 0; i < elementsToRemove; i++) {
-                const lastElement = document.querySelector('.element-item:last-child');
-                if (lastElement) {
-                    lastElement.remove();
+// Render a single element
+function renderElement(element) {
+    const container = document.getElementById('elementsList');
+    const elementDiv = document.createElement('div');
+    elementDiv.className = 'element-card';
+    elementDiv.setAttribute('data-element-id', element.id);
+    elementDiv.draggable = true;
+    
+    elementDiv.innerHTML = `
+        <div class="element-header">
+            <div class="drag-handle">⋮⋮</div>
+            <h5>Element ${element.id + 1}</h5>
+            <div class="element-actions">
+                <button type="button" class="btn btn--sm btn--danger" onclick="removeElement(${element.id})">
+                    🗑️ Remove
+                </button>
+            </div>
+        </div>
+        <div class="element-content">
+            <div class="element-image">
+                ${element.image ? 
+                    `<img src="${element.image}" alt="${element.name}" class="element-preview">` : 
+                    `<div class="no-image">No image</div>`
                 }
-            }
-            currentElementCount = newCount;
-        }
+            </div>
+            <div class="element-info">
+                <div class="form-group">
+                    <label class="form-label">Element Name</label>
+                    <input type="text" 
+                           name="element_${element.id}_name" 
+                           value="${element.name}"
+                           class="form-input element-name-input" 
+                           placeholder="Element name"
+                           onchange="updateElementName(${element.id}, this.value)">
+                    <small class="form-help">Give this element a descriptive name</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="element_${element.id}_description" 
+                              class="form-input" 
+                              placeholder="Element description"
+                              onchange="updateElementDescription(${element.id}, this.value)">${element.description || ''}</textarea>
+                    <small class="form-help">Describe what this element represents</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Alt Text</label>
+                    <input type="text" 
+                           name="element_${element.id}_alt_text" 
+                           value="${element.altText || ''}"
+                           class="form-input" 
+                           placeholder="Alternative text for accessibility"
+                           onchange="updateElementAltText(${element.id}, this.value)">
+                    <small class="form-help">Alternative text for screen readers</small>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="element_${element.id}_current_image" value="${element.image || ''}">
+        <input type="file" name="element_${element.id}_image_file" accept="image/*" style="display: none;">
+        <input type="hidden" name="element_${element.id}_has_file" value="${element.imageFile ? 'true' : 'false'}">
+    `;
+    
+    // Add drag event listeners
+    elementDiv.addEventListener('dragstart', handleDragStart);
+    elementDiv.addEventListener('dragover', handleDragOver);
+    elementDiv.addEventListener('drop', handleDrop);
+    elementDiv.addEventListener('dragend', handleDragEnd);
+    
+    container.appendChild(elementDiv);
+}
+
+// Drag and drop functionality for reordering
+let draggedElement = null;
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    if (draggedElement !== this) {
+        const allElements = [...document.querySelectorAll('.element-card')];
+        const draggedIndex = allElements.indexOf(draggedElement);
+        const droppedIndex = allElements.indexOf(this);
+        
+        // Reorder the elements array
+        const [movedElement] = elements.splice(draggedIndex, 1);
+        elements.splice(droppedIndex, 0, movedElement);
+        
+        // Update element IDs to match new order
+        elements.forEach((element, index) => {
+            element.id = index;
+        });
+        
+        // Re-render all elements to update IDs and hidden inputs
+        const container = document.getElementById('elementsList');
+        container.innerHTML = '';
+        elements.forEach(element => renderElement(element));
+        
+        showStatus('Elements reordered successfully!', 'success');
+        setTimeout(() => {
+            showStatus('', '');
+        }, 2000);
     }
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    draggedElement = null;
+}
+
+// Handle drag and drop
+const dragArea = document.getElementById('simpleDragArea');
+const dragStatus = document.getElementById('dragStatus');
+
+dragArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dragArea.classList.add('drag-over');
 });
 
-function addElement() {
-    console.log('addElement function called. Current count:', currentElementCount);
+dragArea.addEventListener('dragleave', () => {
+    dragArea.classList.remove('drag-over');
+});
+
+dragArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragArea.classList.remove('drag-over');
     
-    const container = document.getElementById('elementsContainer');
-    if (!container) {
-        console.error('elementsContainer not found!');
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    
+    if (files.length === 0) {
+        showStatus('No image files found. Please drop image files only.', 'error');
         return;
     }
     
-    const newElement = document.createElement('div');
-    newElement.className = 'element-item';
-    newElement.setAttribute('data-element-index', currentElementCount);
+    processFiles(files);
+});
+
+// Handle file selection via browse button
+function handleFileSelect(files) {
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
     
-    newElement.innerHTML = `
-        <div class="element-info">
-            <div class="element-icon">${currentElementCount + 1}</div>
-            <div class="element-details">
-                <h4>Element ${currentElementCount + 1}</h4>
-                <button type="button" class="btn btn--danger btn--sm" onclick="removeElement(${currentElementCount})">Remove</button>
-            </div>
-        </div>
+    if (imageFiles.length === 0) {
+        showStatus('No image files found. Please select image files only.', 'error');
+        return;
+    }
+    
+    processFiles(imageFiles);
+}
+
+// Process files (common function for both drag-drop and file selection)
+function processFiles(files) {
+    // Clear any existing elements
+    elements = [];
+    const container = document.getElementById('elementsList');
+    container.innerHTML = '';
+    
+    // Show the elements section
+    document.getElementById('elementsSection').style.display = 'block';
+    
+    // Auto-calculate number of elements based on uploaded images
+    const actualElementCount = Math.min(files.length, 50); // Cap at 50 elements
+    currentElementCount = actualElementCount;
+    
+    // Update the hidden num_elements field
+    document.getElementById('num_elements').value = actualElementCount;
+    
+    if (files.length > 50) {
+        showStatus(`You selected ${files.length} images but the maximum is 50 elements. Only the first 50 images will be used.`, 'warning');
+    }
+    
+    // Process images
+    const maxFiles = actualElementCount;
+    showStatus(`Processing ${maxFiles} images...`, 'info');
+    
+    let processedCount = 0;
+    
+    files.slice(0, maxFiles).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const elementIndex = index;
+            if (elementIndex < actualElementCount) {
+                // Create new element
+                const element = {
+                    id: elementIndex,
+                    name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+                    description: `Image: ${file.name}`,
+                    altText: '',
+                    image: e.target.result,
+                    imageFile: file  // Store the actual file object
+                };
+                
+                elements.push(element);
+                
+                // Render the element
+                renderElement(element);
+                
+                // Update hidden inputs
+                updateHiddenInputs(elementIndex);
+                
+                // Create a file input for this element with the uploaded file
+                const elementDiv = document.querySelector(`[data-element-id="${elementIndex}"]`);
+                if (elementDiv) {
+                    const fileInput = elementDiv.querySelector(`input[name="element_${elementIndex}_image_file"]`);
+                    if (fileInput) {
+                        // Create a new FileList-like object with the file
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                        
+                        // Also update the has_file flag
+                        const hasFileInput = elementDiv.querySelector(`input[name="element_${elementIndex}_has_file"]`);
+                        if (hasFileInput) {
+                            hasFileInput.value = 'true';
+                        }
+                    }
+                }
+                
+                processedCount++;
+                
+                // Show progress
+                const progress = Math.round((processedCount / maxFiles) * 100);
+                showStatus(`Processing: ${progress}% (${processedCount}/${maxFiles})`, 'info');
+                
+                // When all images are processed
+                if (processedCount === maxFiles) {
+                    showStatus(`Successfully processed ${maxFiles} images! Created ${maxFiles} elements.`, 'success');
+                    setTimeout(() => {
+                        showStatus('', '');
+                    }, 3000);
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Update hidden inputs for form submission
+function updateHiddenInputs(elementIndex) {
+    const element = elements[elementIndex];
+    const elementDiv = document.querySelector(`[data-element-id="${elementIndex}"]`);
+    
+    if (elementDiv) {
+        const nameInput = elementDiv.querySelector(`input[name="element_${elementIndex}_name"]`);
+        const descInput = elementDiv.querySelector(`textarea[name="element_${elementIndex}_description"]`);
+        const altInput = elementDiv.querySelector(`input[name="element_${elementIndex}_alt_text"]`);
+        const imgInput = elementDiv.querySelector(`input[name="element_${elementIndex}_current_image"]`);
+        const hasFileInput = elementDiv.querySelector(`input[name="element_${elementIndex}_has_file"]`);
         
-        <div class="study-form-row">
-            <div class="study-form-group">
-                <label class="study-form-label study-form-label--required">Element Name</label>
-                <input type="text" name="element_${currentElementCount}_name" class="study-form-control" placeholder="e.g., Product Feature A" required>
-            </div>
-            
-            <!-- Element type is always image - hidden input -->
-            <input type="hidden" name="element_${currentElementCount}_type" value="image">
-        </div>
+        if (nameInput) nameInput.value = element.name;
+        if (descInput) descInput.value = element.description;
+        if (altInput) altInput.value = element.altText;
+        if (imgInput) imgInput.value = element.image || '';
+        if (hasFileInput) hasFileInput.value = element.imageFile ? 'true' : 'false';
         
-        <div class="study-form-group">
-            <label class="study-form-label">Description</label>
-            <textarea name="element_${currentElementCount}_description" class="study-form-control study-form-textarea" rows="2" placeholder="Brief description of this element"></textarea>
-        </div>
-        
-        <div class="element-content" id="elementContent${currentElementCount}">
-            <!-- All elements are always images -->
-            <div class="study-form-group">
-                <label class="study-form-label study-form-label--required">Image File</label>
-                <input type="file" name="element_${currentElementCount}_image" class="study-form-control" accept="image/*" required onchange="previewImage(this, ${currentElementCount})">
-                <small class="form-help">Upload an image file (JPG, PNG, GIF, WebP). Max size: 16MB.</small>
+        // Ensure the file input has the file if it exists
+        if (element.imageFile) {
+            const fileInput = elementDiv.querySelector(`input[name="element_${elementIndex}_image_file"]`);
+            if (fileInput && fileInput.files.length === 0) {
+                // Create a new FileList with the file
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(element.imageFile);
+                fileInput.files = dataTransfer.files;
+            }
+        }
+    }
+}
+
+// Show status message
+function showStatus(message, type) {
+    dragStatus.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+    setTimeout(() => {
+        dragStatus.innerHTML = '';
+    }, 5000);
+}
+
+// Remove element
+function removeElement(elementId) {
+    // Create a nice confirmation modal instead of default alert
+    showDeleteConfirmation(elementId);
+}
+
+// Show nice delete confirmation modal
+function showDeleteConfirmation(elementId) {
+    const element = elements[elementId];
+    const modal = document.createElement('div');
+    modal.className = 'delete-modal';
+    modal.innerHTML = `
+        <div class="delete-modal-content">
+            <div class="delete-modal-header">
+                <h4>🗑️ Delete Element</h4>
             </div>
-            
-            <!-- Image Preview Container -->
-            <div class="image-preview-container" id="imagePreview${currentElementCount}" style="display: none;">
-                <label class="study-form-label">Image Preview:</label>
-                <div class="preview-image-wrapper">
-                    <img id="previewImage${currentElementCount}" src="" alt="Preview" class="preview-image">
-                    <button type="button" class="preview-remove-btn" onclick="removeImagePreview(${currentElementCount})">Remove</button>
-                </div>
+            <div class="delete-modal-body">
+                <p>Are you sure you want to delete <strong>"${element.name}"</strong>?</p>
+                <p class="delete-warning">This action cannot be undone.</p>
             </div>
-            
-            <div class="study-form-group">
-                <label class="study-form-label">Alt Text</label>
-                <input type="text" name="element_${currentElementCount}_alt_text" class="study-form-control" placeholder="Description for accessibility">
+            <div class="delete-modal-actions">
+                <button type="button" class="btn btn--secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn--danger" onclick="confirmDeleteElement(${elementId})">Delete Element</button>
             </div>
         </div>
     `;
     
-    container.appendChild(newElement);
-    currentElementCount++;
+    document.body.appendChild(modal);
     
-    // Update the num_elements input field to reflect the new count
-    const numElementsInput = document.querySelector('input[name="num_elements"]');
-    if (numElementsInput) {
-        numElementsInput.value = currentElementCount;
-    }
-    
-    // Scroll to the new element
-    newElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    console.log(`Added element ${currentElementCount}. Total elements: ${currentElementCount}`);
-}
-
-function removeElement(elementIndex) {
-    console.log('removeElement function called for index:', elementIndex);
-    
-    const element = document.querySelector(`[data-element-index="${elementIndex}"]`);
-    if (element) {
-        element.remove();
-        
-        // Renumber remaining elements
-        const elements = document.querySelectorAll('.element-item');
-        elements.forEach((el, index) => {
-            el.setAttribute('data-element-index', index);
-            el.querySelector('h4').textContent = `Element ${index + 1}`;
-            el.querySelector('.btn--danger').setAttribute('onclick', `removeElement(${index})`);
-            
-            // Update element icon
-            const elementIcon = el.querySelector('.element-icon');
-            if (elementIcon) elementIcon.textContent = index + 1;
-            
-            // Update form field names
-            const nameInput = el.querySelector('input[name^="element_"][name$="_name"]');
-            const typeHidden = el.querySelector('input[name^="element_"][name$="_type"]');
-            const descTextarea = el.querySelector('textarea[name^="element_"][name$="_description"]');
-            const contentDiv = el.querySelector('.element-content');
-            const imageInput = el.querySelector('input[name^="element_"][name$="_image"]');
-            const altTextInput = el.querySelector('input[name^="element_"][name$="_alt_text"]');
-            
-            if (nameInput) nameInput.name = `element_${index}_name`;
-            if (typeHidden) typeHidden.name = `element_${index}_type`;
-            if (descTextarea) descTextarea.name = `element_${index}_description`;
-            if (contentDiv) contentDiv.id = `elementContent${index}`;
-            if (imageInput) imageInput.name = `element_${index}_image`;
-            if (altTextInput) altTextInput.name = `element_${index}_alt_text`;
-        });
-        
-        currentElementCount = elements.length;
-        
-        // Update the num_elements input to reflect the new count
-        const numElementsInput = document.querySelector('input[name="num_elements"]');
-        if (numElementsInput) {
-            numElementsInput.value = currentElementCount;
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeDeleteModal();
         }
-        
-        console.log(`Removed element ${elementIndex}. Total elements: ${currentElementCount}`);
+    });
+}
+
+// Close delete modal
+function closeDeleteModal() {
+    const modal = document.querySelector('.delete-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 
-// Image preview functionality
-function previewImage(input, elementIndex) {
-    const previewContainer = document.getElementById(`imagePreview${elementIndex}`);
-    const previewImg = document.getElementById(`previewImage${elementIndex}`);
+// Confirm and execute element deletion
+function confirmDeleteElement(elementId) {
+    elements = elements.filter(e => e.id !== elementId);
+    const elementDiv = document.querySelector(`[data-element-id="${elementId}"]`);
+    if (elementDiv) {
+        elementDiv.remove();
+    }
     
-    if (input.files && input.files[0]) {
+    // Re-index remaining elements
+    elements.forEach((element, index) => {
+        element.id = index;
+    });
+    
+    // Re-render all elements to update IDs and input names
+    const container = document.getElementById('elementsList');
+    container.innerHTML = '';
+    elements.forEach(element => renderElement(element));
+    
+    // Update the hidden num_elements field
+    document.getElementById('num_elements').value = elements.length;
+    
+    // Close modal
+    closeDeleteModal();
+    
+    // Show success message
+    showStatus(`Element "${elements[elementId] ? elements[elementId].name : 'Element'}" deleted successfully!`, 'success');
+}
+
+// Update element name
+function updateElementName(elementId, newName) {
+    if (elements[elementId]) {
+        elements[elementId].name = newName;
+    }
+}
+
+// Update element description
+function updateElementDescription(elementId, newDescription) {
+    if (elements[elementId]) {
+        elements[elementId].description = newDescription;
+    }
+}
+
+// Update element alt text
+function updateElementAltText(elementId, newAltText) {
+    if (elements[elementId]) {
+        elements[elementId].altText = newAltText;
+    }
+}
+
+// Replace existing image for an element
+function replaceExistingImage(index) {
+    const elementDiv = document.querySelector(`[data-element-index="${index}"]`);
+    if (elementDiv) {
+        const fileInput = elementDiv.querySelector(`input[name="element_${index}_image_file"]`);
+        const hasFileInput = elementDiv.querySelector(`input[name="element_${index}_has_file"]`);
+        
+        if (fileInput) {
+            // Trigger file input click
+            fileInput.click();
+            
+            // Update has_file flag to true when user selects a new file
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    if (hasFileInput) {
+                        hasFileInput.value = 'true';
+                    }
+                    // Handle the new image upload
+                    handleImageUpload(this, index);
+                }
+            }, { once: true }); // Only listen once
+        }
+    }
+}
+
+// Handle number of elements change
+document.getElementById('num_elements').addEventListener('change', function() {
+    const newCount = parseInt(this.value);
+    if (newCount >= 4 && newCount <= 50) {
+        currentElementCount = newCount;
+        
+        // If elements are already shown, update them
+        if (elements.length > 0) {
+            if (newCount > elements.length) {
+                // Add more elements (but they won't have images)
+                for (let i = elements.length; i < newCount; i++) {
+                    const element = {
+                        id: i,
+                        name: `Element ${i + 1}`,
+                        description: '',
+                        altText: '',
+                        image: null,
+                        imageFile: null
+                    };
+                    elements.push(element);
+                    renderElement(element);
+                }
+            } else if (newCount < elements.length) {
+                // Remove excess elements
+                elements = elements.slice(0, newCount);
+                const container = document.getElementById('elementsList');
+                container.innerHTML = '';
+                elements.forEach(element => renderElement(element));
+            }
+        }
+        // If no elements are shown yet, don't do anything until images are dropped
+    }
+});
+
+// Handle individual image uploads
+function handleImageUpload(input, index) {
         const file = input.files[0];
+    if (file) {
         const reader = new FileReader();
-        
         reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewContainer.style.display = 'block';
+            const imageUploadArea = document.getElementById(`imageUpload${index}`);
+            imageUploadArea.innerHTML = `
+                <div class="current-image">
+                    <img src="${e.target.result}" alt="Preview" class="element-preview">
+                    <input type="hidden" name="element_${index}_current_image" value="${e.target.result}">
+                    <button type="button" class="btn btn--sm btn--outline" onclick="replaceImage(${index})">Replace</button>
+                </div>
+            `;
+            
+            // Update the has_file flag to true
+            const hasFileInput = document.querySelector(`input[name="element_${index}_has_file"]`);
+            if (hasFileInput) {
+                hasFileInput.value = 'true';
+            }
+            
+            // Auto-generate name from filename if empty
+            const nameInput = document.querySelector(`input[name="element_${index}_name"]`);
+            if (nameInput && !nameInput.value) {
+                const fileName = file.name.replace(/\.[^/.]+$/, "");
+                nameInput.value = fileName;
+            }
+            
+            // Auto-generate description if empty
+            const descInput = document.querySelector(`textarea[name="element_${index}_description"]`);
+            if (descInput && !descInput.value) {
+                descInput.value = `Image: ${file.name}`;
+            }
+            
+            // Update the element object if it exists
+            if (elements[index]) {
+                elements[index].imageFile = file;
+                elements[index].name = nameInput ? nameInput.value : elements[index].name;
+                elements[index].description = descInput ? descInput.value : elements[index].description;
+            }
         };
-        
         reader.readAsDataURL(file);
-    } else {
-        previewContainer.style.display = 'none';
     }
-}
-
-function removeImagePreview(elementIndex) {
-    const previewContainer = document.getElementById(`imagePreview${elementIndex}`);
-    const fileInput = document.querySelector(`input[name="element_${elementIndex}_image"]`);
-    const previewImg = document.getElementById(`previewImage${elementIndex}`);
-    
-    // Clear the file input
-    fileInput.value = '';
-    
-    // Hide the preview
-    previewContainer.style.display = 'none';
-    previewImg.src = '';
 }
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded. Setting up event listeners...');
+    initializeElements();
     
-    // Add click event listener to the add button for debugging
-    const addButton = document.getElementById('addElementBtn');
-    if (addButton) {
-        console.log('Add button found, adding event listener...');
-        addButton.addEventListener('click', function(e) {
-            console.log('Add button clicked via event listener!');
-            addElement();
-        });
-    } else {
-        console.error('Add button not found!');
-    }
-    
-    console.log('Event listeners set up complete.');
+    // Initialize existing elements if they exist
+    {% if elements_data %}
+        initializeExistingElements();
+    {% endif %}
 });
+
+// Initialize existing elements from database
+function initializeExistingElements() {
+    const existingElements = {{ elements_data|tojson|safe }};
+    if (existingElements && existingElements.length > 0) {
+        // Clear any existing elements array
+        elements = [];
+        
+        // Convert existing elements to our format
+        existingElements.forEach((elementData, index) => {
+            const element = {
+                id: index,
+                name: elementData.name || `Element ${index + 1}`,
+                description: elementData.description || '',
+                altText: elementData.alt_text || '',
+                image: elementData.content || '', // Azure URL
+                imageFile: null // No file object for existing elements
+            };
+            
+            elements.push(element);
+        });
+        
+        // Update the hidden num_elements field
+        document.getElementById('num_elements').value = elements.length;
+        
+        // Update current element count
+        currentElementCount = elements.length;
+        
+        console.log(`Initialized ${elements.length} existing elements`);
+    }
+}
 
 // Form validation function
 function validateForm() {
@@ -335,23 +669,26 @@ function validateForm() {
     
     // Check number of elements
     const numElements = parseInt(document.querySelector('input[name="num_elements"]').value);
-    if (numElements < 4 || numElements > 16) {
-        alert('Number of elements must be between 4 and 16.');
+    if (numElements < 4 || numElements > 50) {
+        alert('Number of elements must be between 4 and 50.');
+        return false;
+    }
+    
+    // Check if elements have been created
+    if (elements.length === 0) {
+        alert('Please drag and drop some images to create elements first.');
         return false;
     }
     
     // Check file sizes
     let totalFileSize = 0;
-    const fileInputs = form.querySelectorAll('input[type="file"]');
-    
-    fileInputs.forEach(input => {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            totalFileSize += file.size;
+    elements.forEach(element => {
+        if (element.imageFile) {
+            totalFileSize += element.imageFile.size;
             
             // Check individual file size (16MB limit)
-            if (file.size > 16 * 1024 * 1024) {
-                alert(`File "${file.name}" is too large. Maximum size is 16MB.`);
+            if (element.imageFile.size > 16 * 1024 * 1024) {
+                alert(`File "${element.imageFile.name}" is too large. Maximum size is 16MB.`);
                 return false;
             }
         }
@@ -361,16 +698,6 @@ function validateForm() {
     if (totalFileSize > 200 * 1024 * 1024) {
         alert(`Total file size (${(totalFileSize / (1024 * 1024)).toFixed(1)}MB) exceeds the 200MB limit. Please reduce file sizes or number of elements.`);
         return false;
-    }
-    
-    // Check if all required fields are filled
-    const requiredInputs = form.querySelectorAll('input[required]');
-    for (let input of requiredInputs) {
-        if (!input.value.trim()) {
-            alert(`Please fill in all required fields. Missing: ${input.name}`);
-            input.focus();
-            return false;
-        }
     }
     
     // Show confirmation for large forms

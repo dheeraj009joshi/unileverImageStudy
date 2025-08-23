@@ -18,7 +18,12 @@ def upload_to_azure(file):
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         
         # Generate unique blob name
-        file_extension = os.path.splitext(file.filename)[1] if file.filename else ''
+        if hasattr(file, 'filename') and file.filename:
+            file_extension = os.path.splitext(file.filename)[1]
+        else:
+            # Handle BytesIO objects or files without names
+            file_extension = '.png'  # Default extension
+        
         blob_name = f"{uuid.uuid4()}{file_extension}"
         
         # Get blob client
@@ -27,8 +32,11 @@ def upload_to_azure(file):
         # Reset file pointer to beginning
         file.seek(0)
         
-        # Upload file
-        blob_client.upload_blob(file.read(), overwrite=True)
+        # Read file content
+        file_content = file.read()
+        
+        # Upload file content
+        blob_client.upload_blob(file_content, overwrite=True)
         
         # Return the public URL
         account_name = connection_string.split(';')[1].split('=')[1]
@@ -39,6 +47,8 @@ def upload_to_azure(file):
         
     except Exception as e:
         current_app.logger.error(f"Azure upload failed: {str(e)}")
+        current_app.logger.error(f"File type: {type(file)}")
+        current_app.logger.error(f"File attributes: {dir(file)}")
         return None
 
 def delete_from_azure(blob_url):

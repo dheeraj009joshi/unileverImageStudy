@@ -1,1 +1,1 @@
-# Utils package for IPED system
+# Utils package for IPED study application

@@ -11,8 +11,6 @@
     <!-- Macros -->
     {% macro study_progress_bar(current_step, study_type='grid', draft=none) %}
         <!-- DEBUG: study_type={{ study_type }}, draft={{ 'exists' if draft else 'none' }} -->
-        <!-- DEBUG: 1c_layer complete={{ draft.is_step_complete('1c_layer') if draft else 'N/A' }} -->
-        <!-- DEBUG: 2a_layer complete={{ draft.is_step_complete('2a_layer') if draft else 'N/A' }} -->
         
         <div class="progress-section" 
              data-current-step="{{ current_step }}" 
@@ -20,14 +18,15 @@
              data-step1a-complete="{{ 'true' if draft and draft.is_step_complete('1a') else 'false' }}"
              data-step1b-complete="{{ 'true' if draft and draft.is_step_complete('1b') else 'false' }}"
              data-step1c-complete="{{ 'true' if draft and draft.is_step_complete('1c') else 'false' }}"
-             data-step1c-layer-complete="{{ 'true' if draft and draft.is_step_complete('1c_layer') else 'false' }}"
+             data-layer-config-complete="{{ 'true' if draft and draft.is_step_complete('layer_config') else 'false' }}"
+             data-layer-iped-complete="{{ 'true' if draft and draft.is_step_complete('layer_iped') else 'false' }}"
              data-step2a-complete="{{ 'true' if draft and draft.is_step_complete('2a') else 'false' }}"
-             data-step2a-layer-complete="{{ 'true' if draft and draft.is_step_complete('2a_layer') else 'false' }}"
              data-step2b-complete="{{ 'true' if draft and draft.is_step_complete('2b') else 'false' }}"
              data-step2c-complete="{{ 'true' if draft and draft.is_step_complete('2c') else 'false' }}"
              data-step3a-complete="{{ 'true' if draft and draft.is_step_complete('3a') else 'false' }}"
              data-step3b-complete="{{ 'true' if draft and draft.is_step_complete('3b') else 'false' }}">
             <div class="progress-bar">
+                <!-- Step 1: Basic Setup (Common for both study types) -->
                 <div class="progress-step" data-step-id="1a" data-step-name="Basic Details">
                     <div class="step-number">1a</div>
                     <span class="step-label">Basic Details</span>
@@ -40,33 +39,43 @@
                     <div class="step-number">1c</div>
                     <span class="step-label">Rating Scale</span>
                 </div>
-                <div class="progress-step" data-step-id="1c_layer" data-step-name="Categories" data-layer-only="true">
-                    <div class="step-number">1c</div>
-                    <span class="step-label">Categories</span>
+                
+                <!-- Step 2: Classification Questions (Common for both study types) -->
+                <div class="progress-step" data-step-id="2b" data-step-name="Classification Questions">
+                    <div class="step-number">2</div>
+                    <span class="step-label">Classification Questions</span>
                 </div>
-                <div class="progress-step" data-step-id="2a" data-step-name="Elements" data-grid-only="true">
-                    <div class="step-number">2a</div>
-                    <span class="step-label">Elements</span>
+                
+                <!-- Step 3: Content Setup (Different for each study type) -->
+                <div class="progress-step" data-step-id="2a" data-step-name="Elements Setup" data-grid-only="true">
+                    <div class="step-number">3a</div>
+                    <span class="step-label">Elements Setup</span>
                 </div>
-                <div class="progress-step" data-step-id="2a_layer" data-step-name="Categories & Elements" data-layer-only="true">
-                    <div class="step-number">2a</div>
-                    <span class="step-label">Categories & Elements</span>
+                <div class="progress-step" data-step-id="layer_config" data-step-name="Layer Configuration" data-layer-only="true">
+                    <div class="step-number">3b</div>
+                    <span class="step-label">Layer Configuration</span>
                 </div>
-                <div class="progress-step" data-step-id="2b" data-step-name="Questions">
-                    <div class="step-number">2b</div>
-                    <span class="step-label">Questions</span>
-                </div>
-                <div class="progress-step" data-step-id="2c" data-step-name="IPED Parameters">
-                    <div class="step-number">2c</div>
+                
+                <!-- Step 4: IPED Parameters (Different for each study type) -->
+                <div class="progress-step" data-step-id="2c" data-step-name="IPED Parameters" data-grid-only="true">
+                    <div class="step-number">4a</div>
                     <span class="step-label">IPED Parameters</span>
                 </div>
-                <div class="progress-step" data-step-id="3a" data-step-name="Generate Tasks">
-                    <div class="step-number">3a</div>
-                    <span class="step-label">Generate Tasks</span>
+                <div class="progress-step" data-step-id="layer_iped" data-step-name="IPED Parameters" data-layer-only="true">
+                    <div class="step-number">4b</div>
+                    <span class="step-label">IPED Parameters</span>
                 </div>
-                <div class="progress-step" data-step-id="3b" data-step-name="Launch">
-                    <div class="step-number">3b</div>
-                    <span class="step-label">Launch</span>
+                
+                <!-- Step 5: Task Generation (Common for both study types) -->
+                <div class="progress-step" data-step-id="3a" data-step-name="Task Generation">
+                    <div class="step-number">5</div>
+                    <span class="step-label">Task Generation</span>
+                </div>
+                
+                <!-- Step 6: Launch (Common for both study types) -->
+                <div class="progress-step" data-step-id="3b" data-step-name="Launch Study">
+                    <div class="step-number">6</div>
+                    <span class="step-label">Launch Study</span>
                 </div>
             </div>
 
@@ -239,8 +248,6 @@
                 // DEBUG: Show what we're working with (console only)
                 console.log(`DEBUG: Study Type: ${studyType}, Current Step: ${currentStep}`);
                 console.log(`DEBUG: Dataset keys: ${Object.keys(progressSection.dataset).join(', ')}`);
-                console.log(`DEBUG: 1c_layer complete: ${progressSection.dataset['step1cLayerComplete']}`);
-                console.log(`DEBUG: 2a_layer complete: ${progressSection.dataset['step2aLayerComplete']}`);
                 
                 // Define step order and dependencies
                 const stepOrder = getStepOrder(studyType);
@@ -258,7 +265,7 @@
                     
                     if (studyType === 'grid') {
                         // Grid studies: hide layer-specific steps
-                        if (stepId === '1c_layer' || stepId === '2a_layer') {
+                        if (stepId === 'layer_config' || stepId === 'layer_iped') {
                             console.log(`Hiding ${stepId} for grid study`);
                             step.style.display = 'none';
                             step.style.visibility = 'hidden';
@@ -270,7 +277,7 @@
                         }
                     } else if (studyType === 'layer') {
                         // Layer studies: hide grid-specific steps
-                        if (stepId === '2a') {
+                        if (stepId === '2a' || stepId === '2c') {
                             console.log(`Hiding ${stepId} for layer study`);
                             step.style.display = 'none';
                             step.style.visibility = 'hidden';
@@ -310,16 +317,14 @@
                     // Special handling for layer-specific steps
                     let finalIsStepComplete = isStepComplete;
                     if (studyType === 'layer') {
-                        if (stepId === '1c_layer') {
-                            // Check if 1c_layer is complete - use camelCase key
-                            finalIsStepComplete = progressSection.dataset['step1cLayerComplete'] === 'true';
-                            console.log(`Layer study: 1c_layer completion check:`, finalIsStepComplete);
-                            console.log(`Raw dataset value for step1cLayerComplete:`, progressSection.dataset['step1cLayerComplete']);
-                        } else if (stepId === '2a_layer') {
-                            // Check if 2a_layer is complete - use camelCase key
-                            finalIsStepComplete = progressSection.dataset['step2aLayerComplete'] === 'true';
-                            console.log(`Layer study: 2a_layer completion check:`, finalIsStepComplete);
-                            console.log(`Raw dataset value for step2aLayerComplete:`, progressSection.dataset['step2aLayerComplete']);
+                        if (stepId === 'layer_config') {
+                            // Check if layer_config is complete
+                            finalIsStepComplete = progressSection.dataset['layerConfigComplete'] === 'true';
+                            console.log(`Layer study: layer_config completion check:`, finalIsStepComplete);
+                        } else if (stepId === 'layer_iped') {
+                            // Check if layer_iped is complete
+                            finalIsStepComplete = progressSection.dataset['layerIpedComplete'] === 'true';
+                            console.log(`Layer study: layer_iped completion check:`, finalIsStepComplete);
                         }
                     }
                     
@@ -330,9 +335,9 @@
                         'step1a-complete': progressSection.dataset['step1aComplete'],
                         'step1b-complete': progressSection.dataset['step1bComplete'],
                         'step1c-complete': progressSection.dataset['step1cComplete'],
-                        'step1c-layer-complete': progressSection.dataset['step1cLayerComplete'],
+                        'layer-config-complete': progressSection.dataset['layerConfigComplete'],
+                        'layer-iped-complete': progressSection.dataset['layerIpedComplete'],
                         'step2a-complete': progressSection.dataset['step2aComplete'],
-                        'step2a-layer-complete': progressSection.dataset['step2aLayerComplete'],
                         'step2b-complete': progressSection.dataset['step2bComplete'],
                         'step2c-complete': progressSection.dataset['step2cComplete'],
                         'step3a-complete': progressSection.dataset['step3aComplete'],
@@ -373,9 +378,9 @@
         
         function getStepOrder(studyType) {
             if (studyType === 'layer') {
-                return ['1a', '1b', '1c', '1c_layer', '2a_layer', '2b', '2c', '3a', '3b'];
+                return ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b'];
             } else {
-                return ['1a', '1b', '1c', '2a', '2b', '2c', '3a', '3b'];
+                return ['1a', '1b', '1c', '2b', '2a', '2c', '3a', '3b'];
             }
         }
         

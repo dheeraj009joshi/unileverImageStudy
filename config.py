@@ -10,7 +10,7 @@ class Config:
         'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://dlovej009:Dheeraj2006@cluster0.dnu8vna.mongodb.net/iped_system'
     }
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
-    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # Increased to 100MB for multiple file uploads
+    MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # Increased to 100MB for multiple file uploads
     MAX_CONTENT_LENGTH_PER_FILE = 16 * 1024 * 1024  # 16MB max per individual file
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     

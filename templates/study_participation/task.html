@@ -11,12 +11,11 @@
 
     <div class="task-section">
         <div class="task-content">
-            <div style="
-            text-align: end;
-            " class="progress-text">{{ task_number }}/{{ total_tasks }}</div>
+           {{ task_number }}/{{ total_tasks|int }}
                           <div class="task-elements">
                  <span><strong> {{ study.main_question }}{% if not study.main_question.endswith('?') %}?{% endif %}</strong></span>
                   <div class="elements-grid">
+                    {% if study.study_type == 'grid' %}
                     {% if current_task and current_task.elements_shown %}
                         {% for element_name, element_data in current_task.elements_shown.items() %}
                             {% if element_name.endswith('_content') and element_data and element_data != '' %}
@@ -30,11 +29,45 @@
                             {% endif %}
                         {% endfor %}
                     {% endif %}
+                    {% elif study.study_type == 'layer' %}
+                        {% if current_task and current_task.elements_shown_content %}
+                           
+                                <div class="vignette-preview">
+                                    
+                                    
+                                    {% for element_name, element_data in current_task.elements_shown_content.items() %}
+                                        {% if element_data and element_data != 'none' and element_data != '' and element_data is mapping %}
+                                            {% if element_data.url %}
+                                                {% set z_index_value = element_data.z_index if element_data.z_index is defined else 1 %}
+                                                <div class="layer-image" style="z-index: {{ z_index_value }};">
+                                                    <img src="{{ element_data.url }}" 
+                                                         alt="{{ element_data.alt_text or element_data.name }}" 
+                                                         class="vignette-layer-img"
+                                                         data-layer="{{ element_data.layer_name }}"
+                                                         data-z-index="{{ z_index_value }}"
+                                                         title="{{ element_data.layer_name }}: {{ element_data.name }} (z-index: {{ z_index_value }})">
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                
+                          
+                        {% else %}
+                            <div class="no-vignette-data">
+                                <p>No vignette data available for this task.</p>
+                                {% if current_task %}
+                                    <p class="debug-info">
+                                        <small>Debug: elements_shown_content = {{ current_task.elements_shown_content|tojson }}</small>
+                                    </p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
             
-
-               
+            <div class="rating-section">
                 <div class="rating-instructions">
                     <p><strong>{{ study.rating_scale.min_value }} = {{ study.rating_scale.min_label }}</strong></p>
                     {% if study.rating_scale.middle_label %}
@@ -45,14 +78,14 @@
                 
                 <div class="rating-grid">
                     {% for rating in range(study.rating_scale.min_value, study.rating_scale.max_value + 1) %}
-                    <div class="rating-option" data-rating="{{ rating }}">
-                        <div class="rating-label">
-                            <span class="rating-number">{{ rating }}</span>
+                        <div class="rating-option" data-rating="{{ rating }}">
+                            <div class="rating-label">
+                                <span class="rating-number">{{ rating }}</span>
+                            </div>
                         </div>
-                    </div>
                     {% endfor %}
                 </div>
-            
+            </div>
         </div>
     </div>
 {% endblock %}
@@ -65,6 +98,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Task timing - record start time when page loads
     const taskStartTime = new Date();
     console.log('Task start time:', taskStartTime);
+    
+    // Debug z-index layering for layer studies
+    {% if study.study_type == 'layer' %}
+    console.log('Layer study detected, checking z-index layering...');
+    
+    const layerImages = document.querySelectorAll('.layer-image');
+    console.log('Found layer images:', layerImages.length);
+    
+    layerImages.forEach((layer, index) => {
+        const img = layer.querySelector('img');
+        const zIndex = layer.style.zIndex;
+        const layerName = img.dataset.layer;
+        const zIndexData = img.dataset.zIndex;
+        
+        console.log(`Layer ${index + 1}:`, {
+            element: layer,
+            zIndex: zIndex,
+            layerName: layerName,
+            dataZIndex: zIndexData,
+            imgSrc: img.src
+        });
+        
+        // Ensure z-index is properly set
+        if (zIndex && zIndex !== 'auto') {
+            layer.style.zIndex = zIndex;
+            console.log(`Set z-index for layer ${index + 1} to: ${zIndex}`);
+        }
+    });
+    {% endif %}
     
     // Rating selection and auto-advancement
     const ratingOptions = document.querySelectorAll('.rating-option');
@@ -156,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // All tasks completed, go to completion page
                             window.location.href = `/study/{{ study._id }}/completed`;
                         }
-                    }, 1000); // Increased delay to 1 second
+                    }, 10); // Increased delay to 1 second
                     
                 } else {
                     console.error('Error storing task data:', data.error);

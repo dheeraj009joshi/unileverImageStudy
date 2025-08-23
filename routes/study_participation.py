@@ -80,6 +80,19 @@ def personal_info(study_id):
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
         if request.method == 'POST':
+            # Debug: Check study object before processing
+            print(f"DEBUG: Processing POST request for study {study_id}")
+            print(f"DEBUG: Study type: {study.study_type}")
+            print(f"DEBUG: Study has study_layers: {hasattr(study, 'study_layers')}")
+            if hasattr(study, 'study_layers'):
+                print(f"DEBUG: Study layers count: {len(study.study_layers) if study.study_layers else 0}")
+            print(f"DEBUG: Study has elements: {hasattr(study, 'elements')}")
+            if hasattr(study, 'elements'):
+                print(f"DEBUG: Study elements count: {len(study.elements) if study.elements else 0}")
+            print(f"DEBUG: Study has IPED parameters: {hasattr(study, 'iped_parameters')}")
+            if hasattr(study, 'iped_parameters') and study.iped_parameters:
+                print(f"DEBUG: IPED parameters: {study.iped_parameters}")
+            
             # Get form data
             birth_date = request.form.get('birth_date')
             gender = request.form.get('gender')
@@ -116,37 +129,74 @@ def personal_info(study_id):
             
             print(f"Personal info stored in session: {personal_info_data}")
             print(f"Current session data: {session.get('study_data')}")
+            print(f"Session ID: {session.get('_id', 'No session ID')}")
+            print(f"Session modified flag: {session.modified}")
             
             # Create StudyResponse object now that user has actually started
             try:
+                # Validate study object before proceeding
+                try:
+                    study.validate()
+                    print("DEBUG: Study validation passed")
+                except Exception as validation_error:
+                    print(f"DEBUG: Study validation failed: {validation_error}")
+                    # Continue anyway, but log the issue
+                
                 # Calculate respondent ID based on total responses
                 respondent_id = study.total_responses
                 
                 # Get total tasks from IPED parameters
                 total_tasks = 0
                 if hasattr(study, 'iped_parameters') and study.iped_parameters:
-                    total_tasks = study.iped_parameters.tasks_per_consumer
-                    print(f"IPED tasks per consumer: {total_tasks}")
+                    # Handle both grid and layer study IPED parameters
+                    if study.study_type == 'grid':
+                        total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+                    elif study.study_type == 'layer':
+                        # For layer studies, calculate from layer configuration
+                        if hasattr(study, 'study_layers') and study.study_layers:
+                            # Calculate tasks per consumer based on layer configuration
+                            uniqueness_capacity = 1
+                            for layer in study.study_layers:
+                                uniqueness_capacity *= len(layer.images)
+                            total_tasks = min(24, uniqueness_capacity)  # Cap at 24 tasks
+                        else:
+                            total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 16)
+                    else:
+                        total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+                    
+                    print(f"IPED tasks per consumer for {study.study_type} study: {total_tasks}")
                 else:
                     print("Warning: No IPED parameters found, using default")
-                    total_tasks = 25  # Default fallback
+                    if study.study_type == 'layer':
+                        total_tasks = 16  # Default for layer studies
+                    else:
+                        total_tasks = 25  # Default for grid studies
                 
                 # Create new response object
                 session_id = str(uuid.uuid4())
-                response = StudyResponse(
-                    _id=str(uuid.uuid4()),
-                    study=study,
-                    session_id=session_id,
-                    respondent_id=respondent_id,
-                    total_tasks_assigned=total_tasks,
-                    completed_tasks_count=0,
-                    session_start_time=datetime.utcnow(),
-                    is_completed=False,
-                    classification_answers=[],
-                    personal_info=personal_info_data,
-                    total_study_duration=0.0,
-                    last_activity=datetime.utcnow()
-                )
+                
+                # Initialize all required fields with proper defaults
+                response_data = {
+                    'study': study,
+                    'session_id': session_id,
+                    'respondent_id': respondent_id,
+                    'total_tasks_assigned': total_tasks,
+                    'completed_tasks_count': 0,
+                    'session_start_time': datetime.utcnow(),
+                    'is_completed': False,
+                    'classification_answers': [],
+                    'personal_info': personal_info_data,
+                    'total_study_duration': 0.0,
+                    'last_activity': datetime.utcnow(),
+                    'completed_tasks': [],  # Initialize empty list
+                    'current_task_index': 0,  # Start at first task
+                    'completion_percentage': 0.0,  # Start at 0%
+                    'is_abandoned': False  # Not abandoned initially
+                }
+                
+                print(f"Creating StudyResponse with data: {response_data}")
+                
+                response = StudyResponse(**response_data)
                 response.save()
                 
                 # Update study total_responses
@@ -166,7 +216,18 @@ def personal_info(study_id):
                 
             except Exception as e:
                 print(f"Error creating response: {str(e)}")
-                flash('Error creating study response. Please try again.', 'error')
+                print(f"Error type: {type(e).__name__}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
+                
+                # More specific error message based on error type
+                if 'validation' in str(e).lower():
+                    flash('Data validation error. Please check your input and try again.', 'error')
+                elif 'duplicate' in str(e).lower():
+                    flash('Session already exists. Please refresh and try again.', 'error')
+                else:
+                    flash(f'Error creating study response: {str(e)}. Please try again.', 'error')
+                
                 return render_template('study_participation/personal_info.html', study=study)
             
             # Redirect to classification questions
@@ -283,19 +344,71 @@ def task(study_id, task_number):
         if 'task_ratings' not in session['study_data']:
             session['study_data']['task_ratings'] = []
         
+        # Get total tasks from IPED parameters first (before debugging)
+        total_tasks = 0
+        if hasattr(study, 'iped_parameters') and study.iped_parameters:
+            if study.study_type == 'grid':
+                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            elif study.study_type == 'layer':
+                total_final_tasks=getattr(study.iped_parameters, 'total_tasks', 16)
+                totalusers=getattr(study.iped_parameters, 'number_of_respondents', 16)
+                total_tasks = total_final_tasks/totalusers
+            else:
+                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+        else:
+            # Default fallback if no IPED parameters
+            if study.study_type == 'layer':
+                total_tasks = 16
+            else:
+                total_tasks = 25
+
         print(f"Task route - Session data: {session.get('study_data')}")
         print(f"Task route - Response ID: {session.get('response_id')}")
+        print(f"Task route - Study type: {study.study_type}")
+        print(f"Task route - Study has tasks: {hasattr(study, 'tasks')}")
+        if hasattr(study, 'tasks'):
+            print(f"Task route - Tasks count: {len(study.tasks) if study.tasks else 0}")
+        print(f"Task route - Study has IPED parameters: {hasattr(study, 'iped_parameters')}")
+        if hasattr(study, 'iped_parameters') and study.iped_parameters:
+            print(f"Task route - IPED parameters: {study.iped_parameters}")
+        print(f"Task route - Total tasks calculated: {total_tasks}")
         
         # Get tasks from study - check if tasks exist
         if not hasattr(study, 'tasks') or not study.tasks:
             # Try to generate tasks if they don't exist
             try:
-                if hasattr(study, 'generate_tasks'):
-                    study.generate_tasks()
-                    study.save()
+                from utils.task_generation import generate_grid_tasks, generate_layer_tasks_v2
+                
+                if study.study_type == 'grid':
+                    # Generate grid study tasks
+                    result = generate_grid_tasks(
+                        num_elements=study.iped_parameters.num_elements,
+                        tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
+                        number_of_respondents=study.iped_parameters.number_of_respondents,
+                        exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+                        seed=getattr(study.iped_parameters, 'seed', None),
+                        elements=study.elements
+                    )
+                    study.tasks = result['tasks']
+                elif study.study_type == 'layer':
+                    # Generate layer study tasks using new study_layers structure
+                    if not hasattr(study, 'study_layers') or not study.study_layers:
+                        flash('Layer study configuration not found.', 'error')
+                        return redirect(url_for('study_participation.welcome', study_id=study_id))
+                    
+                    # Use the new layer tasks generation function
+                    result = generate_layer_tasks_v2(
+                        layers_data=study.study_layers,
+                        number_of_respondents=study.iped_parameters.number_of_respondents,
+                        exposure_tolerance_pct=getattr(study.iped_parameters, 'exposure_tolerance_pct', 2.0),
+                        seed=getattr(study.iped_parameters, 'seed', None)
+                    )
+                    study.tasks = result['tasks']
                 else:
                     flash('Study tasks not configured properly.', 'error')
                     return redirect(url_for('study_participation.welcome', study_id=study_id))
+                
+                study.save()
             except Exception as e:
                 flash(f'Error generating tasks: {str(e)}', 'error')
                 return redirect(url_for('study_participation.welcome', study_id=study_id))
@@ -305,8 +418,7 @@ def task(study_id, task_number):
             flash('Study tasks could not be generated.', 'error')
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
-        # Get total tasks from IPED parameters
-        total_tasks = study.iped_parameters.tasks_per_consumer 
+        # total_tasks is already calculated above 
         
         if task_number < 1 or task_number > total_tasks:
             flash('Invalid task number.', 'error')
