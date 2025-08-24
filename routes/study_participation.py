@@ -311,8 +311,8 @@ def classification(study_id):
             else:
                 print("No response_id in session")
             
-            # Redirect to first task
-            return redirect(url_for('study_participation.task', study_id=study_id, task_number=1))
+            # Redirect to lightning-fast tasks interface
+            return redirect(url_for('study_participation.load_all_tasks', study_id=study_id))
         
         return render_template('study_participation/classification.html', study=study)
         
@@ -322,6 +322,100 @@ def classification(study_id):
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('study_participation.personal_info', study_id=study_id))
+
+@study_participation.route('/study/<study_id>/tasks', methods=['GET'])
+def load_all_tasks(study_id):
+    """Load all tasks for a study at once - for lightning-fast task flow"""
+    try:
+        study = Study.objects.get(_id=study_id)
+        
+        if study.status != 'active':
+            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Check if previous steps are completed
+        if not session.get('study_data', {}).get('personal_info'):
+            return redirect(url_for('study_participation.personal_info', study_id=study_id))
+        if not session.get('study_data', {}).get('classification_answers'):
+            return redirect(url_for('study_participation.classification', study_id=study_id))
+        
+        # Ensure study_data structure is complete
+        if 'study_data' not in session:
+            session['study_data'] = {}
+        if 'task_ratings' not in session['study_data']:
+            session['study_data']['task_ratings'] = []
+        
+        # Get total tasks from IPED parameters
+        total_tasks = 0
+        if hasattr(study, 'iped_parameters') and study.iped_parameters:
+            if study.study_type == 'grid':
+                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            elif study.study_type == 'layer':
+                total_final_tasks = getattr(study.iped_parameters, 'total_tasks', 16)
+                totalusers = getattr(study.iped_parameters, 'number_of_respondents', 16)
+                total_tasks = total_final_tasks / totalusers
+            else:
+                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+        else:
+            # Default fallback
+            if study.study_type == 'layer':
+                total_tasks = 16
+            else:
+                total_tasks = 25
+        
+        # Generate tasks if they don't exist
+        if not hasattr(study, 'tasks') or not study.tasks:
+            try:
+                from utils.task_generation import generate_grid_tasks, generate_layer_tasks_v2
+                
+                if study.study_type == 'grid':
+                    result = generate_grid_tasks(
+                        num_elements=study.iped_parameters.num_elements,
+                        tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
+                        number_of_respondents=study.iped_parameters.number_of_respondents,
+                        exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+                        seed=getattr(study.iped_parameters, 'seed', None),
+                        elements=study.elements
+                    )
+                    study.tasks = result['tasks']
+                elif study.study_type == 'layer':
+                    if not hasattr(study, 'study_layers') or not study.study_layers:
+                        flash('Layer study configuration not found.', 'error')
+                        return redirect(url_for('study_participation.welcome', study_id=study_id))
+                    
+                    result = generate_layer_tasks_v2(
+                        layers_data=study.study_layers,
+                        number_of_respondents=study.iped_parameters.number_of_respondents,
+                        exposure_tolerance_pct=getattr(study.iped_parameters, 'exposure_tolerance_pct', 2.0),
+                        seed=getattr(study.iped_parameters, 'seed', None)
+                    )
+                    study.tasks = result['tasks']
+                else:
+                    flash('Study tasks not configured properly.', 'error')
+                    return redirect(url_for('study_participation.welcome', study_id=study_id))
+                
+                study.save()
+            except Exception as e:
+                flash(f'Error generating tasks: {str(e)}', 'error')
+                return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Get all tasks for respondent 0 (anonymous participation)
+        respondent_tasks = study.tasks.get("0", [])
+        if not respondent_tasks or len(respondent_tasks) != total_tasks:
+            flash('Task data not found or incomplete.', 'error')
+            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Render the lightning-fast task interface with all tasks loaded
+        return render_template('study_participation/tasks_lightning.html', 
+                           study=study, 
+                           total_tasks=total_tasks, 
+                           all_tasks=respondent_tasks)
+        
+    except Study.DoesNotExist:
+        flash('Study not found.', 'error')
+        return redirect(url_for('index'))
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('study_participation.welcome', study_id=study_id))
 
 @study_participation.route('/study/<study_id>/task/<int:task_number>', methods=['GET', 'POST'])
 def task(study_id, task_number):
@@ -447,6 +541,63 @@ def task(study_id, task_number):
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('study_participation.welcome', study_id=study_id))
+
+@study_participation.route('/study/<study_id>/submit-all-ratings', methods=['POST'])
+def submit_all_ratings(study_id):
+    """Submit all task ratings at once from lightning-fast task flow"""
+    print(f"=== SUBMIT ALL RATINGS ROUTE CALLED ===")
+    print(f"Study ID: {study_id}")
+    
+    try:
+        study = Study.objects.get(_id=study_id)
+        print(f"Study found: {study.title}")
+        
+        if study.status != 'active':
+            print(f"Study not active: {study.status}")
+            return {'error': 'Study not active'}, 400
+        
+        # Get all task ratings from request
+        data = request.get_json()
+        print(f"Request JSON data: {data}")
+        
+        if not data or 'task_ratings' not in data:
+            print("No task_ratings data provided")
+            return {'error': 'No task ratings provided'}, 400
+        
+        task_ratings = data['task_ratings']
+        if not task_ratings or len(task_ratings) == 0:
+            print("Empty task_ratings array")
+            return {'error': 'No task ratings to submit'}, 400
+        
+        print(f"Processing {len(task_ratings)} task ratings")
+        
+        # Ensure session structure is valid
+        if 'study_data' not in session:
+            print("No study_data in session")
+            return {'error': 'Invalid session state'}, 400
+        
+        if 'task_ratings' not in session['study_data']:
+            session['study_data']['task_ratings'] = []
+        
+        # Store all task ratings in session
+        for task_data in task_ratings:
+            if task_data and 'task_number' in task_data and 'rating' in task_data:
+                session['study_data']['task_ratings'].append(task_data)
+                print(f"Added task {task_data['task_number']} rating: {task_data['rating']}")
+        
+        # Mark session as modified
+        session.modified = True
+        
+        print(f"Total task ratings in session: {len(session['study_data']['task_ratings'])}")
+        
+        return {'success': True, 'message': f'Successfully submitted {len(task_ratings)} task ratings'}
+        
+    except Study.DoesNotExist:
+        print(f"Study not found: {study_id}")
+        return {'error': 'Study not found'}, 404
+    except Exception as e:
+        print(f"Error submitting all ratings: {str(e)}")
+        return {'error': f'Server error: {str(e)}'}, 500
 
 @study_participation.route('/study/<study_id>/task-complete', methods=['POST'])
 def task_complete(study_id):
@@ -581,10 +732,12 @@ def completed(study_id):
                 
                 # Update response with completion data
                 response.session_end_time = completion_time
-                response.is_completed = True
                 response.total_study_duration = total_time
                 response.last_activity = completion_time
                 response.completed_tasks_count = len(study_data['task_ratings'])
+                
+                # Mark response as completed (this will also update study counters)
+                response.mark_completed()
                 
                 print(f"Updated response fields - Tasks count: {response.completed_tasks_count}")
                 

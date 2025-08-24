@@ -1994,6 +1994,38 @@ def reset():
     flash('Study creation draft reset. You can start over.', 'info')
     return redirect(url_for('study_creation.step1a'))
 
+@study_creation_bp.route('/update-study-counters')
+@login_required
+def update_study_counters():
+    """Update response counters for all studies based on actual StudyResponse objects."""
+    start_time = time.time()
+    print(f"⏱️  [PERF] Study counters update started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    
+    try:
+        from models.study import Study
+        
+        studies = Study.objects.all()
+        updated_count = 0
+        
+        for study in studies:
+            try:
+                counters = study.update_response_counters()
+                if counters:
+                    updated_count += 1
+                    print(f"✅ Updated study '{study.title}' counters: {counters}")
+            except Exception as e:
+                print(f"⚠️  Error updating study '{study.title}': {str(e)}")
+                continue
+        
+        total_duration = time.time() - start_time
+        print(f"⏱️  [PERF] Study counters update total: {total_duration:.3f}s")
+        
+        return f"Updated response counters for {updated_count}/{len(studies)} studies in {total_duration:.2f}s"
+        
+    except Exception as e:
+        print(f"Error during counters update: {str(e)}")
+        return f"Error: {str(e)}"
+
 @study_creation_bp.route('/cleanup-base64-images')
 @login_required
 def cleanup_base64_images():

@@ -1,0 +1,1344 @@
+{% extends "base.html" %}
+{% block title %}{{ study.title }} - Tasks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+<style>
+/* Lightning-fast task transitions */
+.task-container {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.task-container.fade-out {
+    opacity: 0;
+}
+
+.task-container.fade-in {
+    opacity: 1;
+}
+
+/* Progress bar */
+.progress-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #f0f0f0;
+    z-index: 1000;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #45a049);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* Modern UI - Card-based layout like 3rd image */
+body {
+    background: #8B4513; /* Dark brown background like 3rd image */
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Main task card */
+.task-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 0 15px 15px 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    min-height: 85vh; /* Increased height for larger vignette */
+}
+
+/* Progress indicator */
+.progress-indicator {
+    background: #E3F2FD; /* Light blue like 3rd image */
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-bottom: 15px;
+    text-align: right;
+    font-weight: 500;
+    color: #1976D2;
+    font-size: 14px;
+}
+
+/* Question text */
+.question-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* Image container */
+.image-container {
+    text-align: center;
+    margin-bottom: 20px;
+    height: 60vh; /* 80% of screen height minus other elements */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 3px solid #E3F2FD; /* Light blue border like 3rd image */
+    object-fit: contain;
+}
+
+/* Vignette preview for layer studies */
+.vignette-preview {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.layer-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.vignette-layer-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 3px solid #E3F2FD;
+    object-fit: contain;
+}
+
+/* Rating section */
+.rating-section {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.rating-instructions {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 13px;
+}
+
+.rating-instructions p {
+    margin: 5px 0;
+    font-weight: 500;
+}
+
+.rating-grid {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.rating-option {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rating-label {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #E0E0E0;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.rating-label:hover {
+    border-color: #2196F3;
+    background: #F5F5F5;
+    transform: scale(1.05);
+}
+
+.rating-label.active {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+    transform: scale(1.1);
+}
+
+/* Task navigation removed - only top progress bar remains */
+
+/* Rating submission feedback */
+.rating-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #4CAF50;
+    color: white;
+    padding: 20px 40px;
+    border-radius: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.rating-feedback.show {
+    opacity: 1;
+}
+
+/* Image Loading Countdown */
+.image-countdown {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    font-family: 'Arial', sans-serif;
+}
+
+.countdown-content {
+    text-align: center;
+    color: white;
+}
+
+.countdown-number {
+    font-size: 120px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.countdown-text {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.countdown-subtext {
+    font-size: 18px;
+    opacity: 0.9;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Study completion loader */
+.completion-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.completion-loader.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4CAF50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader-text {
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.loader-subtext {
+    color: #ccc;
+    font-size: 14px;
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .task-card {
+        margin: 0 10px 10px 10px;
+        padding: 15px;
+        min-height: 90vh;
+    }
+    
+    .question-text {
+        font-size: 16px;
+    }
+    
+    .image-container {
+        height: 65vh;
+    }
+    
+    .rating-section {
+        padding: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Progress bar at top only -->
+<div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<!-- Task container -->
+<div class="task-container" id="taskContainer">
+    <!-- Tasks will be dynamically loaded here -->
+</div>
+
+<!-- Rating feedback -->
+<div class="rating-feedback" id="ratingFeedback">
+    ✓ Task Completed!
+</div>
+
+    <!-- Image Loading Countdown -->
+    <div id="imageCountdown" class="image-countdown">
+        <div class="countdown-content">
+            <div class="countdown-number" id="countdownNumber">3</div>
+            <div class="countdown-text" id="countdownText">GET READY!</div>
+            <div class="countdown-subtext" id="countdownSubtext">Loading your first task...</div>
+            <button id="manualCountdownBtn" style="margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Start Countdown Manually</button>
+        </div>
+    </div>
+
+<!-- Study completion loader -->
+<div class="completion-loader" id="completionLoader">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Completing Your Study...</div>
+    <div class="loader-subtext">Please wait while we save your responses and prepare your completion page.</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Lightning-fast task flow - all tasks loaded upfront with image preloading
+class LightningTaskFlow {
+    constructor(studyId, totalTasks, allTasks) {
+        this.studyId = studyId;
+        this.totalTasks = totalTasks;
+        this.allTasks = allTasks;
+        this.currentTaskIndex = 0;
+        this.taskRatings = [];
+        this.isSubmitting = false;
+        this.preloadedImages = new Map();
+        
+        // Initialize
+        this.init();
+    }
+    
+    init() {
+        console.log('🚀 Lightning Task Flow initialized!');
+        console.log(`Total tasks: ${this.totalTasks}`);
+        console.log('All tasks loaded:', this.allTasks);
+        
+        // Show countdown immediately
+        this.showImageCountdown();
+        
+        // Start countdown immediately (don't wait for images)
+        console.log('🎯 About to call startCountdown()...');
+        
+        // Simple countdown test first
+        this.testSimpleCountdown();
+        
+        // Then try the full countdown
+        this.startCountdown();
+        console.log('✅ startCountdown() called successfully!');
+        
+        // Add manual countdown test after 5 seconds if it doesn't work
+        setTimeout(() => {
+            console.log('🔄 Manual countdown test after 5 seconds...');
+            this.manualCountdownTest();
+        }, 5000);
+        
+        // Add manual button listener
+        this.setupManualButton();
+        
+        // Preload images for first few tasks
+        this.preloadInitialImages();
+        
+        // Generate navigation
+        this.generateNavigation();
+        
+        // Update progress
+        this.updateProgress();
+        
+        // Initialize local storage
+        this.loadFromLocalStorage();
+    }
+    
+    preloadInitialImages() {
+        console.log('🖼️  ULTRA-FAST preloading for first task...');
+        
+        // Get first task images immediately
+        const firstTask = this.allTasks[0];
+        if (!firstTask) {
+            console.error('❌ No first task found!');
+            return;
+        }
+        
+        const firstTaskImages = new Set();
+        this.extractImageUrls(firstTask, firstTaskImages);
+        
+        console.log(`📸 First task has ${firstTaskImages.size} images - loading with MAXIMUM priority`);
+        
+        // Load first task images with multiple techniques for speed
+        firstTaskImages.forEach((url, index) => {
+            // Use multiple preloading techniques for first image
+            this.preloadImageUltraFast(url, index === 0);
+        });
+        
+        // Start loading other tasks in background
+        setTimeout(() => {
+            this.preloadRemainingTasks();
+        }, 50);
+    }
+    
+    preloadRemainingTasks() {
+        console.log('🔄 Preloading remaining tasks in background...');
+        
+        // Load images for tasks 2-5
+        for (let i = 1; i < Math.min(5, this.totalTasks); i++) {
+            const task = this.allTasks[i];
+            if (task) {
+                const imageUrls = new Set();
+                this.extractImageUrls(task, imageUrls);
+                imageUrls.forEach(url => {
+                    this.preloadImage(url);
+                });
+            }
+        }
+    }
+    
+    preloadNextTaskImages() {
+        const nextTaskIndex = this.currentTaskIndex + 1;
+        if (nextTaskIndex < this.totalTasks) {
+            console.log(`🔄 Preloading images for next task: ${nextTaskIndex + 1}`);
+            const nextTask = this.allTasks[nextTaskIndex];
+            if (nextTask) {
+                const imageUrls = new Set();
+                this.extractImageUrls(nextTask, imageUrls);
+                
+                console.log(`📸 Preloading ${imageUrls.size} images for next task`);
+                imageUrls.forEach(url => {
+                    this.preloadImage(url);
+                });
+            }
+        }
+    }
+    
+    extractImageUrls(task, imageUrls) {
+        const studyType = '{{ study.study_type }}';
+        
+        if (studyType === 'grid') {
+            // Grid study images
+            if (task.elements_shown) {
+                for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
+                    if (elementName.endsWith('_content') && elementData && elementData !== '') {
+                        imageUrls.add(elementData);
+                    }
+                }
+            }
+        } else if (studyType === 'layer') {
+            // Layer study images
+            if (task.elements_shown_content) {
+                for (const [elementName, elementData] of Object.entries(task.elements_shown_content)) {
+                    if (elementData && elementData !== 'none' && elementData !== '' && typeof elementData === 'object') {
+                        if (elementData.url) {
+                            imageUrls.add(elementData.url);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    preloadImage(url) {
+        if (this.preloadedImages.has(url)) {
+            return; // Already preloaded
+        }
+        
+        console.log(`🔄 Preloading image: ${url}`);
+        
+        const img = new Image();
+        img.onload = () => {
+            console.log(`✅ Image preloaded successfully: ${url}`);
+            this.preloadedImages.set(url, img);
+        };
+        img.onerror = () => {
+            console.log(`❌ Failed to preload image: ${url}`);
+        };
+        img.src = url;
+    }
+    
+    preloadImageUltraFast(url, isFirstImage = false) {
+        if (this.preloadedImages.has(url)) {
+            return; // Already preloaded
+        }
+        
+        console.log(`⚡ ULTRA-FAST preloading: ${url} ${isFirstImage ? '(FIRST IMAGE - MAX PRIORITY)' : ''}`);
+        
+        const img = new Image();
+        
+        // Maximum priority for first image
+        if (isFirstImage) {
+            img.loading = 'eager';
+            img.decoding = 'sync';
+            img.fetchPriority = 'high';
+            console.log(`🚀 Setting MAXIMUM priority for first image: ${url}`);
+        }
+        
+        img.onload = () => {
+            console.log(`✅ ULTRA-FAST image loaded: ${url}`);
+            this.preloadedImages.set(url, img);
+            
+            // If this was the first image, start loading all other images
+            if (isFirstImage) {
+                console.log('🎯 First image loaded! Now starting to load ALL other images...');
+                this.preloadAllRemainingImages();
+            }
+        };
+        
+        img.onerror = () => {
+            console.log(`❌ Failed to load image: ${url}`);
+        };
+        
+        img.src = url;
+    }
+    
+    showImageCountdown() {
+        console.log('🎮 Showing game-style countdown while images load...');
+        const countdown = document.getElementById('imageCountdown');
+        countdown.style.display = 'flex';
+    }
+    
+    hideImageCountdown() {
+        console.log('✅ Hiding countdown, showing first task...');
+        const countdown = document.getElementById('imageCountdown');
+        countdown.style.display = 'none';
+    }
+    
+    testSimpleCountdown() {
+        console.log('🧪 Testing simple countdown...');
+        
+        const countdownNumber = document.getElementById('countdownNumber');
+        if (countdownNumber) {
+            console.log('✅ countdownNumber found, current text:', countdownNumber.textContent);
+            
+            // Test if we can update the DOM
+            countdownNumber.textContent = 'TEST';
+            console.log('📱 Updated to TEST, now shows:', countdownNumber.textContent);
+            
+            // Change back to 3
+            countdownNumber.textContent = '3';
+            console.log('📱 Changed back to 3, now shows:', countdownNumber.textContent);
+        } else {
+            console.error('❌ countdownNumber NOT found!');
+        }
+    }
+    
+    manualCountdownTest() {
+        console.log('🎮 Manual countdown test - forcing countdown to work...');
+        
+        const countdownNumber = document.getElementById('countdownNumber');
+        const countdownText = document.getElementById('countdownText');
+        const countdownSubtext = document.getElementById('countdownSubtext');
+        
+        if (countdownNumber && countdownText && countdownSubtext) {
+            console.log('✅ All elements found, starting manual countdown...');
+            
+            // Manual countdown: 3, 2, 1, GO!
+            countdownNumber.textContent = '3';
+            countdownText.textContent = 'GET READY!';
+            countdownSubtext.textContent = 'Starting in 3...';
+            
+            setTimeout(() => {
+                countdownNumber.textContent = '2';
+                countdownText.textContent = 'GET READY!';
+                countdownSubtext.textContent = 'Starting in 2...';
+                console.log('📱 Manual countdown: 2');
+            }, 1000);
+            
+            setTimeout(() => {
+                countdownNumber.textContent = '1';
+                countdownText.textContent = 'GET READY!';
+                countdownSubtext.textContent = 'Starting in 1...';
+                console.log('📱 Manual countdown: 1');
+            }, 2000);
+            
+            setTimeout(() => {
+                countdownNumber.textContent = 'GO!';
+                countdownText.textContent = 'TASK READY!';
+                countdownSubtext.textContent = 'Your first task is ready!';
+                console.log('📱 Manual countdown: GO!');
+                
+                // After 1 second, hide countdown and show first task
+                setTimeout(() => {
+                    this.hideImageCountdown();
+                    this.showTask(0);
+                }, 1000);
+            }, 3000);
+            
+        } else {
+            console.error('❌ Elements not found for manual countdown');
+        }
+    }
+    
+    setupManualButton() {
+        const manualBtn = document.getElementById('manualCountdownBtn');
+        if (manualBtn) {
+            manualBtn.addEventListener('click', () => {
+                console.log('🔘 Manual countdown button clicked!');
+                this.startCountdown();
+            });
+            console.log('✅ Manual button listener added');
+        } else {
+            console.error('❌ Manual button not found');
+        }
+    }
+    
+    startCountdown() {
+        console.log('🎮 Starting SIMPLE countdown: 3... 2... 1... GO!');
+        
+        const countdownNumber = document.getElementById('countdownNumber');
+        const countdownText = document.getElementById('countdownText');
+        const countdownSubtext = document.getElementById('countdownSubtext');
+        
+        if (!countdownNumber || !countdownText || !countdownSubtext) {
+            console.error('❌ Countdown elements not found!');
+            return;
+        }
+        
+        console.log('✅ Starting simple countdown...');
+        
+        // Simple countdown using setTimeout instead of setInterval
+        countdownNumber.textContent = '3';
+        countdownText.textContent = 'GET READY!';
+        countdownSubtext.textContent = 'Starting in 3...';
+        console.log('📱 Showed: 3');
+        
+        setTimeout(() => {
+            countdownNumber.textContent = '2';
+            countdownText.textContent = 'GET READY!';
+            countdownSubtext.textContent = 'Starting in 2...';
+            console.log('📱 Showed: 2');
+        }, 1000);
+        
+        setTimeout(() => {
+            countdownNumber.textContent = '1';
+            countdownText.textContent = 'GET READY!';
+            countdownSubtext.textContent = 'Starting in 1...';
+            console.log('📱 Showed: 1');
+        }, 2000);
+        
+        setTimeout(() => {
+            countdownNumber.textContent = 'GO!';
+            countdownText.textContent = 'TASK READY!';
+            countdownSubtext.textContent = 'Your first task is ready!';
+            console.log('📱 Showed: GO!');
+        }, 3000);
+        
+        setTimeout(() => {
+            console.log('🎯 Countdown finished, showing first task...');
+            this.hideImageCountdown();
+            this.showTask(0);
+        }, 4000);
+        
+        console.log('⏰ Simple countdown started with setTimeout');
+    }
+    
+    preloadAllRemainingImages() {
+        console.log('🔄 Loading ALL remaining images for all tasks...');
+        
+        const allImageUrls = new Set();
+        
+        // Collect all image URLs from all tasks
+        for (let i = 0; i < this.totalTasks; i++) {
+            const task = this.allTasks[i];
+            if (task) {
+                this.extractImageUrls(task, allImageUrls);
+            }
+        }
+        
+        console.log(`📸 Total unique images found: ${allImageUrls.size}`);
+        
+        // Load all remaining images (excluding already loaded ones)
+        allImageUrls.forEach(url => {
+            if (!this.preloadedImages.has(url)) {
+                this.preloadImage(url);
+            }
+        });
+    }
+    
+    generateNavigation() {
+        // Navigation is now handled by the progress bar
+        // No need to generate individual buttons
+        console.log('Navigation initialized with progress bar');
+    }
+    
+    showTask(taskIndex) {
+        if (taskIndex < 0 || taskIndex >= this.totalTasks) return;
+        
+        this.currentTaskIndex = taskIndex;
+        const task = this.allTasks[taskIndex];
+        
+        console.log(`Showing task ${taskIndex + 1}:`, task);
+        
+        // Debug task structure for layer studies
+        if ('{{ study.study_type }}' === 'layer') {
+            console.log('🔍 Task structure analysis:');
+            console.log('- elements_shown:', task.elements_shown);
+            console.log('- elements_shown_content:', task.elements_shown_content);
+            
+            if (task.elements_shown_content) {
+                const activeElements = Object.entries(task.elements_shown_content)
+                    .filter(([name, data]) => data && data !== 'none' && data !== '' && typeof data === 'object' && data.url);
+                
+                console.log('- Active elements count:', activeElements.length);
+                activeElements.forEach(([name, data]) => {
+                    console.log(`  • ${name}: z-index=${data.z_index}, layer=${data.layer_name}, url=${data.url}`);
+                });
+                
+                // Validate z-index structure
+                this.validateZIndexStructure(activeElements);
+            }
+        }
+        
+        // Update navigation
+        this.updateNavigation();
+        
+        // Render task
+        this.renderTask(task);
+        
+        // Update progress
+        this.updateProgress();
+        
+        // Save current task to local storage
+        this.saveToLocalStorage();
+        
+        // Preload images for next task in background
+        this.preloadNextTaskImages();
+    }
+    
+    renderTask(task) {
+        const container = document.getElementById('taskContainer');
+        console.log('Rendering task, container:', container);
+        
+        if (!container) {
+            console.error('❌ taskContainer element not found!');
+            return;
+        }
+        
+        // Fade out current task
+        container.classList.add('fade-out');
+        
+        setTimeout(() => {
+            // Generate task HTML
+            const taskHTML = this.generateTaskHTML(task);
+            console.log('Generated task HTML:', taskHTML);
+            
+            container.innerHTML = taskHTML;
+            
+            // Fade in new task
+            container.classList.remove('fade-out');
+            container.classList.add('fade-in');
+            
+            // Initialize rating system
+            this.initializeRatingSystem();
+            
+            // Start task timer
+            this.startTaskTimer();
+            
+            // Debug z-index layering for layer studies
+            if ('{{ study.study_type }}' === 'layer') {
+                this.debugZIndexLayering();
+            }
+        }, 200);
+    }
+    
+    generateTaskHTML(task) {
+        const studyType = '{{ study.study_type }}';
+        let imageHTML = '';
+        
+        if (studyType === 'grid') {
+            // Grid study elements
+            if (task.elements_shown) {
+                for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
+                    if (elementName.endsWith('_content') && elementData && elementData !== '') {
+                        const baseName = elementName.replace('_content', '');
+                        const elementActive = task.elements_shown[baseName];
+                        if (elementActive === 1) {
+                            imageHTML = `<img src="${elementData}" alt="Element" class="task-image">`;
+                            break; // Show first active element
+                        }
+                    }
+                }
+            }
+        } else if (studyType === 'layer') {
+            // Layer study elements - show ALL images with proper z-index layering
+            if (task.elements_shown_content) {
+                imageHTML = '<div class="vignette-preview">';
+                
+                // Debug the raw data structure first
+                console.log('🔍 RAW TASK DATA ANALYSIS:');
+                console.log('Task object keys:', Object.keys(task));
+                console.log('elements_shown_content type:', typeof task.elements_shown_content);
+                console.log('elements_shown_content:', task.elements_shown_content);
+                
+                // Extract and analyze each element
+                const allElements = Object.entries(task.elements_shown_content);
+                console.log('All elements entries:', allElements);
+                
+                allElements.forEach(([name, data], index) => {
+                    console.log(`Element ${index + 1}:`, {
+                        name: name,
+                        data: data,
+                        type: typeof data,
+                        isObject: typeof data === 'object',
+                        hasUrl: data && typeof data === 'object' && data.url,
+                        zIndex: data && typeof data === 'object' ? data.z_index : 'N/A',
+                        layerName: data && typeof data === 'object' ? data.layer_name : 'N/A'
+                    });
+                });
+                
+                // Filter valid elements
+                const validElements = allElements.filter(([name, data]) => {
+                    const isValid = data && data !== 'none' && data !== '' && typeof data === 'object' && data.url;
+                    console.log(`Element ${name} valid: ${isValid}`, data);
+                    return isValid;
+                });
+                
+                console.log('Valid elements count:', validElements.length);
+                
+                // Sort elements by z-index to ensure proper layering
+                const sortedElements = validElements.sort((a, b) => {
+                    // Use actual z-index values from database
+                    const zIndexA = a[1].z_index;
+                    const zIndexB = b[1].z_index;
+                    
+                    console.log(`Comparing z-index: ${zIndexA} vs ${zIndexB}`);
+                    
+                    // Handle undefined z-index values
+                    if (zIndexA === undefined && zIndexB === undefined) return 0;
+                    if (zIndexA === undefined) return 1; // Put undefined at end
+                    if (zIndexB === undefined) return -1; // Put undefined at end
+                    
+                    return zIndexA - zIndexB; // Sort by z-index ascending
+                });
+                
+                console.log('Final sorted elements:', sortedElements);
+                
+                sortedElements.forEach(([elementName, elementData], index) => {
+                    // Use actual z-index value from database, don't default
+                    let zIndex = elementData.z_index;
+                    console.log(`Processing element ${index + 1}: ${elementName}, z-index: ${zIndex}, layer: ${elementData.layer_name}`);
+                    
+                    // Validate z-index
+                    if (zIndex === undefined || zIndex === null) {
+                        console.warn(`⚠️  Element ${elementName} has no z-index!`);
+                        // Fallback: use index as z-index for proper layering
+                        zIndex = index;
+                        console.log(`🔄 Using fallback z-index: ${zIndex} for ${elementName}`);
+                    }
+                    
+                    imageHTML += `
+                        <div class="layer-image" style="z-index: ${zIndex};">
+                            <img src="${elementData.url}" 
+                                 alt="${elementData.alt_text || elementData.name}" 
+                                 class="vignette-layer-img"
+                                 data-layer="${elementData.layer_name}"
+                                 data-z-index="${zIndex}"
+                                 title="${elementName}: ${elementData.layer_name} (z-index: ${zIndex})">
+                        </div>
+                    `;
+                });
+                
+                imageHTML += '</div>';
+            }
+        }
+        
+        return `
+            <div class="task-card">
+                <div class="progress-indicator">
+                    Task ${this.currentTaskIndex + 1} of ${this.totalTasks}
+                </div>
+                
+                <div class="question-text">
+                    {{ study.main_question }}{% if not study.main_question.endswith('?') %}?{% endif %}
+                </div>
+                
+                <div class="image-container">
+                    ${imageHTML}
+                </div>
+                
+                <div class="rating-section">
+                    <div class="rating-instructions">
+                        <p><strong>{{ study.rating_scale.min_value }} = {{ study.rating_scale.min_label }}</strong></p>
+                        {% if study.rating_scale.middle_label %}
+                            <p><strong>{{ (study.rating_scale.min_value + study.rating_scale.max_value) // 2 }} = {{ study.rating_scale.middle_label }}</strong></p>
+                        {% endif %}
+                        <p><strong>{{ study.rating_scale.max_value }} = {{ study.rating_scale.max_label }}</strong></p>
+                    </div>
+                    
+                    <div class="rating-grid">
+                        {% for rating in range(study.rating_scale.min_value, study.rating_scale.max_value + 1) %}
+                            <div class="rating-option" data-rating="{{ rating }}">
+                                <div class="rating-label">
+                                    <span class="rating-number">{{ rating }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    initializeRatingSystem() {
+        const ratingOptions = document.querySelectorAll('.rating-option');
+        let selectedRating = null;
+        
+        ratingOptions.forEach(option => {
+            const rating = option.dataset.rating;
+            const label = option.querySelector('.rating-label');
+            
+            option.addEventListener('click', () => {
+                if (this.isSubmitting) return;
+                
+                console.log('Rating selected:', rating);
+                selectedRating = parseInt(rating);
+                
+                // Visual feedback
+                ratingOptions.forEach(opt => opt.querySelector('.rating-label').classList.remove('active'));
+                label.classList.add('active');
+                
+                // Submit rating
+                this.submitRating(selectedRating);
+            });
+            
+            // Hover effects
+            label.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('active')) {
+                    this.classList.add('hover');
+                }
+            });
+            
+            label.addEventListener('mouseleave', function() {
+                this.classList.remove('hover');
+            });
+        });
+    }
+    
+    startTaskTimer() {
+        this.taskStartTime = new Date();
+        console.log('Task timer started:', this.taskStartTime);
+    }
+    
+    validateZIndexStructure(activeElements) {
+        console.log('🔍 Z-Index Structure Validation:');
+        
+        const zIndexValues = activeElements.map(([name, data]) => data.z_index);
+        const uniqueZIndexes = [...new Set(zIndexValues)];
+        
+        console.log('- All z-index values:', zIndexValues);
+        console.log('- Unique z-index values:', uniqueZIndexes.sort((a, b) => a - b));
+        
+        // Check for missing z-index values
+        const missingZIndex = zIndexValues.some(z => z === undefined || z === null);
+        if (missingZIndex) {
+            console.warn('⚠️  Some elements are missing z-index values!');
+        }
+        
+        // Check for duplicate z-index values
+        const duplicateZIndex = uniqueZIndexes.length !== zIndexValues.length;
+        if (duplicateZIndex) {
+            console.warn('⚠️  Duplicate z-index values detected!');
+        }
+        
+        // Analyze layer names and suggest proper z-index
+        console.log('🔍 Layer Name Analysis:');
+        activeElements.forEach(([name, data]) => {
+            const layerName = data.layer_name;
+            const zIndex = data.z_index;
+            
+            // Suggest proper z-index based on layer name
+            let suggestedZIndex = 'Unknown';
+            if (layerName.toLowerCase().includes('background')) suggestedZIndex = 0;
+            else if (layerName.toLowerCase().includes('middle')) suggestedZIndex = 1;
+            else if (layerName.toLowerCase().includes('foreground')) suggestedZIndex = 2;
+            else if (layerName.toLowerCase().includes('top')) suggestedZIndex = 3;
+            else if (layerName.toLowerCase().includes('front')) suggestedZIndex = 3;
+            
+            console.log(`  • ${name}: layer="${layerName}", current z-index=${zIndex}, suggested=${suggestedZIndex}`);
+        });
+        
+        console.log(`- Z-index validation: ${missingZIndex ? '❌' : '✅'} Missing values, ${duplicateZIndex ? '❌' : '✅'} Duplicates`);
+    }
+    
+    debugZIndexLayering() {
+        console.log('Layer study detected, checking z-index layering...');
+        
+        const layerImages = document.querySelectorAll('.layer-image');
+        console.log('Found layer images:', layerImages.length);
+        
+        if (layerImages.length === 0) {
+            console.warn('⚠️  No layer images found! Check if elements_shown_content has data.');
+            return;
+        }
+        
+        layerImages.forEach((layer, index) => {
+            const img = layer.querySelector('img');
+            const zIndex = layer.style.zIndex;
+            const layerName = img.dataset.layer;
+            const zIndexData = img.dataset.zIndex;
+            
+            console.log(`Layer ${index + 1}:`, {
+                element: layer,
+                zIndex: zIndex,
+                layerName: layerName,
+                dataZIndex: zIndexData,
+                imgSrc: img.src,
+                computedZIndex: window.getComputedStyle(layer).zIndex
+            });
+            
+            // Ensure z-index is properly set
+            if (zIndex && zIndex !== 'auto') {
+                layer.style.zIndex = zIndex;
+                console.log(`✅ Set z-index for layer ${index + 1} to: ${zIndex}`);
+            } else {
+                console.warn(`⚠️  Layer ${index + 1} has no z-index set: ${zIndex}`);
+            }
+        });
+        
+        // Log the stacking order
+        console.log('📋 Final stacking order (lowest to highest z-index):');
+        const sortedLayers = Array.from(layerImages).sort((a, b) => {
+            const zA = parseInt(a.style.zIndex) || 0;
+            const zB = parseInt(b.style.zIndex) || 0;
+            return zA - zB;
+        });
+        
+        sortedLayers.forEach((layer, index) => {
+            const img = layer.querySelector('img');
+            const zIndex = layer.style.zIndex;
+            const layerName = img.dataset.layer;
+            console.log(`  ${index + 1}. ${layerName} (z-index: ${zIndex})`);
+        });
+    }
+    
+    async submitRating(rating) {
+        if (this.isSubmitting) return;
+        
+        this.isSubmitting = true;
+        const taskEndTime = new Date();
+        const taskDuration = (taskEndTime - this.taskStartTime) / 1000;
+        
+        console.log('Submitting rating:', rating, 'Duration:', taskDuration);
+        
+        // Create task data
+        const taskData = {
+            task_number: this.currentTaskIndex + 1,
+            rating: rating,
+            timestamp: taskEndTime.toISOString(),
+            task_start_time: this.taskStartTime.toISOString(),
+            task_end_time: taskEndTime.toISOString(),
+            task_duration_seconds: taskDuration,
+            task_data: {
+                elements_shown: this.allTasks[this.currentTaskIndex].elements_shown || {}
+            }
+        };
+        
+        // Store in local storage
+        this.taskRatings[this.currentTaskIndex] = taskData;
+        this.saveToLocalStorage();
+        
+        // Check if this is the last task
+        if (this.currentTaskIndex === this.totalTasks - 1) {
+            console.log('🎯 Last task completed - starting completion process...');
+            // Show completion loader for last task
+            this.showCompletionLoader();
+            // Start the completion process
+            this.completeStudy();
+        } else {
+            // INSTANT progression to next task - no delay!
+            console.log('⚡ Instantly advancing to next task...');
+            this.advanceToNextTask();
+        }
+    }
+    
+    showRatingFeedback() {
+        const feedback = document.getElementById('ratingFeedback');
+        feedback.classList.add('show');
+        
+        setTimeout(() => {
+            feedback.classList.remove('show');
+        }, 800);
+    }
+    
+    showCompletionLoader() {
+        console.log('🔄 Showing completion loader for last task...');
+        const loader = document.getElementById('completionLoader');
+        loader.classList.add('show');
+    }
+    
+    hideCompletionLoader() {
+        console.log('✅ Hiding completion loader...');
+        const loader = document.getElementById('completionLoader');
+        loader.classList.remove('show');
+    }
+    
+    advanceToNextTask() {
+        console.log(`🔄 Advancing from task ${this.currentTaskIndex + 1} to next task...`);
+        
+        if (this.currentTaskIndex < this.totalTasks - 1) {
+            // Reset submission flag before showing next task
+            this.isSubmitting = false;
+            console.log(`✅ Moving to task ${this.currentTaskIndex + 2}`);
+            this.showTask(this.currentTaskIndex + 1);
+        } else {
+            // All tasks completed
+            console.log('🎉 All tasks completed!');
+            this.completeStudy();
+        }
+    }
+    
+    updateNavigation() {
+        // Navigation is now handled by the progress bar
+        // No need to update individual buttons
+        console.log(`Navigation updated - Current task: ${this.currentTaskIndex + 1}`);
+    }
+    
+    updateProgress() {
+        const progress = ((this.currentTaskIndex + 1) / this.totalTasks) * 100;
+        
+        // Update top progress bar only
+        document.getElementById('progressBar').style.width = progress + '%';
+    }
+    
+    saveToLocalStorage() {
+        const data = {
+            studyId: this.studyId,
+            currentTaskIndex: this.currentTaskIndex,
+            taskRatings: this.taskRatings,
+            timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem(`study_${this.studyId}_progress`, JSON.stringify(data));
+        console.log('Progress saved to local storage');
+    }
+    
+    loadFromLocalStorage() {
+        const saved = localStorage.getItem(`study_${this.studyId}_progress`);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.studyId === this.studyId) {
+                    this.currentTaskIndex = data.currentTaskIndex || 0;
+                    this.taskRatings = data.taskRatings || [];
+                    console.log('Progress loaded from local storage:', data);
+                }
+            } catch (e) {
+                console.log('Could not load saved progress:', e);
+            }
+        }
+    }
+    
+    async completeStudy() {
+        console.log('🎉 All tasks completed! Starting completion process...');
+        
+        // Add timeout protection to prevent infinite loading
+        const completionTimeout = setTimeout(() => {
+            console.warn('⚠️  Completion process taking too long, forcing redirect...');
+            this.hideCompletionLoader();
+            window.location.href = `/study/${this.studyId}/completed`;
+        }, 15000); // 15 second timeout
+        
+        try {
+            // Update loader text to show completion progress
+            const loaderText = document.querySelector('#completionLoader .loader-text');
+            const loaderSubtext = document.querySelector('#completionLoader .loader-subtext');
+            
+            if (loaderText && loaderSubtext) {
+                loaderText.textContent = 'Task Complete!';
+                loaderSubtext.textContent = 'Thank you for completing all tasks. Saving your responses...';
+            }
+            
+            // Submit all ratings to server
+            console.log('📤 Submitting all task ratings to server...');
+            console.log('📊 Task ratings to submit:', this.taskRatings);
+            
+            const response = await fetch(`/study/${this.studyId}/submit-all-ratings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    task_ratings: this.taskRatings
+                })
+            });
+            
+            console.log('📡 Server response status:', response.status);
+            
+            if (response.ok) {
+                console.log('✅ All ratings submitted successfully!');
+                
+                // Clear timeout since we're successful
+                clearTimeout(completionTimeout);
+                
+                // Update loader text for final step
+                if (loaderText && loaderSubtext) {
+                    loaderText.textContent = 'Responses Saved!';
+                    loaderSubtext.textContent = 'Redirecting you to the completion page...';
+                }
+                
+                // Clear local storage
+                localStorage.removeItem(`study_${this.studyId}_progress`);
+                
+                // Redirect to completion page after showing success message
+                setTimeout(() => {
+                    console.log('🚀 Redirecting to completion page...');
+                    window.location.href = `/study/${this.studyId}/completed`;
+                }, 2000);
+                
+            } else {
+                const errorText = await response.text();
+                console.error('❌ Server error response:', errorText);
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
+        } catch (error) {
+            console.error('❌ Error submitting ratings:', error);
+            
+            // Clear timeout
+            clearTimeout(completionTimeout);
+            
+            // Hide loader and show error
+            this.hideCompletionLoader();
+            alert('Error submitting ratings. Please try again or contact support.');
+        }
+    }
+}
+
+// Initialize lightning-fast task flow when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM Content Loaded - Starting initialization...');
+    console.log('🔍 Testing if JavaScript is working...');
+    
+    // Simple test to see if JavaScript is running
+    try {
+        console.log('✅ JavaScript is working!');
+        console.log('🔍 Testing element access...');
+        
+        const testElement = document.getElementById('imageCountdown');
+        console.log('📱 imageCountdown element found:', testElement);
+        
+        if (testElement) {
+            console.log('✅ HTML elements exist!');
+        } else {
+            console.error('❌ HTML elements NOT found!');
+        }
+    } catch (error) {
+        console.error('❌ JavaScript error:', error);
+    }
+    
+    // Check if required elements exist
+    const taskContainer = document.getElementById('taskContainer');
+    const progressBar = document.getElementById('progressBar');
+    
+    console.log('Required elements check:');
+    console.log('- taskContainer:', taskContainer);
+    console.log('- progressBar:', progressBar);
+    
+    if (!taskContainer) {
+        console.error('❌ CRITICAL: taskContainer element not found!');
+        return;
+    }
+    
+    if (!progressBar) {
+        console.error('❌ CRITICAL: progressBar element not found!');
+        return;
+    }
+    
+    const studyId = '{{ study._id }}';
+    const totalTasks = {{ total_tasks }};
+    const allTasks = {{ all_tasks|tojson|safe }};
+    
+    console.log('🚀 Initializing Lightning Task Flow...');
+    console.log('Study ID:', studyId);
+    console.log('Total Tasks:', totalTasks);
+    console.log('All Tasks:', allTasks);
+    
+    // Create and start the lightning-fast task flow
+    try {
+        window.taskFlow = new LightningTaskFlow(studyId, totalTasks, allTasks);
+        console.log('✅ LightningTaskFlow initialized successfully!');
+    } catch (error) {
+        console.error('❌ Error initializing LightningTaskFlow:', error);
+    }
+});
+</script>
+{% endblock %}

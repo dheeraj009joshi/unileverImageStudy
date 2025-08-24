@@ -113,12 +113,26 @@ class StudyResponse(Document):
         if self.session_start_time:
             self.total_study_duration = (self.session_end_time - self.session_start_time).total_seconds()
         self.completion_percentage = 100.0
+        
+        # Update study completed responses counter
+        try:
+            self.study.increment_completed_responses()
+            print(f"✅ Study completed_responses updated to: {self.study.completed_responses}")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not update study completed responses counter: {str(e)}")
     
     def mark_abandoned(self, reason="User left study"):
         """Mark the study response as abandoned."""
         self.is_abandoned = True
         self.abandonment_timestamp = datetime.utcnow()
         self.abandonment_reason = reason
+        
+        # Update study abandoned responses counter
+        try:
+            self.study.increment_abandoned_responses()
+            print(f"✅ Study abandoned_responses updated to: {self.study.abandoned_responses}")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not update study abandoned responses counter: {str(e)}")
     
     def to_dict(self):
         """Convert response to dictionary for JSON serialization."""

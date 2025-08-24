@@ -167,6 +167,54 @@ class Study(Document):
         
         return None
     
+    def increment_total_responses(self):
+        """Increment the total responses counter."""
+        self.total_responses += 1
+        self.save()
+        return self.total_responses
+    
+    def increment_completed_responses(self):
+        """Increment the completed responses counter."""
+        self.completed_responses += 1
+        self.save()
+        return self.completed_responses
+    
+    def increment_abandoned_responses(self):
+        """Increment the abandoned responses counter."""
+        self.abandoned_responses += 1
+        self.save()
+        return self.abandoned_responses
+    
+    def update_response_counters(self):
+        """Update response counters based on actual StudyResponse objects."""
+        from models.response import StudyResponse
+        
+        # Count actual responses from database
+        total_count = StudyResponse.objects(study=self).count()
+        completed_count = StudyResponse.objects(study=self, is_completed=True).count()
+        abandoned_count = StudyResponse.objects(study=self, is_abandoned=True).count()
+        
+        # Update counters if they differ
+        if (self.total_responses != total_count or 
+            self.completed_responses != completed_count or 
+            self.abandoned_responses != abandoned_count):
+            
+            self.total_responses = total_count
+            self.completed_responses = completed_count
+            self.abandoned_responses = abandoned_count
+            self.save()
+            
+            print(f"✅ Updated study {self.title} response counters:")
+            print(f"   Total: {self.total_responses}")
+            print(f"   Completed: {self.completed_responses}")
+            print(f"   Abandoned: {self.abandoned_responses}")
+        
+        return {
+            'total': self.total_responses,
+            'completed': self.completed_responses,
+            'abandoned': self.abandoned_responses
+        }
+    
     def get_respondent_tasks(self, respondent_id):
         """Get tasks for a specific respondent."""
         if not self.tasks or str(respondent_id) not in self.tasks:
