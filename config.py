@@ -22,6 +22,9 @@ class Config:
     AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING') or "DefaultEndpointsProtocol=https;AccountName=printxd;AccountKey=CaL/3SmhK8iKVM02i/cIN1VgE3058lyxRnCxeRd2J1k/9Ay6I67GC2CMnW//lJhNl+71WwxYXHnC+AStkbW1Jg==;EndpointSuffix=core.windows.net"
     AZURE_CONTAINER_NAME = os.environ.get('AZURE_CONTAINER_NAME') or "mf2"
     
+    # Parallel upload configuration
+    AZURE_UPLOAD_MAX_WORKERS = int(os.environ.get('AZURE_UPLOAD_MAX_WORKERS', '30'))  # Number of parallel upload workers for ultra-fast uploads
+    
     # Session and CSRF settings
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS

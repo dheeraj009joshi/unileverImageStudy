@@ -143,9 +143,14 @@ class UnileverImageStudyApp {
         });
     }
 
-    showLoading() {
+    showLoading(message = 'Loading...') {
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
+            // Update loading message if provided
+            const textElement = overlay.querySelector('.loading-overlay-text');
+            if (textElement && message) {
+                textElement.textContent = message;
+            }
             overlay.classList.add('is-visible');
         }
     }

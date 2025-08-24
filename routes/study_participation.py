@@ -99,7 +99,7 @@ def personal_info(study_id):
             
             # Validate required fields
             if not birth_date or not gender:
-                flash('Please fill in all required fields.', 'error')
+                
                 return render_template('study_participation/personal_info.html', study=study)
             
             # Calculate age from birth date

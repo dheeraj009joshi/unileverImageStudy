@@ -27,7 +27,7 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" class="layer-config-form" enctype="multipart/form-data" data-validate="true" id="layerConfigForm">
+        <form method="POST" class="layer-config-form step-form" enctype="multipart/form-data" data-validate="true" data-loading="true" id="layerConfigForm">
             {{ form.hidden_tag() }}
             
             <!-- Layer Management Section -->
@@ -630,73 +630,46 @@ function addImageToModal(file) {
     reader.readAsDataURL(file);
 }
 
-// Upload image to Azure (called when form is submitted)
-function uploadImageToAzure(file, imageId) {
-    console.log('Uploading image to Azure:', file.name, 'for image ID:', imageId);
+// 🚀 ULTRA-FAST multiprocessing upload function (replaces old individual upload)
+function uploadLayerImagesWithMultiprocessing(imagesToUpload) {
+    console.log('🚀 Starting multiprocessing upload for', imagesToUpload.length, 'images');
     
-    return new Promise((resolve, reject) => {
-        // Create FormData for the upload
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        // Add CSRF token
-        const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
-        if (!csrfTokenInput) {
-            console.error('CSRF token input not found!');
-            console.log('Available inputs:', document.querySelectorAll('input'));
-            reject(new Error('CSRF token not found'));
-            return;
+    return fetch('/study/create/upload-layer-images', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ images: imagesToUpload })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('🎯 Multiprocessing upload successful:', data.results);
+            return data.results;
+        } else {
+            throw new Error(data.error || 'Multiprocessing upload failed');
         }
-        
-        const csrfToken = csrfTokenInput.value;
-        if (!csrfToken) {
-            console.error('CSRF token value is empty!');
-            reject(new Error('CSRF token is empty'));
-            return;
-        }
-        
-        formData.append('csrf_token', csrfToken);
-        console.log('Uploading with CSRF token:', csrfToken ? 'Present' : 'Missing');
-        
-        // Upload to our backend endpoint
-        fetch('/study/create/upload-image', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            console.log('Upload response status:', response.status);
-            console.log('Upload response headers:', response.headers);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            return response.json();
-        })
-        .then(data => {
-            if (data.success && data.url) {
-                console.log('Image uploaded successfully to Azure:', data.url);
-                
-                // Find the image in the layers and update its URL
-                layers.forEach(layer => {
-                    const imageIndex = layer.images.findIndex(img => img.id === imageId);
-                    if (imageIndex !== -1) {
-                        layer.images[imageIndex].url = data.url;
-                        console.log(`Updated image ${imageId} with Azure URL: ${data.url}`);
-                    }
-                });
-                
-                resolve(data.url);
-            } else {
-                console.error('Upload failed:', data.error);
-                reject(new Error(data.error || 'Upload failed'));
-            }
-        })
-        .catch(error => {
-            console.error('Upload error:', error);
-            reject(error);
-        });
     });
+}
+
+// 🎯 Layer loading functions for professional UX
+function showLayerLoading(message, show = true) {
+    const loadingOverlay = document.getElementById('layerLoadingOverlay');
+    const loadingText = document.getElementById('layerLoadingText');
+    
+    if (loadingOverlay && loadingText) {
+        if (show) {
+            loadingText.textContent = message || 'Processing...';
+            loadingOverlay.classList.add('is-visible');
+            console.log('🚀 Layer loading overlay shown:', message);
+        } else {
+            loadingOverlay.classList.remove('is-visible');
+            console.log('✅ Layer loading overlay hidden');
+        }
+    } else {
+        console.error('❌ Loading overlay elements not found');
+    }
 }
 
 // Render images in modal
@@ -1243,44 +1216,83 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(pair[0] + ': ' + pair[1]);
             }
             
-            // First, upload all images to Azure
-            console.log('Starting Azure upload for all images...');
+            // 🚀 ULTRA-FAST batch upload using multiprocessing
+            console.log('🚀 Starting ULTRA-FAST batch upload for all layer images...');
             console.log('Layers array before upload:', layers);
             console.log('Layers length before upload:', layers.length);
             
-            const uploadPromises = [];
-            const imageFileMap = new Map(); // Map image ID to file object
+            const imagesToUpload = [];
             
-            // Collect all files that need to be uploaded
+            // Collect all images that need to be uploaded
             layers.forEach(layer => {
                 console.log(`Processing layer for upload: ${layer.name} with ${layer.images.length} images`);
                 layer.images.forEach(image => {
                     if (image.file && !image.url) {
-                        imageFileMap.set(image.id, image.file);
-                        uploadPromises.push(uploadImageToAzure(image.file, image.id));
+                        // Convert file to base64 for batch upload
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            imagesToUpload.push({
+                                id: image.id,
+                                file_data: e.target.result
+                            });
+                        };
+                        reader.readAsDataURL(image.file);
                     }
                 });
             });
             
-            if (uploadPromises.length > 0) {
-                console.log(`Uploading ${uploadPromises.length} images to Azure...`);
+            if (imagesToUpload.length > 0) {
+                console.log(`🚀 Starting ULTRA-FAST batch upload of ${imagesToUpload.length} layer images using multiprocessing`);
                 
-                // Show loading message
-                showMobileAlert('Uploading images to Azure... Please wait.');
+                // Show loading overlay with custom message
+                showLayerLoading('🚀 Uploading images to Azure using multiprocessing...', true);
                 
-                // Wait for all uploads to complete
-                Promise.all(uploadPromises)
-                    .then(() => {
-                        console.log('All images uploaded successfully');
-                        showMobileAlert('Images uploaded! Now saving layer configuration...');
+                // Batch upload all images using multiprocessing
+                fetch('/study/create/upload-layer-images', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    },
+                    body: JSON.stringify({ images: imagesToUpload })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('🎯 All layer images uploaded successfully using multiprocessing!');
+                        console.log('Upload results:', data.results);
+                        
+                        // Update image URLs in layers
+                        Object.keys(data.results).forEach(imageId => {
+                            const result = data.results[imageId];
+                            if (result.success) {
+                                // Find and update the image in layers
+                                layers.forEach(layer => {
+                                    const imageIndex = layer.images.findIndex(img => img.id === imageId);
+                                    if (imageIndex !== -1) {
+                                        layer.images[imageIndex].url = result.url;
+                                        console.log(`Updated image ${imageId} with Azure URL: ${result.url}`);
+                                    }
+                                });
+                            } else {
+                                console.error(`Failed to upload image ${imageId}:`, result.error);
+                            }
+                        });
+                        
+                        // Hide loading and show success
+                        showLayerLoading('✅ Images uploaded! Now saving layer configuration...', false);
                         
                         // Now submit the form with Azure URLs
                         submitFormWithAzureUrls();
-                    })
-                    .catch(error => {
-                        console.error('Error uploading images:', error);
-                        showMobileAlert('Error uploading images. Please try again.');
-                    });
+                    } else {
+                        throw new Error(data.error || 'Upload failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('💥 Error during batch upload:', error);
+                    showLayerLoading('', false);
+                    showMobileAlert('Error uploading images. Please try again.');
+                });
             } else {
                 // No images to upload, submit form directly
                 submitFormWithAzureUrls();

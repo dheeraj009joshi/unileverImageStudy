@@ -63,6 +63,8 @@
                     <small class="form-help">Label for the minimum value</small>
                 </div>
                 
+                <div class="study-form-group">
+                    {{ form.max_label.label(class="study-form-label study-form-label--required") }}
                     {{ form.max_label(class="study-form-control", placeholder="e.g., Extremely important") }}
                     {% if form.max_label.errors %}
                         <div class="form-error">

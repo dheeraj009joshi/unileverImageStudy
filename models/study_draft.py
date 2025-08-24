@@ -1,6 +1,7 @@
 from mongoengine import Document, StringField, DictField, DateTimeField, ReferenceField, UUIDField, BooleanField
 from datetime import datetime
 import uuid
+import time
 
 class StudyDraft(Document):
     """Model for storing study creation drafts in the database."""
@@ -63,51 +64,94 @@ class StudyDraft(Document):
     
     def get_step_data(self, step):
         """Get data for a specific step."""
+        start_time = time.time()
+        print(f"⏱️  [PERF] get_step_data({step}) started")
+        
         if step == 'layer_config':
-            return self.layer_config_data
+            result = self.layer_config_data
         elif step == 'layer_iped':
             # For layer_iped, return the IPED parameters from layer_iped_data
-            return self.layer_iped_data or {}
+            result = self.layer_iped_data or {}
         elif step == '3a_grid':
-            return self.step3a_grid_data or {}
+            result = self.step3a_grid_data or {}
         elif step == '3a_layer':
-            return self.step3a_layer_data or {}
+            result = self.step3a_layer_data or {}
         else:
             step_field = f'step{step}_data'
-            return getattr(self, step_field, {})
+            result = getattr(self, step_field, {})
+        
+        total_duration = time.time() - start_time
+        print(f"⏱️  [PERF] get_step_data({step}) total: {total_duration:.3f}s")
+        return result
     
     def is_step_complete(self, step):
         """Check if a specific step is complete."""
+        start_time = time.time()
+        print(f"⏱️  [PERF] is_step_complete({step}) started")
+        
+        step_data_start = time.time()
         step_data = self.get_step_data(step)
+        step_data_duration = time.time() - step_data_start
+        print(f"⏱️  [PERF] Step data retrieval took {step_data_duration:.3f}s")
         
         # For layer-specific steps, check if they have meaningful data
         if step == 'layer_config':
             # Check if layers data exists and has at least one layer
             layers = step_data.get('layers', [])
-            return len(layers) > 0 and all(len(layer.get('images', [])) > 0 for layer in layers)
+            result = len(layers) > 0 and all(len(layer.get('images', [])) > 0 for layer in layers)
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
+            return result
         elif step == 'layer_iped':
             # Check if IPED parameters are set
-            return (step_data.get('number_of_respondents') and 
+            result = (step_data.get('number_of_respondents') and 
                    step_data.get('exposure_tolerance_pct') is not None)
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
+            return result
         elif step == '3a':
             # Check if task matrix has been generated
             # For grid studies, check 3a_grid data
+            grid_data_start = time.time()
             grid_data = self.get_step_data('3a_grid')
+            grid_data_duration = time.time() - grid_data_start
+            print(f"⏱️  [PERF] 3a_grid data retrieval took {grid_data_duration:.3f}s")
+            
             if grid_data and grid_data.get('tasks_matrix'):
+                total_duration = time.time() - start_time
+                print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - TRUE (grid)")
                 return True
             # For layer studies, check 3a_layer data
+            layer_data_start = time.time()
             layer_data = self.get_step_data('3a_layer')
+            layer_data_duration = time.time() - layer_data_start
+            print(f"⏱️  [PERF] 3a_layer data retrieval took {layer_data_duration:.3f}s")
+            
             if layer_data and layer_data.get('tasks_matrix'):
+                total_duration = time.time() - start_time
+                print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - TRUE (layer)")
                 return True
+            
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - FALSE")
             return False
         else:
             # For other steps, check if any data exists
-            return bool(step_data)
+            result = bool(step_data)
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
+            return result
     
     def can_proceed_to_step(self, target_step):
         """Check if user can proceed to a specific step."""
+        start_time = time.time()
+        print(f"⏱️  [PERF] can_proceed_to_step({target_step}) started")
+        
         # Get study type to determine the correct flow
+        study_type_start = time.time()
         study_type = self.get_step_data('1b').get('study_type', 'grid')
+        study_type_duration = time.time() - study_type_start
+        print(f"⏱️  [PERF] Study type retrieval took {study_type_duration:.3f}s")
         
         if study_type == 'layer':
             step_order = ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b']
@@ -120,17 +164,38 @@ class StudyDraft(Document):
         target_index = step_order.index(target_step)
         
         # For forward navigation, require previous steps to be complete
+        completion_check_start = time.time()
         for i in range(target_index):
             step_to_check = step_order[i]
+            step_check_start = time.time()
             if not self.is_step_complete(step_to_check):
+                step_check_duration = time.time() - step_check_start
+                print(f"⏱️  [PERF] Step {step_to_check} completion check took {step_check_duration:.3f}s - NOT COMPLETE")
                 print(f"DEBUG: Cannot proceed to {target_step} - step {step_to_check} is not complete")
+                completion_check_duration = time.time() - completion_check_start
+                print(f"⏱️  [PERF] Total completion check took {completion_check_duration:.3f}s")
+                total_duration = time.time() - start_time
+                print(f"⏱️  [PERF] can_proceed_to_step({target_step}) total: {total_duration:.3f}s - FALSE")
                 return False
+            step_check_duration = time.time() - step_check_start
+            print(f"⏱️  [PERF] Step {step_to_check} completion check took {step_check_duration:.3f}s - COMPLETE")
+        
+        completion_check_duration = time.time() - completion_check_start
+        print(f"⏱️  [PERF] Total completion check took {completion_check_duration:.3f}s")
+        total_duration = time.time() - start_time
+        print(f"⏱️  [PERF] can_proceed_to_step({target_step}) total: {total_duration:.3f}s - TRUE")
         return True
     
     def can_access_step(self, target_step):
         """Check if user can access a specific step (for navigation)."""
+        start_time = time.time()
+        print(f"⏱️  [PERF] can_access_step({target_step}) started")
+        
         # Get study type to determine the correct flow
+        study_type_start = time.time()
         study_type = self.get_step_data('1b').get('study_type', 'grid')
+        study_type_duration = time.time() - study_type_start
+        print(f"⏱️  [PERF] Study type retrieval took {study_type_duration:.3f}s")
         
         if study_type == 'layer':
             step_order = ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b']
@@ -144,39 +209,95 @@ class StudyDraft(Document):
         
         # For navigation (including going back), allow access to completed steps
         if target_index == 0:  # step1a
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - TRUE (step1a)")
             return True
         elif target_index == 1:  # step1b
-            return self.is_step_complete('1a')
+            step_check_start = time.time()
+            result = self.is_step_complete('1a')
+            step_check_duration = time.time() - step_check_start
+            print(f"⏱️  [PERF] Step 1a completion check took {step_check_duration:.3f}s")
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+            return result
         elif target_step == '1c':  # step1c (Rating Scale) - common for both study types
-            return self.is_step_complete('1a') and self.is_step_complete('1b')
+            step_check_start = time.time()
+            result = self.is_step_complete('1a') and self.is_step_complete('1b')
+            step_check_duration = time.time() - step_check_start
+            print(f"⏱️  [PERF] Steps 1a,1b completion check took {step_check_duration:.3f}s")
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+            return result
         elif target_step == '2b':  # step2b (Classification Questions) - common for both study types
-            return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c')
+            step_check_start = time.time()
+            result = self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c')
+            step_check_duration = time.time() - step_check_start
+            print(f"⏱️  [PERF] Steps 1a,1b,1c completion check took {step_check_duration:.3f}s")
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+            return result
         elif target_step in ['2a', 'layer_config']:  # Content setup step (varies by study type)
             if target_step == '2a':  # Grid study elements
-                return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+                step_check_start = time.time()
+                result = self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+                step_check_duration = time.time() - step_check_start
+                print(f"⏱️  [PERF] Steps 1a,1b,1c,2b completion check took {step_check_duration:.3f}s")
+                total_duration = time.time() - start_time
+                print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                return result
             else:  # Layer study configuration
-                return self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+                step_check_start = time.time()
+                result = self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+                step_check_duration = time.time() - step_check_start
+                print(f"⏱️  [PERF] Steps 1a,1b,1c,2b completion check took {step_check_duration:.3f}s")
+                total_duration = time.time() - start_time
+                print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                return result
         else:  # steps 2c, layer_iped, 3a, 3b
             if target_step in ['2c', 'layer_iped']:  # IPED parameters
                 if target_step == '2c':  # Grid study IPED
-                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                    step_check_start = time.time()
+                    result = (self.is_step_complete('1a') and self.is_step_complete('1b') and 
                            self.is_step_complete('1c') and self.is_step_complete('2b') and 
                            self.is_step_complete('2a'))
+                    step_check_duration = time.time() - step_check_start
+                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,2a completion check took {step_check_duration:.3f}s")
+                    total_duration = time.time() - start_time
+                    print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                    return result
                 else:  # Layer study IPED
-                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                    step_check_start = time.time()
+                    result = (self.is_step_complete('1a') and self.is_step_complete('1b') and 
                            self.is_step_complete('1c') and self.is_step_complete('2b') and 
                            self.is_step_complete('layer_config'))
+                    step_check_duration = time.time() - step_check_start
+                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,layer_config completion check took {step_check_duration:.3f}s")
+                    total_duration = time.time() - start_time
+                    print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                    return result
             else:  # steps 3a, 3b
                 if study_type == 'layer':
                     # For layer studies, check layer_config and layer_iped
-                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                    step_check_start = time.time()
+                    result = (self.is_step_complete('1a') and self.is_step_complete('1b') and 
                            self.is_step_complete('1c') and self.is_step_complete('2b') and
                            self.is_step_complete('layer_config') and self.is_step_complete('layer_iped'))
+                    step_check_duration = time.time() - step_check_start
+                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,layer_config,layer_iped completion check took {step_check_duration:.3f}s")
+                    total_duration = time.time() - start_time
+                    print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                    return result
                 else:
                     # For grid studies, check step2a and step2c
-                    return (self.is_step_complete('1a') and self.is_step_complete('1b') and 
+                    step_check_start = time.time()
+                    result = (self.is_step_complete('1a') and self.is_step_complete('1b') and 
                            self.is_step_complete('1c') and self.is_step_complete('2b') and
                            self.is_step_complete('2a') and self.is_step_complete('2c'))
+                    step_check_duration = time.time() - step_check_start
+                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,2a,2c completion check took {step_check_duration:.3f}s")
+                    total_duration = time.time() - start_time
+                    print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                    return result
     
     def get_all_data(self):
         """Get all collected data as a dictionary."""

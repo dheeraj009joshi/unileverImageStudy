@@ -22,6 +22,7 @@
 
 /* Base Container */
 .study-participation-container {
+    justify-items: center;
     max-width: 100%;
     margin: 0 auto;
     padding: 1rem 0.5rem;
@@ -1108,6 +1109,7 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .study-participation-container {
+        justify-items: center;
         padding: 0.5rem;
     }
     

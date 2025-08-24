@@ -260,7 +260,7 @@
                 <h3>Launch Study</h3>
                 <p class="form-help">Once you launch your study, it will be available to respondents and you can start collecting data.</p>
                 
-                <form method="POST" class="study-form">
+                <form method="POST" class="study-form step-form" data-validate="true" data-loading="true">
                     {{ form.hidden_tag() }}
                     
                     <div class="form-group">
@@ -273,13 +273,48 @@
                     
                     <div class="form-actions">
                         <a href="{{ url_for('study_creation.step3a') }}" class="btn btn-secondary">Previous</a>
-                        {{ form.submit(class="btn btn-success") }}
+                        {{ form.submit(class="btn btn-success", id="launchSubmitBtn") }}
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[data-loading="true"]');
+    const submitBtn = document.getElementById('launchSubmitBtn');
+    
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            // Show loading state using the base.js system
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Launching...';
+            
+            // Show loading overlay with custom message
+            if (window.UnileverImageStudy && window.UnileverImageStudy.app) {
+                window.UnileverImageStudy.app.showLoading('Launching Study...');
+            } else if (window.UnileverImageStudy) {
+                // Fallback to global method
+                window.UnileverImageStudy.showLoading('Launching Study...');
+            } else {
+                // Direct fallback if nothing else works
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    const textElement = overlay.querySelector('.loading-overlay-text');
+                    if (textElement) {
+                        textElement.textContent = 'Launching Study...';
+                    }
+                    overlay.classList.add('is-visible');
+                }
+            }
+            
+            console.log('Launching study...');
+        });
+    }
+});
+</script>
 
 <style>
 /* Professional Study Preview Styling */
