@@ -53,7 +53,7 @@ class Step1cRatingScaleForm(FlaskForm):
     ])
     max_value = IntegerField('Maximum Value', validators=[
         DataRequired(message='Maximum value is required'),
-        NumberRange(min=1, max=10, message='Maximum value must be between 1 and 10')
+        NumberRange(min=1, max=5, message='Maximum value must be between 1 and 5')
     ])
     min_label = StringField('Minimum Label', validators=[
         DataRequired(message='Minimum label is required'),

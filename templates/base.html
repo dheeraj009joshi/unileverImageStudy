@@ -105,6 +105,7 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
     <!-- Header -->
+    {% if not request.endpoint.endswith('tasks') %}
     <header class="app-header" role="banner">
         <nav class="nav-container" role="navigation" aria-label="Main navigation">
             <div class="nav-brand">
@@ -159,8 +160,10 @@
             </button>
         </nav>
     </header>
+    {% endif %}
 
     <!-- Flash Messages -->
+    {% if not request.endpoint.endswith('tasks') %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-container" role="alert" aria-live="polite">
@@ -183,6 +186,11 @@
         {% endif %}
     {% endwith %}
 
+
+      
+    
+    {% endif %}
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
         <div class="loading-overlay-content">
@@ -191,11 +199,10 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <main id="main-content" class="app-main" role="main">
-        {% block content %}{% endblock %}
-    </main>
-
+  <!-- Main Content -->
+  <main id="main-content" class="app-main" role="main">
+    {% block content %}{% endblock %}
+</main>
 
 
     <!-- Loading Overlay -->
@@ -572,6 +579,7 @@
     </script>
     
     <!-- Footer -->
+    {% if not request.endpoint.endswith('tasks') %}
     <footer class="app-footer" role="contentinfo">
         <div class="footer-container">
             <div class="footer-content">
@@ -591,10 +599,10 @@
                 <div class="footer-section">
                     <h4 class="footer-subtitle">Support</h4>
                     <ul class="footer-links">
-                        <li><a href="#help">Help Center</a></li>
-                        <li><a href="#docs">Documentation</a></li>
-                        <li><a href="#privacy">Privacy Policy</a></li>
-                        <li><a href="#terms">Terms of Service</a></li>
+                        <li><a href="{{ url_for('index') }}">Help Center</a></li>
+                        <li><a href="{{ url_for('index') }}">Documentation</a></li>
+                        <li><a href="{{ url_for('index') }}">Privacy Policy</a></li>
+                        <li><a href="{{ url_for('index') }}">Terms of Service</a></li>
                     </ul>
                 </div>
             </div>
@@ -603,5 +611,6 @@
             </div>
         </div>
     </footer>
+    {% endif %}
 </body>
 </html>

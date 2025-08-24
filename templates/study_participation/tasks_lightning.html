@@ -4,6 +4,44 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
 <style>
+/* Remove top space and colored bars for tasks page */
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    /* Dark brown background */
+}
+
+/* Override main content top margin and padding */
+#main-content.app-main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* Remove any top bars or spacing */
+.app-header,
+.progress-section,
+.flash-container {
+    display: none !important;
+}
+
+/* Ensure countdown takes full screen */
+.image-countdown {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+}
+
+/* Task container should start from top */
+.task-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Progress bar removed - no more top space */
 /* Lightning-fast task transitions */
 .task-container {
     transition: opacity 0.2s ease-in-out;
@@ -17,27 +55,11 @@
     opacity: 1;
 }
 
-/* Progress bar */
-.progress-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: #f0f0f0;
-    z-index: 1000;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #4CAF50, #45a049);
-    transition: width 0.3s ease;
-    width: 0%;
-}
+/* Progress bar removed - too big */
 
 /* Modern UI - Card-based layout like 3rd image */
 body {
-    background: #8B4513; /* Dark brown background like 3rd image */
+  
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -53,24 +75,85 @@ body {
     min-height: 85vh; /* Increased height for larger vignette */
 }
 
-/* Progress indicator */
+/* Progress indicator - Instagram stories style with individual rectangles */
 .progress-indicator {
-    background: #E3F2FD; /* Light blue like 3rd image */
+    background: transparent; /* No background for the container */
     border-radius: 10px;
-    padding: 6px 12px;
-    margin-bottom: 15px;
-    text-align: right;
+    text-align: center;
     font-weight: 500;
-    color: #1976D2;
     font-size: 14px;
+    position: relative;
+    overflow: visible;
+    min-width: 200px;
+    display: block;
+    height: auto;
+    padding: 15px 0 5px 0;
+    margin: 10px auto;
 }
+
+/* Task rectangles container */
+.task-rectangles {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+/* Individual task rectangle */
+.task-rectangle {
+    width: 12px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    transition: all 0.3s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Completed task rectangle */
+.task-rectangle.completed {
+    background: linear-gradient(90deg, #4CAF50, #45a049);
+    border-color: #4CAF50;
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+/* Current task rectangle */
+.task-rectangle.current {
+    background: linear-gradient(90deg, #FF9800, #F57C00);
+    border-color: #FF9800;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Upcoming task rectangle */
+.task-rectangle.upcoming {
+    background: lightgrey;
+    border-color: #D3D3D3;
+    opacity: 0.8;
+}
+
+/* Progress indicator text */
+.progress-indicator .progress-text {
+    position: absolute;
+    top: -20px; /* Position text above the bar */
+    right: 0;
+    color: #1976D2;
+    font-weight: 600;
+    font-size: 12px;
+    z-index: 2;
+}
+
+
 
 /* Question text */
 .question-text {
     font-size: 18px;
     font-weight: 700;
     color: #333;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     text-align: center;
 }
 
@@ -90,22 +173,26 @@ body {
     width: auto;
     height: auto;
     border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 3px solid #E3F2FD; /* Light blue border like 3rd image */
+    box-shadow: none !important;
+    border: none !important;
     object-fit: contain;
 }
 
 /* Vignette preview for layer studies */
 .vignette-preview {
+    border: none !important;
+    box-shadow: none !important;
+    background: none !important;
     position: relative;
     width: 100%;
-    height: 100%;
+    height: 500px; /* Reduced height */
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .layer-image {
+    border: none !important;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -120,8 +207,8 @@ body {
     width: auto;
     height: auto;
     border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 3px solid #E3F2FD;
+    box-shadow: none !important;
+    border: none !important;
     object-fit: contain;
 }
 
@@ -134,18 +221,25 @@ body {
 }
 
 .rating-instructions {
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+    justify-items: center;
+    justify-content: center;
     text-align: center;
-    margin-bottom: 15px;
+   
     color: #666;
     font-size: 13px;
 }
 
 .rating-instructions p {
-    margin: 5px 0;
+    
     font-weight: 500;
 }
 
 .rating-grid {
+   
+    padding: 0 !important;
     display: flex;
     justify-content: center;
     gap: 12px;
@@ -173,15 +267,15 @@ body {
 }
 
 .rating-label:hover {
-    border-color: #2196F3;
+    border-color: #E0E0E0;
     background: #F5F5F5;
     transform: scale(1.05);
 }
 
 .rating-label.active {
-    background: #2196F3;
+    background: #4CAF50;
     color: white;
-    border-color: #2196F3;
+    border-color: #4CAF50;
     transform: scale(1.1);
 }
 
@@ -214,14 +308,16 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 3000;
+    z-index: 9999;
     font-family: 'Arial', sans-serif;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .countdown-content {
@@ -336,15 +432,38 @@ body {
     .rating-section {
         padding: 12px;
     }
+    
+    /* Mobile progress indicator adjustments */
+    .progress-indicator {
+        margin: 0 !important;
+        min-width: 150px;
+        padding: 10px 0 3px 0;
+    }
+    
+    .task-rectangles {
+        
+        gap: 3px;
+    }
+    .task-rectangle.upcoming {
+        background: lightgrey;
+        border-color: #D3D3D3;
+    }
+    .task-rectangle {
+        
+        width: 10px;
+        height: 6px;
+    }
+    
+    .progress-text {
+        font-size: 11px;
+        top: -18px;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Progress bar at top only -->
-<div class="progress-container">
-    <div class="progress-bar" id="progressBar"></div>
-</div>
+<!-- Progress bar removed - too big -->
 
 <!-- Task container -->
 <div class="task-container" id="taskContainer">
@@ -841,7 +960,7 @@ class LightningTaskFlow {
         } else if (studyType === 'layer') {
             // Layer study elements - show ALL images with proper z-index layering
             if (task.elements_shown_content) {
-                imageHTML = '<div class="vignette-preview">';
+                imageHTML = '<div class="vignette-preview" style="border: none !important; box-shadow: none !important; background: none !important;">';
                 
                 // Debug the raw data structure first
                 console.log('🔍 RAW TASK DATA ANALYSIS:');
@@ -922,20 +1041,22 @@ class LightningTaskFlow {
         }
         
         return `
-            <div class="task-card">
+           
                 <div class="progress-indicator">
-                    Task ${this.currentTaskIndex + 1} of ${this.totalTasks}
+                    <div class="task-rectangles">
+                        ${this.generateTaskRectangles()}
+                    </div>
+                   
                 </div>
                 
                 <div class="question-text">
                     {{ study.main_question }}{% if not study.main_question.endswith('?') %}?{% endif %}
                 </div>
                 
-                <div class="image-container">
+
                     ${imageHTML}
-                </div>
-                
-                <div class="rating-section">
+     
+                <div class="rating-section" style="border: none !important; box-shadow: none !important; background: none !important;">
                     <div class="rating-instructions">
                         <p><strong>{{ study.rating_scale.min_value }} = {{ study.rating_scale.min_label }}</strong></p>
                         {% if study.rating_scale.middle_label %}
@@ -954,7 +1075,7 @@ class LightningTaskFlow {
                         {% endfor %}
                     </div>
                 </div>
-            </div>
+            
         `;
     }
     
@@ -1172,11 +1293,45 @@ class LightningTaskFlow {
         console.log(`Navigation updated - Current task: ${this.currentTaskIndex + 1}`);
     }
     
+    generateTaskRectangles() {
+        let rectanglesHTML = '';
+        for (let i = 0; i < this.totalTasks; i++) {
+            let className = 'task-rectangle';
+            if (i < this.currentTaskIndex) {
+                className += ' completed';
+            } else if (i === this.currentTaskIndex) {
+                className += ' current';
+            } else {
+                className += ' upcoming';
+            }
+            rectanglesHTML += `<div class="${className}" data-task="${i + 1}"></div>`;
+        }
+        return rectanglesHTML;
+    }
+    
+    calculateProgressPercentage() {
+        return ((this.currentTaskIndex + 1) / this.totalTasks) * 100;
+    }
+    
     updateProgress() {
-        const progress = ((this.currentTaskIndex + 1) / this.totalTasks) * 100;
+        const progress = this.calculateProgressPercentage();
         
-        // Update top progress bar only
-        document.getElementById('progressBar').style.width = progress + '%';
+        console.log(`🔄 Updating progress: ${progress}% - Task ${this.currentTaskIndex + 1} of ${this.totalTasks}`);
+        
+        // Update task rectangles to show current progress
+        const progressIndicator = document.querySelector('.progress-indicator');
+        if (progressIndicator) {
+            const taskRectangles = progressIndicator.querySelector('.task-rectangles');
+            if (taskRectangles) {
+                // Regenerate rectangles with updated state
+                taskRectangles.innerHTML = this.generateTaskRectangles();
+                console.log(`🎯 Task rectangles updated - Current task: ${this.currentTaskIndex + 1}`);
+            } else {
+                console.warn('⚠️  Task rectangles container not found');
+            }
+        } else {
+            console.warn('⚠️  Progress indicator element not found');
+        }
     }
     
     saveToLocalStorage() {
@@ -1184,11 +1339,12 @@ class LightningTaskFlow {
             studyId: this.studyId,
             currentTaskIndex: this.currentTaskIndex,
             taskRatings: this.taskRatings,
+            progressPercentage: this.calculateProgressPercentage(), // Save progress percentage
             timestamp: new Date().toISOString()
         };
         
         localStorage.setItem(`study_${this.studyId}_progress`, JSON.stringify(data));
-        console.log('Progress saved to local storage');
+        console.log('💾 Progress saved to local storage:', data);
     }
     
     loadFromLocalStorage() {
@@ -1199,12 +1355,31 @@ class LightningTaskFlow {
                 if (data.studyId === this.studyId) {
                     this.currentTaskIndex = data.currentTaskIndex || 0;
                     this.taskRatings = data.taskRatings || [];
-                    console.log('Progress loaded from local storage:', data);
+                    console.log('💾 Progress loaded from local storage:', data);
+                    
+                    // Restore progress bar state if available
+                    if (data.progressPercentage !== undefined) {
+                        console.log(`🎯 Restoring progress bar to ${data.progressPercentage}%`);
+                        this.restoreProgressBarState(data.progressPercentage);
+                    }
                 }
             } catch (e) {
                 console.log('Could not load saved progress:', e);
             }
         }
+    }
+    
+    restoreProgressBarState(percentage) {
+        console.log(`🎯 Restoring progress bar to ${percentage}%`);
+        
+        // Calculate which task this percentage represents
+        const taskIndex = Math.ceil((percentage / 100) * this.totalTasks) - 1;
+        this.currentTaskIndex = Math.max(0, Math.min(taskIndex, this.totalTasks - 1));
+        
+        console.log(`🎯 Restored to task ${this.currentTaskIndex + 1} (${percentage}%)`);
+        
+        // Update the progress display
+        this.updateProgress();
     }
     
     async completeStudy() {
@@ -1307,19 +1482,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if required elements exist
     const taskContainer = document.getElementById('taskContainer');
-    const progressBar = document.getElementById('progressBar');
     
     console.log('Required elements check:');
     console.log('- taskContainer:', taskContainer);
-    console.log('- progressBar:', progressBar);
     
     if (!taskContainer) {
         console.error('❌ CRITICAL: taskContainer element not found!');
-        return;
-    }
-    
-    if (!progressBar) {
-        console.error('❌ CRITICAL: progressBar element not found!');
         return;
     }
     
@@ -1336,6 +1504,23 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         window.taskFlow = new LightningTaskFlow(studyId, totalTasks, allTasks);
         console.log('✅ LightningTaskFlow initialized successfully!');
+        
+        // Save progress before page unload (refresh, close, etc.)
+        window.addEventListener('beforeunload', () => {
+            if (window.taskFlow) {
+                console.log('💾 Saving progress before page unload...');
+                window.taskFlow.saveToLocalStorage();
+            }
+        });
+        
+        // Save progress when page becomes hidden (mobile app switching, etc.)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && window.taskFlow) {
+                console.log('💾 Saving progress - page hidden...');
+                window.taskFlow.saveToLocalStorage();
+            }
+        });
+        
     } catch (error) {
         console.error('❌ Error initializing LightningTaskFlow:', error);
     }
