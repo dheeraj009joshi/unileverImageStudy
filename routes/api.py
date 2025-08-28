@@ -340,12 +340,20 @@ def export_timing_data(study_id):
             
             timing_data.append(response_data)
         
+        # Generate descriptive filename for timing data export
+        study_name = study.title.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        study_type = study.study_type.upper() if hasattr(study, 'study_type') else 'UNKNOWN'
+        response_count = len(timing_data)
+        current_date = datetime.utcnow().strftime('%Y-%m-%d')
+        current_time = datetime.utcnow().strftime('%H%M')
+        
         return jsonify({
             'study_id': str(study._id),
             'study_title': study.title,
             'export_timestamp': datetime.utcnow().isoformat(),
             'total_responses': len(timing_data),
-            'timing_data': timing_data
+            'timing_data': timing_data,
+            'suggested_filename': f"{study_name}_{study_type}_Timing_Data_{response_count}_responses_{current_date}_{current_time}.json"
         })
         
     except Exception as e:

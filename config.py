@@ -31,6 +31,53 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour CSRF token expiry
+    
+    # Dynamic Application Configuration
+    APP_NAME = os.environ.get('APP_NAME', 'UnileverImageStudy')
+    APP_DESCRIPTION = os.environ.get('APP_DESCRIPTION', 'Professional IPED Study System for Research and Data Collection')
+    APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Conduct cutting-edge research with our advanced Individual Parameter Estimation Design platform')
+    APP_SUBTAGLINE = os.environ.get('APP_SUBTAGLINE', 'Create, manage, and analyze studies with enterprise-grade tools')
+    
+    # Company Information
+    COMPANY_NAME = os.environ.get('COMPANY_NAME', 'UnileverImageStudy')
+    COMPANY_YEAR = os.environ.get('COMPANY_YEAR', '2024')
+    COMPANY_WEBSITE = os.environ.get('COMPANY_WEBSITE', 'https://unileverimagestudy.com')
+    COMPANY_EMAIL = os.environ.get('COMPANY_EMAIL', 'contact@unileverimagestudy.com')
+    
+    # Feature Descriptions
+    FEATURES = {
+        'algorithm': {
+            'title': 'Advanced IPED Algorithm',
+            'description': 'Sophisticated Individual Parameter Estimation Design with balanced matrix generation for optimal research outcomes.',
+            'icon': '🧠'
+        },
+        'analytics': {
+            'title': 'Real-time Analytics',
+            'description': 'Comprehensive analytics and reporting tools to track study progress and analyze results.',
+            'icon': '📊'
+        },
+        'mobile': {
+            'title': 'Mobile Optimized',
+            'description': 'Fully responsive design that works seamlessly across all devices and screen sizes.',
+            'icon': '📱'
+        }
+    }
+    
+    # Social Media Links
+    SOCIAL_LINKS = {
+        'twitter': os.environ.get('SOCIAL_TWITTER', 'https://twitter.com/unileverimagestudy'),
+        'linkedin': os.environ.get('SOCIAL_LINKEDIN', 'https://linkedin.com/company/unileverimagestudy'),
+        'github': os.environ.get('SOCIAL_GITHUB', 'https://github.com/unileverimagestudy'),
+        'youtube': os.environ.get('SOCIAL_YOUTUBE', 'https://youtube.com/@unileverimagestudy')
+    }
+    
+    # Contact Information
+    CONTACT_INFO = {
+        'address': os.environ.get('CONTACT_ADDRESS', '123 Research Drive, Innovation City, IC 12345'),
+        'phone': os.environ.get('CONTACT_PHONE', '+1 (555) 123-4567'),
+        'support_email': os.environ.get('SUPPORT_EMAIL', 'support@unileverimagestudy.com'),
+        'sales_email': os.environ.get('SALES_EMAIL', 'sales@unileverimagestudy.com')
+    }
 
 class DevelopmentConfig(Config):
     """Development configuration."""

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Profile - UnileverImageStudy{% endblock %}
+{% block title %}Profile - {{ config.get('APP_NAME', 'UnileverImageStudy') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">

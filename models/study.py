@@ -215,6 +215,20 @@ class Study(Document):
             'abandoned': self.abandoned_responses
         }
     
+    def get_real_time_counts(self):
+        """Get real-time response counts from database for consistency."""
+        from models.response import StudyResponse
+        
+        total = StudyResponse.objects(study=self).count()
+        completed = StudyResponse.objects(study=self, is_completed=True).count()
+        abandoned = StudyResponse.objects(study=self, is_abandoned=True).count()
+        
+        return {
+            'total': total,
+            'completed': completed,
+            'abandoned': abandoned
+        }
+    
     def get_respondent_tasks(self, respondent_id):
         """Get tasks for a specific respondent."""
         if not self.tasks or str(respondent_id) not in self.tasks:

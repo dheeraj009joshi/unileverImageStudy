@@ -74,6 +74,49 @@
 }
 
 /* ========================================
+   Export Information
+   ======================================== */
+
+.export-info {
+    background: linear-gradient(135deg, var(--color-info-50) 0%, var(--color-primary-50) 100%);
+    border: 1px solid var(--color-primary-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-8);
+}
+
+.export-info h3 {
+    color: var(--color-primary-700);
+    margin: 0 0 var(--space-4) 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+}
+
+.export-info p {
+    margin: 0 0 var(--space-3) 0;
+    color: var(--color-neutral-700);
+    line-height: var(--line-height-relaxed);
+}
+
+.export-info ul {
+    margin: var(--space-4) 0;
+    padding-left: var(--space-6);
+}
+
+.export-info li {
+    margin-bottom: var(--space-2);
+    color: var(--color-neutral-600);
+}
+
+.export-info code {
+    background: var(--color-neutral-100);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family-mono);
+    color: var(--color-primary-700);
+}
+
+/* ========================================
    Section Titles
    ======================================== */
 
@@ -211,6 +254,8 @@
 .stat-change--negative {
     color: var(--color-error-600);
 }
+
+
 
 /* ========================================
    Quick Actions
@@ -676,6 +721,8 @@
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
     
+
+    
     .studies-grid {
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     }
@@ -706,6 +753,8 @@
     .quick-actions-grid {
         grid-template-columns: 1fr;
     }
+    
+
     
     .studies-grid {
         grid-template-columns: 1fr;
@@ -745,8 +794,7 @@
         font-size: var(--font-size-base);
     }
     
-    .stat-card,
-    .action-card {
+    .stat-card {
         padding: var(--space-6);
     }
     

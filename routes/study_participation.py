@@ -191,7 +191,7 @@ def personal_info(study_id):
                     'completed_tasks': [],  # Initialize empty list
                     'current_task_index': 0,  # Start at first task
                     'completion_percentage': 0.0,  # Start at 0%
-                    'is_abandoned': False  # Not abandoned initially
+                    'is_abandoned': True  # Default to abandoned until completed
                 }
                 
                 print(f"Creating StudyResponse with data: {response_data}")
@@ -199,8 +199,9 @@ def personal_info(study_id):
                 response = StudyResponse(**response_data)
                 response.save()
                 
-                # Update study total_responses
+                # Update study response counters
                 study.total_responses += 1
+                study.abandoned_responses += 1  # Increment abandoned count since response starts as abandoned
                 study.save()
                 
                 # Store in session
@@ -768,17 +769,36 @@ def completed(study_id):
                         task_completion_time = completion_time
                         task_duration = 0.0
                     
+                    # Extract comprehensive task data
+                    task_data_dict = task_rating.get('task_data', {})
+                    
                     task_data = {
                         'task_id': f"task_{task_rating['task_number']}",
                         'respondent_id': session['respondent_id'],
                         'task_index': task_rating['task_number'] - 1,
-                        'elements_shown_in_task': task_rating['task_data'].get('elements_shown', {}),
+                        # Grid study data
+                        'elements_shown_in_task': task_data_dict.get('elements_shown', {}),
+                        # Layer study data
+                        'elements_shown_content': task_data_dict.get('elements_shown_content', {}),
+                        # Task metadata
+                        'task_type': task_data_dict.get('task_type', study.study_type),
+                        'task_context': task_data_dict.get('task_context', {}),
+                        # Timing data
                         'task_start_time': task_start_time,
                         'task_completion_time': task_completion_time,
                         'task_duration_seconds': task_duration,
+                        # Rating data
                         'rating_given': task_rating['rating'],
-                        'rating_timestamp': safe_datetime_parse(task_rating['timestamp'])
+                        'rating_timestamp': safe_datetime_parse(task_rating['timestamp']),
+                        # Element interactions (if available)
+                        'element_interactions': task_data_dict.get('element_interactions', [])
                     }
+                    
+                    print(f"  📋 Comprehensive task data prepared:")
+                    print(f"    - Elements shown: {len(task_data['elements_shown_in_task'])} items")
+                    print(f"    - Elements shown content: {len(task_data['elements_shown_content'])} items")
+                    print(f"    - Task type: {task_data['task_type']}")
+                    print(f"    - Element interactions: {len(task_data['element_interactions'])} items")
                     
                     print(f"  Adding task data: {task_data}")
                     response.add_completed_task(task_data)

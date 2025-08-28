@@ -179,70 +179,48 @@
         </div>
     </div>
 
-        <!-- Recent Responses -->
+        <!-- View Responses Section -->
         <div class="content-section">
-            <h2>Recent Responses</h2>
-            {% if recent_responses %}
-            <div class="responses-table">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Respondent ID</th>
-                            <th>Start Time</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Tasks Completed</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for response in recent_responses %}
-                        <tr>
-                            <td>{{ response.respondent_id }}</td>
-                            <td>{{ response.session_start_time.strftime('%Y-%m-%d %H:%M') if response.session_start_time else 'N/A' }}</td>
-                            <td>{{ "%.1f"|format(response.total_study_duration) }}s</td>
-                            <td>
-                                <span class="status-badge status-{{ 'completed' if response.is_completed else 'abandoned' }}">
-                                    {{ 'Completed' if response.is_completed else 'Abandoned' }}
-                                </span>
-                            </td>
-                            <td>{{ response.completed_tasks_count }}/{{ study.iped_parameters.tasks_per_consumer }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="section-header">
+                <h2 class="section-title">Study Responses</h2>
+                <p class="section-subtitle">View and analyze all responses for this study</p>
             </div>
-            <div class="view-all">
-                <a href="{{ url_for('dashboard.study_responses', study_id=study._id) }}" class="btn btn-outline-primary">View All Responses</a>
+            <div class="card">
+                <div class="card-body">
+                    <div class="responses-overview">
+                        <div class="responses-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">{{ stats.total_responses }}</span>
+                                <span class="stat-label">Total Responses</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">{{ stats.completed_responses }}</span>
+                                <span class="stat-label">Completed</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">{{ stats.abandoned_responses }}</span>
+                                <span class="stat-label">Abandoned</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">{{ "%.1f"|format(stats.completion_rate) }}%</span>
+                                <span class="stat-label">Completion Rate</span>
+                            </div>
+                        </div>
+                        <div class="responses-actions">
+                            <a href="{{ url_for('dashboard.study_responses', study_id=study._id) }}" class="btn btn--primary btn--lg">
+                                <span class="btn-icon">📊</span>
+                                View All Responses
+                            </a>
+                            <a href="{{ url_for('dashboard.export_study', study_id=study._id, type='csv') }}" class="btn btn--secondary btn--lg">
+                                <span class="btn-icon">📥</span>
+                                Export CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            {% else %}
-            <div class="empty-state">
-                <p>No responses yet. Share your study to start collecting data!</p>
-                <a href="{{ url_for('dashboard.study_share', study_id=study._id) }}" class="btn btn-primary">Share Study</a>
-            </div>
-            {% endif %}
         </div>
 
-        <!-- Quick Actions -->
-        <div class="content-section">
-            <h2>Quick Actions</h2>
-            <div class="actions-grid">
-                <a href="{{ url_for('dashboard.study_analytics', study_id=study._id) }}" class="action-card">
-                    <div class="action-icon">📊</div>
-                    <h4>View Analytics</h4>
-                    <p>Detailed timing and interaction data</p>
-                </a>
-                <a href="{{ url_for('dashboard.export_study', study_id=study._id, type='json') }}" class="action-card">
-                    <div class="action-icon">📥</div>
-                    <h4>Export Data</h4>
-                    <p>Download responses as JSON or CSV</p>
-                </a>
-                <a href="{{ url_for('dashboard.study_preview', study_id=study._id) }}" class="action-card">
-                    <div class="action-icon">👁️</div>
-                    <h4>Preview Study</h4>
-                    <p>See how respondents experience your study</p>
-                </a>
-            </div>
-        </div>
     </div>
   </div>
   

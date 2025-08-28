@@ -16,13 +16,32 @@ class CompletedTask(EmbeddedDocument):
     task_id = StringField(required=True, max_length=20)
     respondent_id = IntField(required=True, min_value=0)
     task_index = IntField(required=True, min_value=0)
+    
+    # Grid study data
     elements_shown_in_task = DictField(required=True)  # Copy from study.tasks
+    
+    # Layer study data
+    elements_shown_content = DictField()  # Layer images with z-index and metadata
+    
+    # Task metadata
+    task_type = StringField(max_length=50)  # 'grid' or 'layer'
+    task_context = DictField()  # Additional task context and metadata
+    
+    # Timing data
     task_start_time = DateTimeField(required=True)
     task_completion_time = DateTimeField(required=True)
     task_duration_seconds = FloatField(required=True, min_value=0.0)
+    
+    # Rating data
     rating_given = IntField(required=True)
     rating_timestamp = DateTimeField(required=True)
+    
+    # Element interactions and user behavior
     element_interactions = ListField(EmbeddedDocumentField(ElementInteraction))
+    
+    # Backward compatibility fields
+    elements_shown = DictField()  # Legacy field for grid studies
+    layers_shown_in_task = DictField()  # Legacy field for layer studies
 
 class ClassificationAnswer(EmbeddedDocument):
     """Embedded document for classification question answers."""
@@ -72,7 +91,7 @@ class StudyResponse(Document):
     last_activity = DateTimeField(default=datetime.utcnow)
     
     # Abandonment Detection
-    is_abandoned = BooleanField(default=False)
+    is_abandoned = BooleanField(default=True)  # Default to abandoned, set to False when completed
     abandonment_timestamp = DateTimeField()
     abandonment_reason = StringField(max_length=200)
     
@@ -109,27 +128,38 @@ class StudyResponse(Document):
     def mark_completed(self):
         """Mark the study response as completed."""
         self.is_completed = True
+        self.is_abandoned = False  # Set to False when completed
         self.session_end_time = datetime.utcnow()
         if self.session_start_time:
             self.total_study_duration = (self.session_end_time - self.session_start_time).total_seconds()
         self.completion_percentage = 100.0
         
-        # Update study completed responses counter
+        # Update study response counters
         try:
             self.study.increment_completed_responses()
+            # Also decrement abandoned count since this response is no longer abandoned
+            if self.study.abandoned_responses > 0:
+                self.study.abandoned_responses -= 1
+                self.study.save()
             print(f"✅ Study completed_responses updated to: {self.study.completed_responses}")
         except Exception as e:
             print(f"⚠️  Warning: Could not update study completed responses counter: {str(e)}")
     
     def mark_abandoned(self, reason="User left study"):
         """Mark the study response as abandoned."""
+        was_completed = self.is_completed
         self.is_abandoned = True
+        self.is_completed = False  # Set to False when abandoned
         self.abandonment_timestamp = datetime.utcnow()
         self.abandonment_reason = reason
         
-        # Update study abandoned responses counter
+        # Update study response counters
         try:
             self.study.increment_abandoned_responses()
+            # If this response was previously completed, decrement completed count
+            if was_completed and self.study.completed_responses > 0:
+                self.study.completed_responses -= 1
+                self.study.save()
             print(f"✅ Study abandoned_responses updated to: {self.study.abandoned_responses}")
         except Exception as e:
             print(f"⚠️  Warning: Could not update study abandoned responses counter: {str(e)}")

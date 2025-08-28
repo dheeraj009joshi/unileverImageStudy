@@ -450,7 +450,6 @@ blockquote {
 .app-main {
     flex: 1;
     margin-top: var(--header-height);
-    padding: var(--space-6) 0;
 }
 
 /* Skip Link for Accessibility */

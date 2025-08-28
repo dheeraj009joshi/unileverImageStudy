@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - UnileverImageStudy{% endblock %}
+{% block title %}Dashboard - {{ config.get('APP_NAME', 'UnileverImageStudy') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
@@ -16,7 +16,7 @@
                 <p class="header-subtitle">Manage your research studies and track progress</p>
             </div>
             <div class="header-actions">
-                <a href="{{ url_for('study_creation.step1a') }}" class="btn btn--primary">
+                <a href="{{ url_for('study_creation.step1a') }}" class="btn btn--primary" style="color: white; text-decoration: none;">
                     Create New Study
                 </a>
             </div>
@@ -69,24 +69,39 @@
     <div class="container">
         <h2 class="section-title">Quick Actions</h2>
         <div class="quick-actions-grid">
+            <a href="{{ url_for('dashboard.studies') }}" class="action-card">
+                <div class="action-icon">📚</div>
+                <div class="action-content">
+                    <h3 class="action-title">View All Studies</h3>
+                    <p class="action-description">Browse and manage all your research studies</p>
+                </div>
+            </a>
+            
             <a href="{{ url_for('study_creation.step1a') }}" class="action-card">
                 <div class="action-icon">➕</div>
-                <h3 class="action-title">Create Study</h3>
-                <p class="action-description">Start a new IPED research study</p>
+                <div class="action-content">
+                    <h3 class="action-title">Create New Study</h3>
+                    <p class="action-description">Start building a new research study</p>
+                </div>
             </a>
             
-            <a href="{{ url_for('dashboard.studies') }}" class="action-card">
-                <div class="action-icon">📋</div>
-                <h3 class="action-title">View Studies</h3>
-                <p class="action-description">Manage all your studies</p>
+            <a href="{{ url_for('dashboard.studies') }}?filter=active" class="action-card">
+                <div class="action-icon">🚀</div>
+                <div class="action-content">
+                    <h3 class="action-title">Active Studies</h3>
+                    <p class="action-description">View and manage your active studies</p>
+                </div>
             </a>
             
-            <a href="{{ url_for('dashboard.studies', status='active') }}" class="action-card">
-                <div class="action-icon">📊</div>
-                <h3 class="action-title">Active Studies</h3>
-                <p class="action-description">Monitor running studies</p>
+            <a href="{{ url_for('dashboard.studies') }}?filter=draft" class="action-card">
+                <div class="action-icon">📝</div>
+                <div class="action-content">
+                    <h3 class="action-title">Draft Studies</h3>
+                    <p class="action-description">Continue working on your draft studies</p>
+                </div>
             </a>
         </div>
     </div>
 </section>
+
 {% endblock %}

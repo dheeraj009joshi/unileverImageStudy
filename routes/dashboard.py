@@ -78,7 +78,7 @@ def index():
         'draft_studies': status_data.get('draft', {}).get('count', 0),
         'completed_studies': status_data.get('completed', {}).get('count', 0),
         'paused_studies': status_data.get('paused', {}).get('count', 0),
-        'total_responses': sum(s.get('total_responses', 0) for s in status_data.get('active', {}).get('studies', []))
+        'total_responses': StudyResponse.objects.count()  # Real-time count from database
     }
     
     return render_template('dashboard/index.html',
@@ -114,8 +114,6 @@ def studies():
                     'study_type': 1,
                     'created_at': 1,
                     'background': 1,
-                    'total_responses': 1,
-                    'completed_responses': 1,
                     'iped_parameters': 1
                 }}
             ]
@@ -154,6 +152,19 @@ def studies():
         total = status_counts['all']
     else:
         total = status_counts.get(status_filter, 0)
+    
+    # Add real-time response counts for each study
+    for study in studies:
+        study_id = study['_id']
+        # Get real-time counts from StudyResponse collection
+        total_responses = StudyResponse.objects(study=study_id).count()
+        completed_responses = StudyResponse.objects(study=study_id, is_completed=True).count()
+        abandoned_responses = StudyResponse.objects(study=study_id, is_abandoned=True).count()
+        
+        # Add counts to study object
+        study['total_responses'] = total_responses
+        study['completed_responses'] = completed_responses
+        study['abandoned_responses'] = abandoned_responses
     
     return render_template('dashboard/studies.html',
                          studies=studies,
@@ -234,8 +245,18 @@ def study_detail(study_id):
         total_responses = completed_responses = abandoned_responses = completion_rate = avg_task_time = 0
         recent_responses = []
     
+    # Create stats object for template
+    stats_obj = {
+        'total_responses': total_responses,
+        'completed_responses': completed_responses,
+        'abandoned_responses': abandoned_responses,
+        'completion_rate': completion_rate,
+        'avg_task_time': avg_task_time
+    }
+    
     return render_template('dashboard/study_detail.html',
                          study=study,
+                         stats=stats_obj,
                          total_responses=total_responses,
                          completed_responses=completed_responses,
                          abandoned_responses=abandoned_responses,
@@ -257,6 +278,10 @@ def study_responses(study_id):
     
     responses = StudyResponse.objects(study=study).order_by('-created_at')
     total = responses.count()
+    
+    # Ensure total is a valid number
+    if total is None:
+        total = 0
     
     # Pagination
     responses = responses.skip((page - 1) * per_page).limit(per_page)
@@ -399,16 +424,239 @@ def change_study_status(study_id):
 @dashboard_bp.route('/studies/<study_id>/export')
 @login_required
 def export_study(study_id):
-    """Export study data."""
+    """Export study data in comprehensive CSV format."""
+    print(f"🔍 Export requested for study {study_id}")
+    print(f"🔍 Export type: {request.args.get('type', 'csv')}")
+    print(f"🔍 Current user: {current_user.username}")
+    
     study = Study.objects(_id=study_id, creator=current_user).first()
     if not study:
+        print(f"❌ Study not found or access denied")
         flash('Study not found.', 'error')
         return redirect(url_for('dashboard.studies'))
     
-    export_type = request.args.get('type', 'json')
+    print(f"✅ Study found: {study.title}")
+    export_type = request.args.get('type', 'csv')
     
-    if export_type == 'json':
-        # Export as JSON
+    if export_type == 'csv':
+        # Get all completed responses for this study
+        print(f"🔍 Fetching completed responses for study {study_id}")
+        responses = StudyResponse.objects(study=study, is_completed=True)
+        # Convert to list for easier processing
+        responses = list(responses)
+        print(f"🔍 Found {len(responses)} completed responses")
+        
+        if not responses:
+            print(f"⚠️ No completed responses found")
+            flash('No completed responses found for export.', 'warning')
+            return redirect(url_for('dashboard.study_responses', study_id=study_id))
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Create simplified header structure
+        header_row = []
+        
+        # Panelist (Respondent) info
+        header_row.append('Panelist')
+        
+        # Classification questions columns (with option numbers)
+        if study.classification_questions:
+            for question in study.classification_questions:
+                header_row.append(f'Q{question.question_id}')
+        
+        # Personal info columns
+        header_row.extend(['Gender', 'Age'])
+        
+        # Task number
+        header_row.append('Task')
+        
+        # Element/Layer columns (same for all tasks)
+        if study.study_type == 'grid' and study.elements:
+            # For grid studies: dynamically get column names from elements_shown_in_task
+            # We'll get the actual keys from the first response that has data
+            grid_columns = []
+            for response in responses:
+                if response.completed_tasks:
+                    for task in response.completed_tasks:
+                        elements_shown = getattr(task, 'elements_shown_in_task', {})
+                        if elements_shown:
+                            # Get all keys that don't end with '_content' (ignore image URL keys)
+                            for key in elements_shown.keys():
+                                if not key.endswith('_content'):
+                                    if key not in grid_columns:
+                                        grid_columns.append(key)
+                            break
+                    if grid_columns:
+                        break
+            
+            # Sort the grid columns for consistent ordering
+            grid_columns.sort()
+            
+            # Add the dynamic grid columns to header
+            for column in grid_columns:
+                header_row.append(column)
+            
+            header_row.extend(['Rating', 'ResponseTime'])
+        elif study.study_type == 'layer' and study.study_layers:
+            # For layer studies: dynamically get column names from elements_shown_in_task
+            # We'll get the actual keys from the first response that has data
+            layer_columns = []
+            for response in responses:
+                if response.completed_tasks:
+                    for task in response.completed_tasks:
+                        elements_shown = getattr(task, 'elements_shown_in_task', {})
+                        if elements_shown:
+                            # Get all keys that start with 'Layer_' and don't end with '_content'
+                            for key in elements_shown.keys():
+                                if key.startswith('Layer_') and not key.endswith('_content'):
+                                    if key not in layer_columns:
+                                        layer_columns.append(key)
+                            break
+                    if layer_columns:
+                        break
+            
+            # Sort the layer columns for consistent ordering
+            layer_columns.sort()
+            
+            # Add the dynamic layer columns to header
+            for column in layer_columns:
+                header_row.append(column)
+            
+            header_row.extend(['Rating', 'ResponseTime'])
+        
+        # Write header
+        print(f"🔍 Writing CSV header with {len(header_row)} columns")
+        writer.writerow(header_row)
+        
+        # Write data rows - one row per task
+        print(f"🔍 Writing task rows for {len(responses)} responses")
+        total_rows = 0
+        
+        # Add progress indicator
+        print(f"📊 Starting export of {len(responses)} responses...")
+        print(f"⏳ Progress: 0% (0/{len(responses)} responses processed)")
+        
+        for response in responses:
+            # Get classification answers once per response
+            classification_answers = {}
+            if study.classification_questions:
+                for question in study.classification_questions:
+                    answer = next((a.answer for a in response.classification_answers 
+                                 if a.question_id == question.question_id), '')
+                    # Store the answer text, not just 'yes'
+                    classification_answers[question.question_id] = answer
+            
+            # Task-specific data - create one row per task
+            completed_tasks = response.completed_tasks if hasattr(response, 'completed_tasks') else []
+            
+            # Get the maximum number of tasks for this response
+            max_tasks = response.total_tasks_assigned if hasattr(response, 'total_tasks_assigned') else 0
+            
+            for task_num in range(1, max_tasks + 1):
+                task_data = next((task for task in completed_tasks 
+                                if getattr(task, 'task_index', None) == task_num - 1), None)
+                
+                row_data = []
+                
+                # Panelist (Respondent ID)
+                row_data.append(response.respondent_id)
+                
+                # Classification answers (option numbers)
+                if study.classification_questions:
+                    for question in study.classification_questions:
+                        row_data.append(classification_answers.get(question.question_id, ''))
+                
+                # Personal info (Gender and Age)
+                gender = getattr(response, 'personal_info', {}).get('gender', '') if hasattr(response, 'personal_info') else ''
+                age = getattr(response, 'personal_info', {}).get('age', '') if hasattr(response, 'personal_info') else ''
+                row_data.extend([gender, age])
+                
+                # Task number
+                row_data.append(task_num)
+                
+                if task_data:
+                    print(f"🔍 Task {task_num} data: {task_data}")
+                    print(f"🔍 Task {task_num} elements_shown_in_task: {getattr(task_data, 'elements_shown_in_task', 'N/A')}")
+                    print(f"🔍 Task {task_num} elements_shown_content: {getattr(task_data, 'elements_shown_content', 'N/A')}")
+                    
+                    # Element/Layer visibility for this task
+                    if study.study_type == 'grid' and study.elements:
+                        elements_shown = getattr(task_data, 'elements_shown_in_task', {})
+                        # For grid studies: use dynamic columns from header
+                        for column in grid_columns:
+                            # Get the value for this column (1 if visible, 0 if not)
+                            is_visible = elements_shown.get(column, 0)
+                            row_data.append(is_visible)
+                        
+                        # Add rating and response time
+                        rating = getattr(task_data, 'rating_given', '')
+                        response_time = getattr(task_data, 'task_duration_seconds', '')
+                        row_data.extend([rating, response_time])
+                        
+                    elif study.study_type == 'layer' and study.study_layers:
+                        elements_shown_in_task = getattr(task_data, 'elements_shown_in_task', {})
+                        print(f"🔍 Task {task_num} elements_shown_in_task: {elements_shown_in_task}")
+                        
+                        # For layer studies: use dynamic columns from header
+                        for column in layer_columns:
+                            # Get the value for this column (1 if visible, 0 if not)
+                            element_visible = elements_shown_in_task.get(column, 0)
+                            print(f"🔍 Layer column {column}: {element_visible}")
+                            row_data.append(element_visible)
+                        
+                        # Add rating and response time
+                        rating = getattr(task_data, 'rating_given', '')
+                        response_time = getattr(task_data, 'task_duration_seconds', '')
+                        row_data.extend([rating, response_time])
+                else:
+                    # No data for this task, fill with empty values
+                    if study.study_type == 'grid' and study.elements:
+                        empty_count = len(grid_columns) + 2  # dynamic columns + rating + response time
+                    elif study.study_type == 'layer' and study.study_layers:
+                        # Count total elements across all layers using dynamic columns
+                        empty_count = len(layer_columns) + 2  # dynamic columns + rating + response time
+                    else:
+                        empty_count = 0
+                    
+                    row_data.extend([''] * empty_count)
+                
+                writer.writerow(row_data)
+                total_rows += 1
+            
+            # Progress update every 5 responses
+            if (responses.index(response) + 1) % 5 == 0 or (responses.index(response) + 1) == len(responses):
+                progress = ((responses.index(response) + 1) / len(responses)) * 100
+                print(f"⏳ Progress: {progress:.1f}% ({responses.index(response) + 1}/{len(responses)} responses processed)")
+        
+        print(f"🔍 Wrote {total_rows} total task rows")
+        print(f"✅ Export completed successfully!")
+        
+        output.seek(0)
+        
+        # Generate descriptive filename with study details
+        study_name = study.title.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        study_type = study.study_type.upper()
+        response_count = len(responses)
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_time = datetime.now().strftime('%H%M')
+        filename = f"{study_name}_{study_type}_{response_count}_responses_{current_date}_{current_time}.csv"
+        
+        print(f"🔍 Generated filename: {filename}")
+        print(f"🔍 CSV content length: {len(output.getvalue())} characters")
+        print(f"🔍 CSV content preview: {output.getvalue()[:200]}...")
+        
+        response = current_app.response_class(
+            output.getvalue(),
+            status=200,
+            mimetype='text/csv'
+        )
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        print(f"✅ Returning CSV response with {len(output.getvalue())} characters")
+        return response
+        
+    elif export_type == 'json':
+        # Export as JSON (keep existing functionality)
         study_data = study.to_dict()
         
         # Add responses data
@@ -423,46 +671,501 @@ def export_study(study_id):
         response.headers['Content-Disposition'] = f'attachment; filename=study_{study._id}.json'
         return response
         
-    elif export_type == 'csv':
-        # Export as CSV
-        responses = StudyResponse.objects(study=study)
+    else:
+        flash('Invalid export type.', 'error')
+        return redirect(url_for('dashboard.study_detail', study_id=study_id))
+
+@dashboard_bp.route('/responses/<response_id>/export')
+@login_required
+def export_individual_response(response_id):
+    """Export individual response data in CSV format."""
+    try:
+        # Find the response and ensure it belongs to a study created by current user
+        response = StudyResponse.objects(_id=response_id).first()
+        if not response:
+            flash('Response not found.', 'error')
+            return redirect(url_for('dashboard.studies'))
         
+        study = Study.objects(_id=response.study._id, creator=current_user).first()
+        if not study:
+            flash('Access denied.', 'error')
+            return redirect(url_for('dashboard.studies'))
+        
+        # Create CSV output
         output = StringIO()
         writer = csv.writer(output)
         
         # Write header
-        writer.writerow([
-            'Response ID', 'Session ID', 'Respondent ID', 'Start Time', 'End Time',
-            'Completion Status', 'Total Duration', 'Tasks Completed', 'Completion Percentage'
-        ])
+        header_row = [
+            'Response ID', 'Session ID', 'Respondent ID', 'Study ID', 'Study Title',
+            'Session Start Time', 'Session End Time', 'Total Duration (seconds)',
+            'Completion Status', 'Tasks Completed', 'Total Tasks Assigned',
+            'Completion Percentage', 'Is Abandoned', 'Abandonment Reason'
+        ]
         
-        # Write data
-        for response in responses:
-            writer.writerow([
-                str(response.id),
-                response.session_id,
-                response.respondent_id,
+        # Add classification questions
+        if study.classification_questions:
+            for question in study.classification_questions:
+                header_row.append(f'Classification_{question.question_id}_{question.question_text}')
+        
+        # Add personal info
+        header_row.extend(['Personal_Birth_Date', 'Personal_Age', 'Personal_Gender'])
+        
+        # Add task columns
+        if response.completed_tasks:
+            for i, task in enumerate(response.completed_tasks):
+                task_prefix = f'Task_{i+1}'
+                header_row.extend([
+                    f'{task_prefix}_Task_ID', f'{task_prefix}_Task_Index',
+                    f'{task_prefix}_Start_Time', f'{task_prefix}_Completion_Time',
+                    f'{task_prefix}_Duration_Seconds', f'{task_prefix}_Rating_Given',
+                    f'{task_prefix}_Rating_Timestamp'
+                ])
+                
+                # Add element/layer columns based on study type
+                if study.study_type == 'grid' and study.elements:
+                    for element in study.elements:
+                        header_row.extend([
+                            f'{task_prefix}_{element.element_id}_Shown',
+                            f'{task_prefix}_{element.element_id}_Content'
+                        ])
+                elif study.study_type == 'layer' and study.study_layers:
+                    for layer in study.study_layers:
+                        header_row.extend([
+                            f'{task_prefix}_Layer_{layer.layer_id}_Z_Index',
+                            f'{task_prefix}_Layer_{layer.layer_id}_Order',
+                            f'{task_prefix}_Layer_{layer.layer_id}_Image_URL',
+                            f'{task_prefix}_Layer_{layer.layer_id}_Image_Name'
+                        ])
+        
+        writer.writerow(header_row)
+        
+        # Write data row
+        row_data = [
+            str(response._id), response.session_id, response.respondent_id,
+            str(study._id), study.title,
                 response.session_start_time.isoformat() if response.session_start_time else '',
                 response.session_end_time.isoformat() if response.session_end_time else '',
+            response.total_study_duration,
                 'Completed' if response.is_completed else 'Abandoned',
-                response.total_study_duration,
-                response.completed_tasks_count,
-                response.completion_percentage
+            response.completed_tasks_count, response.total_tasks_assigned,
+            response.completion_percentage, response.is_abandoned,
+            response.abandonment_reason or ''
+        ]
+        
+        # Add classification answers
+        if study.classification_questions:
+            for question in study.classification_questions:
+                answer = next((a.answer for a in response.classification_answers 
+                             if a.question_id == question.question_id), '')
+                row_data.append(answer)
+        
+        # Add personal info
+        if hasattr(response, 'personal_info') and response.personal_info:
+            personal = response.personal_info
+            row_data.extend([
+                personal.get('birth_date', ''),
+                personal.get('age', ''),
+                personal.get('gender', '')
             ])
+        else:
+            row_data.extend(['', '', ''])
+        
+        # Add task data
+        if response.completed_tasks:
+            for task in response.completed_tasks:
+                row_data.extend([
+                    task.task_id, task.task_index,
+                    task.task_start_time.isoformat() if task.task_start_time else '',
+                    task.task_completion_time.isoformat() if task.task_completion_time else '',
+                    task.task_duration_seconds, task.rating_given,
+                    task.rating_timestamp.isoformat() if task.rating_timestamp else ''
+                ])
+                
+                # Add element/layer data
+                if study.study_type == 'grid' and study.elements:
+                    elements_shown = getattr(task, 'elements_shown_in_task', {})
+                    elements_shown_content = getattr(task, 'elements_shown_content', {})
+                    for element in study.elements:
+                        row_data.extend([
+                            elements_shown.get(element.element_id, ''),
+                            elements_shown_content.get(f'{element.element_id}_content', '')
+                        ])
+                elif study.study_type == 'layer' and study.study_layers:
+                    elements_shown_content = getattr(task, 'elements_shown_content', {})
+                    for layer in study.study_layers:
+                        layer_data = elements_shown_content.get(str(layer.layer_id), {})
+                        row_data.extend([
+                            layer_data.get('z_index', layer.z_index),
+                            layer_data.get('order', layer.order),
+                            layer_data.get('url', ''),
+                            layer_data.get('name', '')
+                        ])
+        
+        writer.writerow(row_data)
+        output.seek(0)
+        
+        # Generate descriptive filename
+        study_name = study.title.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        study_type = study.study_type.upper()
+        respondent_id = response.respondent_id
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_time = datetime.now().strftime('%H%M')
+        filename = f"{study_name}_{study_type}_Respondent_{respondent_id}_{current_date}_{current_time}.csv"
+        
+        response_obj = current_app.response_class(
+            output.getvalue(),
+            status=200,
+            mimetype='text/csv'
+        )
+        response_obj.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response_obj
+        
+    except Exception as e:
+        flash(f'Error exporting response: {str(e)}', 'error')
+        return redirect(url_for('dashboard.studies'))
+
+@dashboard_bp.route('/export-all-studies')
+@login_required
+def export_all_studies():
+    """Export summary data for all studies created by the current user."""
+    try:
+        studies = Study.objects(creator=current_user)
+        
+        if not studies:
+            flash('No studies found for export.', 'warning')
+            return redirect(url_for('dashboard.studies'))
+        
+        # Create CSV output
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        header_row = [
+            'Study ID', 'Study Title', 'Study Type', 'Status', 'Created Date',
+            'Total Responses', 'Completed Responses', 'Abandoned Responses',
+            'Completion Rate (%)', 'Total Tasks', 'Elements/Layers Count',
+            'Classification Questions', 'Creator', 'Share Token'
+        ]
+        writer.writerow(header_row)
+        
+        # Write data rows
+        for study in studies:
+            # Get real-time counts
+            real_time_counts = study.get_real_time_counts()
+            
+            # Count elements/layers
+            if study.study_type == 'grid' and study.elements:
+                elements_count = len(study.elements)
+            elif study.study_type == 'layer' and study.study_layers:
+                elements_count = len(study.study_layers)
+            else:
+                elements_count = 0
+            
+            # Count classification questions
+            classification_count = len(study.classification_questions) if study.classification_questions else 0
+            
+            # Calculate completion rate
+            completion_rate = 0
+            if real_time_counts['total'] > 0:
+                completion_rate = (real_time_counts['completed'] / real_time_counts['total']) * 100
+            
+            row_data = [
+                str(study._id),
+                study.title,
+                study.study_type,
+                study.status,
+                study.created_at.isoformat() if study.created_at else '',
+                real_time_counts['total'],
+                real_time_counts['completed'],
+                real_time_counts['abandoned'],
+                round(completion_rate, 2),
+                study.iped_parameters.tasks_per_consumer if study.iped_parameters else 0,
+                elements_count,
+                classification_count,
+                study.creator.username if study.creator else '',
+                study.share_token or ''
+            ]
+            writer.writerow(row_data)
         
         output.seek(0)
+        
+        # Generate descriptive filename
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_time = datetime.now().strftime('%H%M')
+        study_count = len(studies)
+        filename = f"All_Studies_Summary_{study_count}_studies_{current_date}_{current_time}.csv"
         
         response = current_app.response_class(
             output.getvalue(),
             status=200,
             mimetype='text/csv'
         )
-        response.headers['Content-Disposition'] = f'attachment; filename=study_{study._id}_responses.csv'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     
-    else:
-        flash('Invalid export type.', 'error')
-        return redirect(url_for('dashboard.study_detail', study_id=study._id))
+    except Exception as e:
+        flash(f'Error exporting studies: {str(e)}', 'error')
+        return redirect(url_for('dashboard.studies'))
+
+@dashboard_bp.route('/sync-counts')
+@login_required
+def sync_study_counts():
+    """Sync all study response counts to ensure consistency."""
+    try:
+        studies = Study.objects(creator=current_user)
+        updated_count = 0
+        
+        for study in studies:
+            # Update response counters for each study
+            study.update_response_counters()
+            updated_count += 1
+        
+        flash(f'Successfully synced response counts for {updated_count} studies.', 'success')
+        return redirect(url_for('dashboard.studies'))
+        
+    except Exception as e:
+        flash(f'Error syncing counts: {str(e)}', 'error')
+        return redirect(url_for('dashboard.studies'))
+
+@dashboard_bp.route('/responses/<response_id>/details')
+@login_required
+def get_response_details(response_id):
+    """Get detailed information about a specific response including tasks."""
+    try:
+        # Find the response and ensure it belongs to a study created by current user
+        response = StudyResponse.objects(_id=response_id).first()
+        if not response:
+            return jsonify({'error': 'Response not found'}), 404
+        
+        # Check if the study belongs to current user
+        study = Study.objects(_id=response.study._id, creator=current_user).first()
+        if not study:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Prepare response data
+        response_data = {
+            'response_id': str(response._id),
+            'respondent_id': response.respondent_id,
+            'session_id': response.session_id,
+            'status': 'Completed' if response.is_completed else 'Abandoned',
+            'completion_percentage': response.completion_percentage or 0,
+            'session_start_time': response.session_start_time.isoformat() if response.session_start_time else None,
+            'session_end_time': response.session_end_time.isoformat() if response.session_end_time else None,
+            'total_study_duration': response.total_study_duration or 0,
+            'created_at': response.session_start_time.isoformat() if response.session_start_time else None,  # Use session_start_time as created_at
+            'last_activity': response.last_activity.isoformat() if response.last_activity else None,
+            'is_completed': response.is_completed,
+            'is_abandoned': response.is_abandoned,
+            'abandonment_reason': response.abandonment_reason if response.is_abandoned else None,
+            'classification_answers': {},
+            'personal_info': response.personal_info or {},
+            'tasks': []
+        }
+        
+        # Process classification answers
+        if response.classification_answers:
+            for answer in response.classification_answers:
+                if hasattr(answer, 'question_text') and hasattr(answer, 'answer'):
+                    response_data['classification_answers'][answer.question_text] = answer.answer
+        
+        # Add task details with vignette information
+        if hasattr(response, 'completed_tasks') and response.completed_tasks:
+            for i, task in enumerate(response.completed_tasks):
+                try:
+                    task_data = {
+                        'task_index': i + 1,
+                        'task_id': str(task.task_id) if hasattr(task, 'task_id') and task.task_id else f'task_{i+1}',
+                        'start_time': task.task_start_time.isoformat() if hasattr(task, 'task_start_time') and task.task_start_time else None,
+                        'completion_time': task.task_completion_time.isoformat() if hasattr(task, 'task_completion_time') and task.task_completion_time else None,
+                        'duration_seconds': getattr(task, 'task_duration_seconds', 0) or 0,
+                        'rating_given': getattr(task, 'rating_given', 0) or 0,
+                        'rating_timestamp': task.rating_timestamp.isoformat() if hasattr(task, 'rating_timestamp') and task.rating_timestamp else None,
+                        'elements_shown': [],
+                        'layers_shown': [],
+                        'vignettes': []  # New field for actual vignette content
+                    }
+                    
+                    # Add element information and vignettes for grid studies
+                    if hasattr(task, 'elements_shown_in_task') and task.elements_shown_in_task:
+                        try:
+                            print(f"🔍 Found elements_shown_in_task for grid study task {i}")
+                            print(f"🔍 Content: {task.elements_shown_in_task}")
+                            
+                            # Process grid study elements
+                            for element_name, element_data in task.elements_shown_in_task.items():
+                                if element_name.endswith('_content') and element_data and element_data != '':
+                                    # This is the image content
+                                    base_name = element_name.replace('_content', '')
+                                    element_active = task.elements_shown_in_task.get(base_name, 0)
+                                    
+                                    if element_active == 1:
+                                        print(f"✅ Active grid element: {base_name}")
+                                        print(f"✅ Element content: {element_data}")
+                                        
+                                        # Add to elements_shown for backward compatibility
+                                        element_info = {
+                                            'element_id': str(base_name),
+                                            'content': element_data,
+                                            'position': 'active'
+                                        }
+                                        task_data['elements_shown'].append(element_info)
+                                        
+                                        # Add vignette content for grid studies
+                                        vignette_data = {
+                                            'type': 'grid',
+                                            'content': element_data,
+                                            'element_id': str(base_name),
+                                            'element_name': base_name,
+                                            'is_active': True
+                                        }
+                                        print(f"🖼️ Adding grid vignette: {vignette_data}")
+                                        task_data['vignettes'].append(vignette_data)
+                                    else:
+                                        print(f"⚠️ Inactive grid element: {base_name} (active: {element_active})")
+                        except Exception as e:
+                            print(f"Warning: Error processing grid elements for task {i}: {e}")
+                    
+                    # Add layer information and vignettes for layer studies
+                    if hasattr(task, 'elements_shown_content') and task.elements_shown_content:
+                        try:
+                            print(f"🔍 Found elements_shown_content for layer study task {i}")
+                            print(f"🔍 Content: {task.elements_shown_content}")
+                            
+                            # Process elements_shown_content (this is the actual vignette data)
+                            for element_name, element_data in task.elements_shown_content.items():
+                                if isinstance(element_data, dict) and element_data.get('url'):
+                                    print(f"✅ Processing layer element: {element_name}")
+                                    print(f"✅ Element data: {element_data}")
+                                    
+                                    # Add to layers_shown for backward compatibility
+                                    layer_info = {
+                                        'layer_id': str(element_name),
+                                        'z_index': element_data.get('z_index', 0),
+                                        'order': element_data.get('order', 0)
+                                    }
+                                    task_data['layers_shown'].append(layer_info)
+                                    
+                                    # Add vignette content directly from elements_shown_content
+                                    vignette_data = {
+                                        'type': 'layer',
+                                        'content': element_data.get('url'),
+                                        'layer_id': str(element_name),
+                                        'z_index': element_data.get('z_index', 0),
+                                        'image_name': element_data.get('name', element_name),
+                                        'alt_text': element_data.get('alt_text', ''),
+                                        'order': element_data.get('order', 0),
+                                        'layer_name': element_data.get('layer_name', element_name)
+                                    }
+                                    print(f"🖼️ Adding layer vignette: {vignette_data}")
+                                    task_data['vignettes'].append(vignette_data)
+                                else:
+                                    print(f"⚠️ Invalid layer element data for {element_name}: {element_data}")
+                        except Exception as e:
+                            print(f"Warning: Error processing elements_shown_content for task {i}: {e}")
+                    
+                    # Also check the old elements_shown field for backward compatibility
+                    elif hasattr(task, 'elements_shown') and task.elements_shown:
+                        try:
+                            print(f"🔍 Found elements_shown for grid study task {i} (backward compatibility)")
+                            print(f"🔍 Content: {task.elements_shown}")
+                            
+                            # Process grid study elements
+                            for element_name, element_data in task.elements_shown.items():
+                                if element_name.endswith('_content') and element_data and element_data != '':
+                                    # This is the image content
+                                    base_name = element_name.replace('_content', '')
+                                    element_active = task.elements_shown.get(base_name, 0)
+                                    
+                                    if element_active == 1:
+                                        print(f"✅ Active grid element: {base_name}")
+                                        print(f"✅ Element content: {element_data}")
+                                        
+                                        # Add to elements_shown for backward compatibility
+                                        element_info = {
+                                            'element_id': str(base_name),
+                                            'content': element_data,
+                                            'position': 'active'
+                                        }
+                                        task_data['elements_shown'].append(element_info)
+                                        
+                                        # Add vignette content for grid studies
+                                        vignette_data = {
+                                            'type': 'grid',
+                                            'content': element_data,
+                                            'element_id': str(base_name),
+                                            'element_name': base_name,
+                                            'is_active': True
+                                        }
+                                        print(f"🖼️ Adding grid vignette: {vignette_data}")
+                                        task_data['vignettes'].append(vignette_data)
+                                    else:
+                                        print(f"⚠️ Inactive grid element: {base_name} (active: {element_active})")
+                        except Exception as e:
+                            print(f"Warning: Error processing grid elements for task {i}: {e}")
+                    
+                    # Also check layers_shown_in_task for backward compatibility
+                    elif hasattr(task, 'layers_shown_in_task') and task.layers_shown_in_task:
+                        try:
+                            for layer_id, layer_data in task.layers_shown_in_task.items():
+                                if isinstance(layer_data, dict):
+                                    layer_info = {
+                                        'layer_id': str(layer_id),
+                                        'z_index': layer_data.get('z_index', 0),
+                                        'order': layer_data.get('order', 0)
+                                    }
+                                    task_data['layers_shown'].append(layer_info)
+                                    
+                                    # Get actual vignette content from study layers based on z-index
+                                    if study.study_type == 'layer' and study.study_layers:
+                                        print(f"🔍 Processing layer {layer_id} for task {i}")
+                                        print(f"🔍 Study has {len(study.study_layers)} layers")
+                                        for study_layer in study.study_layers:
+                                            print(f"🔍 Checking layer {study_layer.layer_id} vs {layer_id}")
+                                            if str(study_layer.layer_id) == str(layer_id):
+                                                print(f"✅ Found matching layer, adding {len(study_layer.images)} images")
+                                                # Add vignette content for this layer
+                                                for image in study_layer.images:
+                                                    vignette_data = {
+                                                        'type': 'layer',
+                                                        'content': image.url,
+                                                        'layer_id': str(layer_id),
+                                                        'z_index': study_layer.z_index,
+                                                        'image_name': image.name,
+                                                        'alt_text': image.alt_text,
+                                                        'order': image.order
+                                                    }
+                                                    print(f"🖼️ Adding vignette: {vignette_data}")
+                                                    task_data['vignettes'].append(vignette_data)
+                                            else:
+                                                print(f"❌ Layer ID mismatch: {study_layer.layer_id} != {layer_id}")
+                        except Exception as e:
+                            print(f"Warning: Error processing layers for task {i}: {e}")
+                    
+                    print(f"📋 Task {i} data: {task_data}")
+                    response_data['tasks'].append(task_data)
+                    
+                except Exception as e:
+                    print(f"Warning: Error processing task {i}: {e}")
+                    # Add a basic task entry if there's an error
+                    response_data['tasks'].append({
+                        'task_index': i + 1,
+                        'task_id': f'task_{i+1}',
+                        'start_time': None,
+                        'completion_time': None,
+                        'duration_seconds': 0,
+                        'rating_given': 0,
+                        'rating_timestamp': None,
+                        'elements_shown': [],
+                        'layers_shown': [],
+                        'vignettes': []
+                    })
+        
+        print(f"🎯 Final response data: {response_data}")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({'error': f'Error fetching response details: {str(e)}'}), 500
 
 @dashboard_bp.route('/studies/<study_id>/delete', methods=['POST'])
 @login_required

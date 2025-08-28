@@ -9,7 +9,8 @@ from werkzeug.utils import secure_filename
 import uuid
 from datetime import datetime
 import json
-    # Register blueprints
+
+# Import routes
 from routes.index import index_bp
 from routes.auth import auth_bp
 from routes.study_creation import study_creation_bp
@@ -90,6 +91,11 @@ def create_app(config_name='default'):
     app.register_blueprint(study_creation_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(api_bp)
+    
+    # Make config available in templates
+    @app.context_processor
+    def inject_config():
+        return dict(config=app.config)
     
 
     

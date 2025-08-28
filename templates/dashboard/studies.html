@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}My Studies - UnileverImageStudy{% endblock %}
+{% block title %}My Studies - {{ config.get('APP_NAME', 'UnileverImageStudy') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/studies.css') }}">
@@ -16,6 +16,14 @@
                 <p>Manage and monitor your IPED research studies with advanced analytics</p>
             </div>
             <div class="header-actions">
+                <a href="{{ url_for('dashboard.export_all_studies') }}" class="btn btn--secondary btn--lg" title="Export summary of all studies">
+                    <span class="btn-icon">📊</span>
+                    Export All Studies
+                </a>
+                <a href="{{ url_for('dashboard.sync_study_counts') }}" class="btn btn--secondary btn--lg" title="Sync response counts for consistency">
+                    <span class="btn-icon">🔄</span>
+                    Sync Counts
+                </a>
                 <a href="{{ url_for('study_creation.index') }}" class="btn btn--primary btn--xl">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>

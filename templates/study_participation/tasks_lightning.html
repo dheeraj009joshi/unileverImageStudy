@@ -8,6 +8,8 @@
 body {
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important; /* Prevent scrolling */
+    height: 100vh !important; /* Force full viewport height */
     /* Dark brown background */
 }
 
@@ -16,6 +18,8 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     background: transparent !important;
+    overflow: hidden !important; /* Prevent scrolling */
+    height: 100vh !important; /* Force full viewport height */
 }
 
 /* Remove any top bars or spacing */
@@ -39,6 +43,32 @@ body {
 .task-container {
     margin-top: 0 !important;
     padding-top: 0 !important;
+    overflow: hidden !important; /* Prevent scrolling */
+    height: 100vh !important; /* Force full viewport height */
+}
+
+/* Global scroll prevention */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100vw !important;
+}
+
+/* Use calculated viewport height for better mobile support */
+:root {
+    --vh: 1vh;
+    --vw: 1vw;
+}
+
+/* Force exact screen dimensions */
+html, body, #main-content, .task-container {
+    height: calc(var(--vh, 1vh) * 100) !important;
+    width: calc(var(--vw, 1vw) * 100) !important;
+    overflow: hidden !important;
 }
 
 /* Progress bar removed - no more top space */
@@ -68,33 +98,35 @@ body {
 /* Main task card */
 .task-card {
     background: white;
-    border-radius: 20px;
-    padding: 20px;
-    margin: 0 15px 15px 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    min-height: 85vh; /* Increased height for larger vignette */
+    border-radius: 2vh;
+    padding: 1vh;
+    margin: 0 0.5vh 0.5vh 0.5vh;
+    box-shadow: 0 0.4vh 2vh rgba(0,0,0,0.15);
+    height: calc(calc(var(--vh, 1vh) * 99) - 1vh); /* 99vh minus margins */
+    overflow: hidden; /* Prevent content overflow */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 /* Progress indicator - Instagram stories style with individual rectangles */
 .progress-indicator {
     background: transparent; /* No background for the container */
-    border-radius: 10px;
+    border-radius: 1vh;
     text-align: center;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 1.4vh;
     position: relative;
     overflow: visible;
-    min-width: 200px;
+    min-width: 20vw;
     display: block;
     height: auto;
-    padding: 15px 0 5px 0;
-    margin: 10px auto;
+    padding: 1.5vh 0 0.5vh 0;
+    margin: 1vh auto;
 }
 
 /* Task rectangles container */
 .task-rectangles {
     display: flex;
-    gap: 4px;
+    gap: 0.4vh;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
@@ -103,12 +135,12 @@ body {
 
 /* Individual task rectangle */
 .task-rectangle {
-    width: 12px;
-    height: 8px;
+    width: 1.2vh;
+    height: 0.8vh;
     background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
+    border-radius: 0.2vh;
     transition: all 0.3s ease-in-out;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 0.1vh solid rgba(255, 255, 255, 0.2);
 }
 
 /* Completed task rectangle */
@@ -150,21 +182,22 @@ body {
 
 /* Question text */
 .question-text {
-    font-size: 18px;
+    font-size: 2.2vh;
     font-weight: 700;
     color: #333;
-    margin-bottom: 5px;
+    margin-bottom: 0.6vh;
     text-align: center;
 }
 
 /* Image container */
 .image-container {
     text-align: center;
-    margin-bottom: 20px;
-    height: 60vh; /* 80% of screen height minus other elements */
+    margin-bottom: 0.5vh;
+    height: calc(calc(var(--vh, 1vh) * 60) - 2vh); /* 60vh minus margins */
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden; /* Prevent image overflow */
 }
 
 .task-image {
@@ -185,10 +218,11 @@ body {
     background: none !important;
     position: relative;
     width: 100%;
-    height: 500px; /* Reduced height */
+    height: calc(calc(var(--vh, 1vh) * 55) - 1vh); /* 55vh minus margins */
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden; /* Prevent overflow */
 }
 
 .layer-image {
@@ -215,21 +249,24 @@ body {
 /* Rating section */
 .rating-section {
     background: white;
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-radius: 1.5vh;
+    padding: 2vh 1.5vh 1.5vh 1.5vh; /* More top padding to prevent cut-off */
+    box-shadow: 0 0.2vh 1vh rgba(0,0,0,0.05);
+    margin-top: 1vh; /* Add top margin for breathing room */
+    overflow: visible; /* Allow rating circles to be fully visible */
+    min-height: 15vh; /* Ensure minimum height for rating section */
 }
 
 .rating-instructions {
     display: flex;
-    gap: 10px;
+    gap: 1vh;
     flex-direction: row;
     justify-items: center;
     justify-content: center;
     text-align: center;
-   
+    margin-bottom: 1.5vh; /* Add bottom margin for spacing */
     color: #666;
-    font-size: 13px;
+    font-size: 1.3vh;
 }
 
 .rating-instructions p {
@@ -238,30 +275,33 @@ body {
 }
 
 .rating-grid {
-   
-    padding: 0 !important;
+    margin: 0 !important;
+    padding: 1vh 0 !important; /* Add vertical padding to prevent cut-off */
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 1.2vh;
     flex-wrap: wrap;
+    align-items: center; /* Ensure proper vertical alignment */
 }
 
 .rating-option {
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative; /* Create positioning context */
+    z-index: 5; /* Ensure rating options are above other elements */
 }
 
 .rating-label {
-    width: 50px;
-    height: 50px;
-    border: 2px solid #E0E0E0;
-    border-radius: 25px;
+    width: 5vh;
+    height: 5vh;
+    border: 0.2vh solid #E0E0E0;
+    border-radius: 2.5vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 1.6vh;
     color: #333;
     transition: all 0.2s ease;
 }
@@ -277,6 +317,8 @@ body {
     color: white;
     border-color: #4CAF50;
     transform: scale(1.1);
+    z-index: 10; /* Ensure active rating is on top */
+    position: relative; /* Create stacking context */
 }
 
 /* Task navigation removed - only top progress bar remains */
@@ -326,26 +368,26 @@ body {
 }
 
 .countdown-number {
-    font-size: 120px;
+    font-size: 12vh;
     font-weight: bold;
-    margin-bottom: 20px;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    margin-bottom: 2vh;
+    text-shadow: 0 0 2vh rgba(255, 255, 255, 0.5);
     animation: pulse 1s ease-in-out infinite;
 }
 
 .countdown-text {
-    font-size: 36px;
+    font-size: 3.6vh;
     font-weight: bold;
-    margin-bottom: 15px;
+    margin-bottom: 1.5vh;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.2vh;
+    text-shadow: 0 0 1.5vh rgba(255, 255, 255, 0.3);
 }
 
 .countdown-subtext {
-    font-size: 18px;
+    font-size: 1.8vh;
     opacity: 0.9;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 1vh rgba(255, 255, 255, 0.2);
 }
 
 @keyframes pulse {
@@ -434,30 +476,30 @@ body {
     }
     
     /* Mobile progress indicator adjustments */
-    .progress-indicator {
-        margin: 0 !important;
-        min-width: 150px;
-        padding: 10px 0 3px 0;
-    }
-    
-    .task-rectangles {
-        
-        gap: 3px;
-    }
-    .task-rectangle.upcoming {
-        background: lightgrey;
-        border-color: #D3D3D3;
-    }
-    .task-rectangle {
-        
-        width: 10px;
-        height: 6px;
-    }
-    
-    .progress-text {
-        font-size: 11px;
-        top: -18px;
-    }
+.progress-indicator {
+    margin: 0 !important;
+    min-width: 15vw;
+    padding: 1vh 0 0.3vh 0;
+}
+
+.task-rectangles {
+    gap: 0.3vh;
+}
+
+.task-rectangle.upcoming {
+    background: lightgrey;
+    border-color: #D3D3D3;
+}
+
+.task-rectangle {
+    width: 1vh;
+    height: 0.6vh;
+}
+
+.progress-text {
+    font-size: 1.1vh;
+    top: -1.8vh;
+}
 }
 </style>
 {% endblock %}
@@ -515,6 +557,9 @@ class LightningTaskFlow {
         console.log(`Total tasks: ${this.totalTasks}`);
         console.log('All tasks loaded:', this.allTasks);
         
+        // Calculate and apply screen dimensions
+        this.calculateAndApplyDimensions();
+        
         // Show countdown immediately
         this.showImageCountdown();
         
@@ -548,6 +593,34 @@ class LightningTaskFlow {
         
         // Initialize local storage
         this.loadFromLocalStorage();
+    }
+    
+    calculateAndApplyDimensions() {
+        const vh = window.innerHeight * 0.01;
+        const vw = window.innerWidth * 0.01;
+        
+        console.log('📱 TaskFlow Screen dimensions:', {
+            innerHeight: window.innerHeight,
+            innerWidth: window.innerWidth,
+            vh: vh,
+            vw: vw
+        });
+        
+        // Set CSS custom properties
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        document.documentElement.style.setProperty('--vw', `${vw}px`);
+        
+        // Force recalculation of layout
+        this.updateLayoutDimensions();
+    }
+    
+    updateLayoutDimensions() {
+        const taskCard = document.querySelector('.task-card');
+        if (taskCard) {
+            const cardHeight = window.innerHeight - 2; // 2px for margins
+            taskCard.style.height = `${cardHeight}px`;
+            console.log(`✅ Task card height set to: ${cardHeight}px`);
+        }
     }
     
     preloadInitialImages() {
@@ -1220,7 +1293,10 @@ class LightningTaskFlow {
         
         console.log('Submitting rating:', rating, 'Duration:', taskDuration);
         
-        // Create task data
+        // Create task data with comprehensive information
+        const currentTask = this.allTasks[this.currentTaskIndex];
+        console.log('📋 Current task data for submission:', currentTask);
+        
         const taskData = {
             task_number: this.currentTaskIndex + 1,
             rating: rating,
@@ -1229,9 +1305,25 @@ class LightningTaskFlow {
             task_end_time: taskEndTime.toISOString(),
             task_duration_seconds: taskDuration,
             task_data: {
-                elements_shown: this.allTasks[this.currentTaskIndex].elements_shown || {}
+                // Grid study data
+                elements_shown: currentTask.elements_shown || {},
+                // Layer study data
+                elements_shown_content: currentTask.elements_shown_content || {},
+                // Task metadata
+                task_type: currentTask.task_type || '{{ study.study_type }}',
+                task_index: this.currentTaskIndex,
+                // Element interactions (if available)
+                element_interactions: currentTask.element_interactions || [],
+                // Additional task context
+                task_context: {
+                    study_type: '{{ study.study_type }}',
+                    total_elements: currentTask.total_elements || 0,
+                    active_elements: currentTask.active_elements || 0
+                }
             }
         };
+        
+        console.log('📤 Submitting comprehensive task data:', taskData);
         
         // Store in local storage
         this.taskRatings[this.currentTaskIndex] = taskData;
@@ -1461,30 +1553,46 @@ class LightningTaskFlow {
 // Initialize lightning-fast task flow when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM Content Loaded - Starting initialization...');
-    console.log('🔍 Testing if JavaScript is working...');
     
-    // Simple test to see if JavaScript is running
-    try {
-        console.log('✅ JavaScript is working!');
-        console.log('🔍 Testing element access...');
+    // Calculate and apply proper screen dimensions
+    function calculateScreenDimensions() {
+        const vh = window.innerHeight * 0.01;
+        const vw = window.innerWidth * 0.01;
         
-        const testElement = document.getElementById('imageCountdown');
-        console.log('📱 imageCountdown element found:', testElement);
+        console.log('📱 Screen dimensions:', {
+            innerHeight: window.innerHeight,
+            innerWidth: window.innerWidth,
+            vh: vh,
+            vw: vw
+        });
         
-        if (testElement) {
-            console.log('✅ HTML elements exist!');
-        } else {
-            console.error('❌ HTML elements NOT found!');
-        }
-    } catch (error) {
-        console.error('❌ JavaScript error:', error);
+        // Set CSS custom properties for dynamic sizing
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        document.documentElement.style.setProperty('--vw', `${vw}px`);
+        
+        // Apply calculated heights to prevent scrolling
+        const body = document.body;
+        const html = document.documentElement;
+        const mainContent = document.getElementById('main-content');
+        const taskContainer = document.getElementById('taskContainer');
+        
+        if (body) body.style.height = `${window.innerHeight}px`;
+        if (html) html.style.height = `${window.innerHeight}px`;
+        if (mainContent) mainContent.style.height = `${window.innerHeight}px`;
+        if (taskContainer) taskContainer.style.height = `${window.innerHeight}px`;
+        
+        console.log('✅ Screen dimensions applied');
     }
+    
+    // Calculate dimensions on load and resize
+    calculateScreenDimensions();
+    window.addEventListener('resize', calculateScreenDimensions);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(calculateScreenDimensions, 100);
+    });
     
     // Check if required elements exist
     const taskContainer = document.getElementById('taskContainer');
-    
-    console.log('Required elements check:');
-    console.log('- taskContainer:', taskContainer);
     
     if (!taskContainer) {
         console.error('❌ CRITICAL: taskContainer element not found!');

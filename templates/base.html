@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="UnileverImageStudy - Professional IPED Study System">
+    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'UnileverImageStudy - Professional IPED Study System') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{% block title %}UnileverImageStudy{% endblock %}</title>
+    <title>{% block title %}{{ config.get('APP_NAME', 'UnileverImageStudy') }}{% endblock %}</title>
     
     <!-- Macros -->
     {% macro study_progress_bar(current_step, study_type='grid', draft=none) %}
@@ -111,7 +111,7 @@
             <div class="nav-brand">
                 <a href="{{ url_for('index.index') }}" class="brand-link" aria-label="Home">
                     <span class="brand-icon">🧠</span>
-                    <span class="brand-text">UnileverImageStudy</span>
+                    <span class="brand-text">{{ config.get('APP_NAME', 'UnileverImageStudy') }}</span>
                 </a>
             </div>
             
@@ -584,8 +584,8 @@
         <div class="footer-container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3 class="footer-title">UnileverImageStudy</h3>
-                    <p class="footer-description">Professional IPED Study System for Research and Data Collection</p>
+                    <h3 class="footer-title">{{ config.get('APP_NAME', 'UnileverImageStudy') }}</h3>
+                    <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional IPED Study System for Research and Data Collection') }}</p>
                 </div>
                 <div class="footer-section">
                     <h4 class="footer-subtitle">Quick Links</h4>
@@ -607,7 +607,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-copyright">&copy; 2024 UnileverImageStudy. All rights reserved.</p>
+                <p class="footer-copyright">&copy; {{ config.get('COMPANY_YEAR', '2024') }} {{ config.get('COMPANY_NAME', 'UnileverImageStudy') }}. All rights reserved.</p>
             </div>
         </div>
     </footer>
