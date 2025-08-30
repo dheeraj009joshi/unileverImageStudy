@@ -79,8 +79,7 @@
 }
 
 .auth-logo:hover {
-    transform: scale(1.05);
-    background: var(--color-primary-200);
+    /* Hover effects removed */
 }
 
 .auth-logo .icon {
@@ -175,8 +174,7 @@
 }
 
 .auth-footer-link:hover {
-    color: var(--color-primary-700);
-    text-decoration: underline;
+    /* Hover effects removed */
 }
 
 /* ========================================
@@ -318,8 +316,7 @@
 }
 
 .auth-form .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    /* Hover effects removed */
 }
 
 /* ========================================
@@ -345,8 +342,7 @@
 }
 
 .password-toggle:hover {
-    color: var(--color-neutral-700);
-    background: var(--color-neutral-100);
+    /* Hover effects removed */
 }
 
 .password-toggle-icon {
@@ -392,10 +388,7 @@
 }
 
 .social-btn:hover {
-    border-color: var(--color-neutral-300);
-    background: var(--color-neutral-50);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    /* Hover effects removed */
 }
 
 .social-icon {
@@ -494,8 +487,7 @@
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    /* Hover effects removed */
 }
 
 .btn-text {
@@ -508,7 +500,7 @@
 }
 
 .btn-primary:hover .btn-arrow {
-    transform: translateX(4px);
+    /* Hover effects removed */
 }
 
 /* ========================================
@@ -551,8 +543,7 @@
 }
 
 .auth-link:hover {
-    color: var(--color-primary-700);
-    text-decoration: underline;
+    /* Hover effects removed */
 }
 
 @media (max-width: 640px) {

@@ -189,8 +189,7 @@
 }
 
 .stat-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
+    /* Hover effects removed */
 }
 
 .stat-icon {
@@ -206,8 +205,7 @@
 }
 
 .stat-card:hover .stat-icon {
-    transform: scale(1.1);
-    background: var(--color-primary-100);
+    /* Hover effects removed */
 }
 
 .stat-icon .icon {
@@ -298,9 +296,7 @@
 }
 
 .action-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
-    color: inherit;
+    /* Hover effects removed */
 }
 
 .action-icon {
@@ -316,8 +312,7 @@
 }
 
 .action-card:hover .action-icon {
-    transform: scale(1.1);
-    background: var(--color-primary-100);
+    /* Hover effects removed */
 }
 
 .action-icon .icon {
@@ -406,13 +401,11 @@
 }
 
 .study-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-primary-200);
+    /* Hover effects removed */
 }
 
 .study-card:hover::before {
-    opacity: 1;
+    /* Hover effects removed */
 }
 
 .study-header {
@@ -561,13 +554,11 @@
 }
 
 .activity-item:hover {
-    border-color: var(--color-primary-300);
-    box-shadow: var(--shadow-md);
-    transform: translateX(4px);
+    /* Hover effects removed */
 }
 
 .activity-item:hover::before {
-    opacity: 1;
+    /* Hover effects removed */
 }
 
 .activity-icon {
@@ -583,8 +574,7 @@
 }
 
 .activity-item:hover .activity-icon {
-    background: var(--color-primary-100);
-    transform: scale(1.1);
+    /* Hover effects removed */
 }
 
 .activity-icon .icon {

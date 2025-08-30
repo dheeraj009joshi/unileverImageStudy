@@ -134,10 +134,7 @@
 }
 
 .filter-tab:hover {
-    color: var(--color-primary-600);
-    background: var(--color-primary-50);
-    border-color: var(--color-primary-200);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .filter-tab.active {
@@ -234,7 +231,7 @@
 }
 
 .filter-select:hover {
-    border-color: var(--color-neutral-300);
+    /* Hover effects removed */
 }
 
 /* ========================================
@@ -297,9 +294,7 @@
 }
 
 .view-toggle:hover {
-    border-color: var(--color-primary-300);
-    color: var(--color-primary-600);
-    background: var(--color-primary-50);
+    /* Hover effects removed */
 }
 
 .view-toggle.active {
@@ -370,9 +365,7 @@
 }
 
 .study-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
-    border-color: var(--color-primary-300);
+    /* Hover effects removed */
 }
 
 .study-card:hover::before {
@@ -504,9 +497,7 @@
 }
 
 .stat-item:hover {
-    background: var(--color-primary-50);
-    border-color: var(--color-primary-200);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .stat-value {
@@ -646,10 +637,7 @@
 }
 
 .page-link:hover {
-    border-color: var(--color-primary-300);
-    color: var(--color-primary-600);
-    background: var(--color-primary-50);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .page-link.active {
@@ -1244,8 +1232,8 @@
     .stat-item:hover,
     .page-link:hover,
     .view-toggle:hover {
-        transform: none;
-    }
+    /* Hover effects removed */
+}
     
     .filter-tab:active,
     .study-card:active,

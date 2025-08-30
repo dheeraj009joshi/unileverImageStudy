@@ -73,43 +73,7 @@
     </div>
 
     <!-- Export Information Card -->
-        <div class="content-section">
-        <div class="export-info-card">
-            <div class="export-header">
-                <h3>📊 Export Study Results</h3>
-                <span class="export-badge">CSV Format</span>
-            </div>
-            <div class="export-content">
-                <p>The CSV export includes simplified data structure for analysis:</p>
-                <div class="export-features">
-                    <div class="feature-item">
-                        <span class="feature-icon">👤</span>
-                        <span class="feature-text">Panelist (Respondent ID)</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">❓</span>
-                        <span class="feature-text">Classification Questions (Q1, Q2, Q3... with option numbers)</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">🎯</span>
-                        <span class="feature-text">Task Data: Element/Layer visibility (1=visible, 0=hidden)</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">⭐</span>
-                        <span class="feature-text">Rating and Response Time for each task</span>
-                    </div>
-                </div>
-                <div class="export-note">
-                    <strong>Structure:</strong> 
-                    <code>Panelist | Q1 | Q2 | Task | Element1 | Element2 | Rating | ResponseTime</code>
-                    <br><small>For Grid Studies: Element1, Element2, Element3, Element4</small>
-                    <br><small>For Layer Studies: LayerA_Element1, LayerA_Element2, LayerB_Element1, etc.</small>
-                    <br><small>Each row represents one task, so one user with 16 tasks will have 16 rows</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
+     
     <!-- Filters and Search -->
     <div class="content-section">
         <div class="filters-section">
@@ -161,13 +125,12 @@
                     <thead>
                         <tr>
                             <th>Respondent ID</th>
-                            <th>Session ID</th>
+                           
                             <th>Start Time</th>
                             <th>End Time</th>
                             <th>Duration</th>
                             <th>Status</th>
-                            <th>Tasks Completed</th>
-                            <th>Completion %</th>
+                
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -184,12 +147,7 @@
                                             {% endif %}
                                         </div>
                             </td>
-                            <td>
-                                        <div class="session-info">
-                                            <code class="session-id">{{ response.session_id[:8] }}...</code>
-                                            <span class="session-tooltip" title="{{ response.session_id }}">Full ID</span>
-                                        </div>
-                            </td>
+                           
                             <td>
                                         <div class="time-info">
                                             <span class="date">{{ response.session_start_time.strftime('%Y-%m-%d') if response.session_start_time else 'N/A' }}</span>
@@ -214,34 +172,16 @@
                                     {{ 'Completed' if response.is_completed else 'Abandoned' }}
                                 </span>
                             </td>
-                            <td>
-                                        <div class="tasks-info">
-                                            <span class="tasks-count">{{ response.completed_tasks_count }}</span>
-                                            <div class="tasks-bar">
-                                                <div class="tasks-fill" style="width: {{ (response.completed_tasks_count / study.iped_parameters.tasks_per_consumer * 100)|round(1) if study.iped_parameters and study.iped_parameters.tasks_per_consumer and response.completed_tasks_count else 0 }}%"></div>
-                                            </div>
-                                        </div>
-                            </td>
-                            <td>
-                                        <div class="completion-info">
-                                <div class="completion-bar">
-                                    <div class="completion-fill" style="width: {{ response.completion_percentage }}%"></div>
-                                            </div>
-                                    <span class="completion-text">{{ "%.1f"|format(response.completion_percentage) }}%</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                            <button class="btn btn--sm btn--primary" onclick="viewResponseDetails('{{ response._id }}')" title="View full response details">
-                                                <span class="btn-icon">👁️</span>
-                                                Details
-                                            </button>
-                                            <button class="btn btn--sm btn--secondary" onclick="exportResponse('{{ response._id }}')" title="Export this response">
-                                                <span class="btn-icon">📥</span>
-                                                Export
-                                    </button>
-                                </div>
-                            </td>
+                        
+                            
+                                                          <td>
+                                  <div class="action-buttons">
+                                      <button class="btn btn--sm btn--primary" onclick="viewResponseDetails('{{ response._id }}')" title="View full response details">
+                                          <span class="btn-icon">👁️</span>
+                                          Details
+                                      </button>
+                                  </div>
+                              </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -297,16 +237,12 @@
                                 </div>
             </div>
 
-                            <div class="card-actions">
-                                <button class="btn btn--sm btn--primary" onclick="viewResponseDetails('{{ response._id }}')">
-                                    <span class="btn-icon">👁️</span>
-                                    View Details
-                                </button>
-                                <button class="btn btn--sm btn--secondary" onclick="exportResponse('{{ response._id }}')">
-                                    <span class="btn-icon">📥</span>
-                                    Export
-                                </button>
-                            </div>
+                                                          <div class="card-actions">
+                                  <button class="btn btn--sm btn--primary" onclick="viewResponseDetails('{{ response._id }}')">
+                                      <span class="btn-icon">👁️</span>
+                                      View Details
+                                  </button>
+                              </div>
                         </div>
                         {% endfor %}
                     </div>
@@ -377,10 +313,9 @@
                         <p>Loading response details...</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn--secondary" onclick="closeResponseModal()">Close</button>
-                    <button type="button" class="btn btn--primary" onclick="exportCurrentResponse()">Export Response</button>
-                </div>
+                                 <div class="modal-footer">
+                     <button type="button" class="btn btn--secondary" onclick="closeResponseModal()">Close</button>
+                 </div>
             </div>
         </div>
     </div>
@@ -523,8 +458,6 @@ function viewResponseDetails(responseId) {
                             <div class="task-header">
                                 <h5>Task ${task.task_index}</h5>
                                 <span class="task-duration">${formatDuration(task.duration_seconds)}</span>
-                            </div>
-                            <div class="task-details">
                                 <div class="task-info-grid">
                                     <div class="info-item">
                                         <span class="label">Start Time:</span>
@@ -542,89 +475,70 @@ function viewResponseDetails(responseId) {
                                         <span class="label">Rating Given:</span>
                                         <span class="value">${task.rating_given || 'N/A'}</span>
                                     </div>
-                                </div>
+                                </div> 
+                            </div>
+                            <div class="task-details">
+                               
                                 
                                 ${task.vignettes && task.vignettes.length > 0 ? `
                                     <div class="vignettes-section">
-                                        <h6>Vignettes Shown (${task.vignettes.length}):</h6>
-                                        <div class="vignettes-grid">
-                                            ${task.vignettes.map(vignette => {
-                                                console.log('🎨 Processing vignette:', vignette);
-                                                return `
-                                                <div class="vignette-item">
-                                                    ${vignette.type === 'layer' ? `
-                                                        <div class="vignette-header">
-                                                            <span class="vignette-type">Layer</span>
-                                                            <span class="vignette-z-index">Z-Index: ${vignette.z_index}</span>
-                                                            ${vignette.layer_name ? `<span class="vignette-layer-name">${vignette.layer_name}</span>` : ''}
-                                                        </div>
-                                                        <div class="vignette-content">
-                                                            <img src="${vignette.content}" alt="${vignette.alt_text || 'Vignette image'}" class="vignette-image" onerror="this.style.display='none'; console.log('❌ Image failed to load:', this.src);" />
-                                                            <div class="vignette-info">
-                                                                <span class="vignette-name">${vignette.image_name}</span>
-                                                                <span class="vignette-order">Order: ${vignette.order}</span>
-                                                            </div>
-                                                        </div>
-                                                    ` : vignette.type === 'grid' ? `
+                                     
+                                        ${task.vignettes[0].type === 'layer' ? `
+                                            <!-- Layer Study: Stacked vignette with z-index -->
+                                            <div class="vignette-preview layer-vignette">
+                                                ${task.vignettes.sort((a, b) => (a.z_index || 0) - (b.z_index || 0)).map((vignette, index) => `
+                                                    <div class="layer-image" 
+                                                         style="z-index: ${vignette.z_index || index}; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                                        <img src="${vignette.content}" 
+                                                             alt="${vignette.alt_text || 'Layer image'}" 
+                                                             class="vignette-layer-img"
+                                                             data-layer="${vignette.layer_name || 'Unknown'}"
+                                                             data-z-index="${vignette.z_index || index}"
+                                                             title="${vignette.layer_name || 'Unknown'} (z-index: ${vignette.z_index || index})"
+                                                             onerror="this.style.display='none'; console.log('❌ Layer image failed to load:', this.src);">
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        ` : task.vignettes[0].type === 'grid' ? `
+                                            <!-- Grid Study: Grid layout -->
+                                            <div class="vignettes-grid grid-vignettes">
+                                                ${task.vignettes.map(vignette => `
+                                                    <div class="vignette-item grid-vignette">
                                                         <div class="vignette-header">
                                                             <span class="vignette-type">Grid Element</span>
-                                                            <span class="vignette-element-id">ID: ${vignette.element_id}</span>
+                                                            <span class="vignette-element-id">ID: ${vignette.element_id || 'N/A'}</span>
                                                             ${vignette.is_active ? '<span class="vignette-active">Active</span>' : ''}
                                                         </div>
                                                         <div class="vignette-content">
-                                                            <img src="${vignette.content}" alt="Grid element ${vignette.element_name}" class="vignette-image" onerror="this.style.display='none'; console.log('❌ Grid image failed to load:', this.src);" />
+                                                            <img src="${vignette.content}" 
+                                                                 alt="Grid element ${vignette.element_name || 'Unknown'}" 
+                                                                 class="vignette-image" 
+                                                                 onerror="this.style.display='none'; console.log('❌ Grid image failed to load:', this.src);" />
                                                             <div class="vignette-info">
-                                                                <span class="vignette-name">${vignette.element_name}</span>
+                                                                <span class="vignette-name">${vignette.element_name || 'Unknown'}</span>
                                                                 <span class="vignette-status">${vignette.is_active ? 'Active' : 'Inactive'}</span>
                                                             </div>
                                                         </div>
-                                                    ` : `
-                                                        <div class="vignette-header">
-                                                            <span class="vignette-type">Element</span>
-                                                            <span class="vignette-id">ID: ${vignette.element_id}</span>
-                                                        </div>
-                                                        <div class="vignette-content">
-                                                            <div class="vignette-text">${vignette.content}</div>
-                                                        </div>
-                                                    `}
-                                                </div>
-                                            `}).join('')}
-                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        ` : `
+                                            <!-- Unknown type -->
+                                            <div class="unknown-vignette-type">
+                                                <p>Unknown vignette type: ${task.vignettes[0].type}</p>
+                                                <pre>${JSON.stringify(task.vignettes, null, 2)}</pre>
+                                            </div>
+                                        `}
                                     </div>
                                 ` : `
                                     <div class="no-vignettes">
                                         <p>No vignettes data available for this task</p>
                                         <p><small>Debug: Task has ${task.elements_shown ? 'elements_shown' : 'no elements_shown'}, ${task.elements_shown_content ? 'elements_shown_content' : 'no elements_shown_content'}, ${task.layers_shown_in_task ? 'layers_shown_in_task' : 'no layers_shown_in_task'}</small></p>
+                                        <p><small>Task type: ${task.task_type || 'unknown'}, Study type: ${study.study_type || 'unknown'}</small></p>
                                     </div>
                                 `}
                                 
-                                ${task.elements_shown && task.elements_shown.length > 0 ? `
-                                    <div class="elements-section">
-                                        <h6>Elements Shown:</h6>
-                                        <div class="elements-grid">
-                                            ${task.elements_shown.map(element => `
-                                                <div class="element-item">
-                                                    <span class="element-id">${element.element_id}</span>
-                                                    <span class="element-content">${element.content}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                ` : ''}
-                                ${task.layers_shown && task.layers_shown.length > 0 ? `
-                                    <div class="layers-section">
-                                        <h6>Layers Shown:</h6>
-                                        <div class="layers-grid">
-                                            ${task.layers_shown.map(layer => `
-                                                <div class="layer-item">
-                                                    <span class="layer-id">${layer.layer_id}</span>
-                                                    <span class="layer-order">Order: ${layer.order}</span>
-                                                    <span class="layer-z-index">Z-Index: ${layer.z_index}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                ` : ''}
+                                
                             </div>
                         </div>
                     `;
@@ -727,44 +641,7 @@ function viewResponseDetails(responseId) {
         });
 }
 
-function exportResponse(responseId) {
-    // Export individual response
-    console.log(`Exporting response ${responseId}...`);
-    
-    // Create a temporary link to trigger download
-    const exportUrl = `/dashboard/responses/${responseId}/export`;
-    const link = document.createElement('a');
-    link.href = exportUrl;
-    link.download = `response_${responseId}.csv`;
-    link.style.display = 'none';
-    
-    // Add to DOM, click, and remove
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Show success message
-    const toast = document.createElement('div');
-    toast.className = 'toast toast-success';
-    toast.innerHTML = `
-        <span class="toast-icon">✅</span>
-        <span class="toast-message">Response export started!</span>
-    `;
-    document.body.appendChild(toast);
-    
-    // Remove toast after 3 seconds
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-        }
-    }, 3000);
-}
 
-function exportCurrentResponse() {
-    if (currentResponseId) {
-        exportResponse(currentResponseId);
-    }
-}
 
 function closeResponseModal() {
     document.getElementById('responseDetailsModal').style.display = 'none';

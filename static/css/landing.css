@@ -84,8 +84,7 @@
 }
 
 .stat-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    /* Hover effects removed */
 }
 
 .stat-number {
@@ -153,12 +152,11 @@
 }
 
 .feature-card:hover::before {
-    transform: scaleX(1);
+    /* Hover effects removed */
 }
 
 .feature-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    /* Hover effects removed */
 }
 
 .feature-icon {
@@ -303,7 +301,7 @@
 }
 
 .hover-lift:hover {
-    transform: translateY(-5px);
+    /* Hover effects removed */
 }
 
 /* Glassmorphism Effect */

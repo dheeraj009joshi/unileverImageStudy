@@ -366,8 +366,7 @@ a {
 }
 
 a:hover {
-    color: var(--color-primary-700);
-    text-decoration: underline;
+    /* Hover effects removed */
 }
 
 /* List Styles */
@@ -582,7 +581,7 @@ blockquote {
 }
 
 .footer-links li a:hover {
-    color: var(--color-primary-400);
+    /* Hover effects removed */
 }
 
 .footer-bottom {

@@ -746,7 +746,7 @@ def export_individual_response(response_id):
             str(study._id), study.title,
                 response.session_start_time.isoformat() if response.session_start_time else '',
                 response.session_end_time.isoformat() if response.session_end_time else '',
-            response.total_study_duration,
+                response.total_study_duration,
                 'Completed' if response.is_completed else 'Abandoned',
             response.completed_tasks_count, response.total_tasks_assigned,
             response.completion_percentage, response.is_abandoned,
@@ -1104,6 +1104,24 @@ def get_response_details(response_id):
                         except Exception as e:
                             print(f"Warning: Error processing grid elements for task {i}: {e}")
                     
+                    # Fallback: If no vignettes were generated but this is a grid study, generate them from study elements
+                    if study.study_type == 'grid' and len(task_data['vignettes']) == 0 and study.elements:
+                        print(f"🔄 Fallback: Generating vignettes from study elements for task {i}")
+                        try:
+                            for element in study.elements:
+                                if hasattr(element, 'url') and element.url:
+                                    vignette_data = {
+                                        'type': 'grid',
+                                        'content': element.url,
+                                        'element_id': str(element.element_id),
+                                        'element_name': element.name,
+                                        'is_active': True
+                                    }
+                                    print(f"🖼️ Fallback grid vignette: {vignette_data}")
+                                    task_data['vignettes'].append(vignette_data)
+                        except Exception as e:
+                            print(f"Warning: Error in fallback grid vignette generation for task {i}: {e}")
+                    
                     # Also check layers_shown_in_task for backward compatibility
                     elif hasattr(task, 'layers_shown_in_task') and task.layers_shown_in_task:
                         try:
@@ -1130,6 +1148,7 @@ def get_response_details(response_id):
                                                         'type': 'layer',
                                                         'content': image.url,
                                                         'layer_id': str(layer_id),
+                                                        'layer_name': study_layer.name,
                                                         'z_index': study_layer.z_index,
                                                         'image_name': image.name,
                                                         'alt_text': image.alt_text,
@@ -1141,6 +1160,32 @@ def get_response_details(response_id):
                                                 print(f"❌ Layer ID mismatch: {study_layer.layer_id} != {layer_id}")
                         except Exception as e:
                             print(f"Warning: Error processing layers for task {i}: {e}")
+                    
+                    # Fallback: If no vignettes were generated but this is a layer study, generate them from study layers
+                    if study.study_type == 'layer' and len(task_data['vignettes']) == 0 and study.study_layers:
+                        print(f"🔄 Fallback: Generating vignettes from study layers for task {i}")
+                        try:
+                            # Sort layers by z_index to ensure proper stacking order
+                            sorted_layers = sorted(study.study_layers, key=lambda x: getattr(x, 'z_index', 0) or 0)
+                            print(f"🔍 Sorted layers by z_index: {[(layer.name, getattr(layer, 'z_index', 0)) for layer in sorted_layers]}")
+                            
+                            for study_layer in sorted_layers:
+                                if hasattr(study_layer, 'images') and study_layer.images:
+                                    for image in study_layer.images:
+                                        vignette_data = {
+                                            'type': 'layer',
+                                            'content': image.url,
+                                            'layer_id': str(study_layer.layer_id),
+                                            'layer_name': study_layer.name,
+                                            'z_index': getattr(study_layer, 'z_index', 0) or 0,
+                                            'image_name': image.name,
+                                            'alt_text': image.alt_text,
+                                            'order': image.order
+                                        }
+                                        print(f"🖼️ Fallback vignette: {vignette_data}")
+                                        task_data['vignettes'].append(vignette_data)
+                        except Exception as e:
+                            print(f"Warning: Error in fallback vignette generation for task {i}: {e}")
                     
                     print(f"📋 Task {i} data: {task_data}")
                     response_data['tasks'].append(task_data)

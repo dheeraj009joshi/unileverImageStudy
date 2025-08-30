@@ -105,7 +105,7 @@
 }
 
 .breadcrumb-link:hover {
-    color: white;
+    /* Hover effects removed */
 }
 
 .breadcrumb-separator {
@@ -127,7 +127,7 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+   
     gap: var(--space-6);
 }
 
@@ -144,9 +144,7 @@
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary-300);
+    /* Hover effects removed */
 }
 
 .stat-icon {
@@ -404,7 +402,7 @@
 }
 
 .view-btn:hover:not(.active) {
-    color: var(--color-neutral-800);
+    /* Hover effects removed */
 }
 
 /* ========================================
@@ -448,9 +446,139 @@
 }
 
 .table tr:hover {
-    background: var(--color-neutral-50);
+    /* Hover effects removed */
 }
 
+/* ========================================
+   Vignette Display Styles
+   ======================================== */
+
+/* Layer Study Vignettes - Stacked with z-index */
+.vignette-preview.layer-vignette {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    border: 2px solid var(--color-neutral-200);
+    border-radius: var(--radius-lg);
+    background: var(--color-neutral-50);
+    overflow: hidden;
+}
+
+.layer-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 100%;
+    max-height: 100%;
+    transition: all 0.3s ease;
+    /* Ensure proper z-index stacking - will be overridden by inline styles */
+    z-index: 1;
+    /* Ensure images are properly stacked */
+    pointer-events: none;
+}
+
+.vignette-layer-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: var(--radius-md);
+    object-fit: contain;
+    display: block;
+}
+
+/* Grid Study Vignettes - Grid layout */
+.vignettes-grid.grid-vignettes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.vignette-item.grid-vignette {
+    background: white;
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+}
+
+.vignette-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-neutral-100);
+}
+
+.vignette-type {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-neutral-600);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+}
+
+.vignette-element-id {
+    font-size: var(--font-size-xs);
+    color: var(--color-neutral-500);
+    font-family: var(--font-family-mono);
+}
+
+.vignette-active {
+    background: var(--color-success-100);
+    color: var(--color-success-700);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.vignette-content {
+    text-align: center;
+}
+
+.vignette-image {
+    max-width: 100%;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    border-radius: var(--radius-md);
+    object-fit: contain;
+    margin-bottom: var(--space-3);
+}
+
+.vignette-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.vignette-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-neutral-900);
+}
+
+.vignette-status {
+    font-size: var(--font-size-sm);
+    color: var(--color-neutral-600);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .vignette-preview.layer-vignette {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .vignettes-grid.grid-vignettes {
+        grid-template-columns: 1fr;
+    }
+}
+  
 /* Table Cell Components */
 .respondent-info {
     display: flex;
@@ -635,9 +763,7 @@
 }
 
 .response-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary-300);
+    /* Hover effects removed */
 }
 
 .card-header {
@@ -773,9 +899,7 @@
 }
 
 .page-link:hover {
-    background: var(--color-neutral-50);
-    border-color: var(--color-neutral-400);
-    color: var(--color-neutral-900);
+    /* Hover effects removed */
 }
 
 .page-item.active .page-link {
@@ -900,8 +1024,7 @@
 }
 
 .modal-close:hover {
-    background: var(--color-neutral-200);
-    color: var(--color-neutral-600);
+    /* Hover effects removed */
 }
 
 .modal-body {
@@ -945,9 +1068,7 @@
    ======================================== */
 
 @media (max-width: 1024px) {
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
+    
     
     .export-features {
         grid-template-columns: 1fr;
@@ -979,9 +1100,7 @@
         text-align: center;
     }
     
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
+   
     
     .filter-controls {
         flex-direction: column;
@@ -1143,7 +1262,7 @@
 }
 
 .task-header {
-    display: flex;
+    
     justify-content: space-between;
     align-items: center;
     padding: var(--space-3) var(--space-4);
@@ -1172,12 +1291,15 @@
 }
 
 .task-info-grid {
+    margin-bottom: 3rem;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--space-3);
     margin-bottom: var(--space-4);
 }
-
+.info-item{
+    padding: 0 !important;
+}
 .task-info-grid .info-item {
     display: flex;
     flex-direction: column;

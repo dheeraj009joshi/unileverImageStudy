@@ -717,9 +717,7 @@
 }
 
 .element-thumbnail:hover {
-    border-color: var(--color-primary-400);
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Hover effects removed */
 }
 
 .element-tag {
@@ -776,8 +774,7 @@
 }
 
 .action-buttons .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    /* Hover effects removed */
 }
 
 /* Matrix Summary */
@@ -885,8 +882,7 @@
 }
 
 .simple-drag-area:hover {
-    border-color: #007bff;
-    background-color: #e3f2fd;
+    /* Hover effects removed */
 }
 
 .simple-drag-area.drag-over {
@@ -929,8 +925,7 @@
 }
 
 .drag-actions .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    /* Hover effects removed */
 }
 
 /* Drag Status */
@@ -982,8 +977,7 @@
 }
 
 .element-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .element-card.dragging {
@@ -1023,7 +1017,7 @@
 }
 
 .drag-handle:hover {
-    color: #007bff;
+    /* Hover effects removed */
 }
 
 .element-content {
@@ -1421,8 +1415,7 @@
 }
 
 .modal-close:hover {
-    color: #495057;
-    transform: rotate(90deg);
+    /* Hover effects removed */
 }
 
 .modal-body {
@@ -1790,10 +1783,7 @@
 }
 
 .browse-btn:hover {
-    background: #007bff;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    /* Hover effects removed */
 }
 
 /* Enhanced Images Scroll Container */
@@ -1845,9 +1835,7 @@
 }
 
 .image-item:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-    border-color: #007bff;
+    /* Hover effects removed */
 }
 
 .image-preview {
@@ -2119,9 +2107,7 @@
 }
 
 .layer-list-item:hover {
-    border-color: #007bff;
-    box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .layer-list-item.dragging {
@@ -2202,8 +2188,7 @@
 }
 
 .info-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    /* Hover effects removed */
 }
 
 .info-item strong {
@@ -2240,8 +2225,7 @@
 }
 
 .step-nav-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    /* Hover effects removed */
 }
 
 /* Layer Preview Section */
@@ -2259,9 +2243,7 @@
 }
 
 .preview-container:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
+    /* Hover effects removed */
 }
 
 .vignette-preview {
@@ -2283,12 +2265,7 @@
 }
 
 .vignette-preview:hover {
-    border-color: #007bff;
-    border-width: 3px;
-    box-shadow: 
-        inset 0 2px 12px rgba(0, 123, 255, 0.1),
-        0 12px 40px rgba(0, 123, 255, 0.15);
-    transform: translateY(-4px);
+    /* Hover effects removed */
 }
 
 .vignette-placeholder {
@@ -2307,10 +2284,7 @@
 }
 
 .vignette-placeholder:hover {
-    border-color: #007bff;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+    /* Hover effects removed */
 }
 
 .vignette-placeholder p {
@@ -2355,8 +2329,7 @@
 .layer-preview:nth-child(5) { z-index: 5; }
 
 .layer-preview:hover {
-    transform: translate(-50%, -50%) scale(1.05);
-    z-index: 1000;
+    /* Hover effects removed */
 }
 
 .layer-preview img {
@@ -2397,9 +2370,7 @@
 }
 
 .layer-stack-info:hover {
-    border-color: #007bff;
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.1);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .z-index-list {
@@ -2420,9 +2391,7 @@
 }
 
 .z-index-item:hover {
-    border-color: #007bff;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
-    transform: translateX(4px);
+    /* Hover effects removed */
 }
 
 .z-index-label {
@@ -2471,8 +2440,7 @@
 
 .z-index-up:hover,
 .z-index-down:hover {
-    background: #007bff;
-    color: white;
+    /* Hover effects removed */
 }
 
 .z-index-up:disabled,
@@ -2505,9 +2473,7 @@
 }
 
 .btn--primary:hover {
-    background: linear-gradient(135deg, #0056b3, #004085);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    /* Hover effects removed */
 }
 
 .btn--secondary {
@@ -2518,9 +2484,7 @@
 }
 
 .btn--secondary:hover {
-    background: linear-gradient(135deg, #495057, #343a40);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+    /* Hover effects removed */
 }
 
 .btn--danger {
@@ -2531,9 +2495,7 @@
 }
 
 .btn--danger:hover {
-    background: linear-gradient(135deg, #c82333, #a71e2a);
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    /* Hover effects removed */
 }
 
 .btn--sm {
@@ -2548,9 +2510,7 @@
 }
 
 .btn--outline:hover {
-    background: #007bff;
-    color: white;
-    transform: translateY(-1px);
+    /* Hover effects removed */
 }
 
 /* Form Help Text */
@@ -2657,8 +2617,7 @@
 }
 
 .form-section:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .section-header {
@@ -2801,8 +2760,7 @@
 }
 
 .layer-modal-close:hover {
-    color: #495057;
-    transform: rotate(90deg);
+    /* Hover effects removed */
 }
 
 .layer-modal-body {
@@ -3153,10 +3111,7 @@
 }
 
 .browse-btn:hover {
-    background: #007bff;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    /* Hover effects removed */
 }
 
 /* Enhanced Images Scroll Container */
@@ -3208,9 +3163,7 @@
 }
 
 .image-item:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-    border-color: #007bff;
+    /* Hover effects removed */
 }
 
 .image-preview {
@@ -3347,8 +3300,7 @@
 }
 
 .mobile-alert-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+    /* Hover effects removed */
 }
 
 /* Enhanced Mobile Responsiveness */
@@ -3479,10 +3431,8 @@
     }
     
     .browse-btn:hover {
-        background: #0056b3;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-    }
+    /* Hover effects removed */
+}
     
     .images-scroll-container {
         max-height: 350px;
@@ -3542,10 +3492,8 @@
     }
     
     .btn--primary:hover {
-        background: linear-gradient(135deg, #0056b3, #004085);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-    }
+    /* Hover effects removed */
+}
     
     .btn--secondary {
         background: linear-gradient(135deg, #6c757d, #495057);
@@ -3555,10 +3503,8 @@
     }
     
     .btn--secondary:hover {
-        background: linear-gradient(135deg, #495057, #343a40);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
-    }
+    /* Hover effects removed */
+}
 }
 
 @media (max-width: 480px) {
@@ -4384,8 +4330,7 @@
 }
 
 .vignette-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    /* Hover effects removed */
 }
 
 .vignette-header {
@@ -4581,7 +4526,7 @@
 }
 
 .element-simple-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Hover effects removed */
 }
 
 .element-name {
@@ -4659,9 +4604,7 @@
 }
 
 .element-preview-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    border-color: #3b82f6;
+    /* Hover effects removed */
 }
 
 .element-header {
@@ -4797,7 +4740,7 @@
 }
 
 .element-preview-image:hover {
-    transform: scale(1.05);
+    /* Hover effects removed */
 }
 
 .error-placeholder {

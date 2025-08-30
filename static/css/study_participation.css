@@ -155,8 +155,7 @@
 }
 
 .vignette-layer-img:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    /* Hover effects removed */
 }
 
 .vignette-info {
@@ -227,8 +226,7 @@
 }
 
 .task-element-img:hover {
-    transform: scale(1.05);
-    box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+    /* Hover effects removed */
 }
 
 /* Rating Section */
@@ -412,10 +410,7 @@
 }
 
 .option-label:hover {
-    border-color: var(--participation-primary);
-    background: var(--participation-primary-light);
-    transform: translateY(-2px);
-    box-shadow: var(--participation-shadow);
+    /* Hover effects removed */
 }
 
 .option-label.active {
@@ -517,10 +512,7 @@
 }
 
 .rating-label:hover {
-    border-color: var(--participation-primary);
-    background: var(--participation-primary-light);
-    transform: translateY(-2px);
-    box-shadow: var(--participation-shadow);
+    /* Hover effects removed */
 }
 
 .rating-label.active {
@@ -567,9 +559,7 @@
 }
 
 .btn-primary:hover {
-    background: var(--participation-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+    /* Hover effects removed */
 }
 
 .btn-primary:disabled {
@@ -585,8 +575,7 @@
 }
 
 .btn-secondary:hover {
-    background: #475569;
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .btn-outline {
@@ -596,10 +585,7 @@
 }
 
 .btn-outline:hover {
-    background: var(--participation-secondary);
-    color: white;
-    border-color: var(--participation-secondary);
-    transform: translateY(-2px);
+    /* Hover effects removed */
 }
 
 .btn-icon {
@@ -608,7 +594,7 @@
 }
 
 .btn:hover .btn-icon {
-    transform: translateX(4px);
+    /* Hover effects removed */
 }
 
 /* Task Section */
@@ -1069,9 +1055,7 @@
 }
 
 .start-study-btn:hover {
-    background: var(--participation-primary-dark);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(59, 130, 246, 0.5);
+    /* Hover effects removed */
 }
 
 .study-footer {
