@@ -425,29 +425,20 @@ def change_study_status(study_id):
 @login_required
 def export_study(study_id):
     """Export study data in comprehensive CSV format."""
-    print(f"🔍 Export requested for study {study_id}")
-    print(f"🔍 Export type: {request.args.get('type', 'csv')}")
-    print(f"🔍 Current user: {current_user.username}")
-    
     study = Study.objects(_id=study_id, creator=current_user).first()
     if not study:
-        print(f"❌ Study not found or access denied")
         flash('Study not found.', 'error')
         return redirect(url_for('dashboard.studies'))
     
-    print(f"✅ Study found: {study.title}")
     export_type = request.args.get('type', 'csv')
     
     if export_type == 'csv':
         # Get all completed responses for this study
-        print(f"🔍 Fetching completed responses for study {study_id}")
         responses = StudyResponse.objects(study=study, is_completed=True)
         # Convert to list for easier processing
         responses = list(responses)
-        print(f"🔍 Found {len(responses)} completed responses")
         
         if not responses:
-            print(f"⚠️ No completed responses found")
             flash('No completed responses found for export.', 'warning')
             return redirect(url_for('dashboard.study_responses', study_id=study_id))
         
@@ -526,16 +517,10 @@ def export_study(study_id):
             header_row.extend(['Rating', 'ResponseTime'])
         
         # Write header
-        print(f"🔍 Writing CSV header with {len(header_row)} columns")
         writer.writerow(header_row)
         
         # Write data rows - one row per task
-        print(f"🔍 Writing task rows for {len(responses)} responses")
         total_rows = 0
-        
-        # Add progress indicator
-        print(f"📊 Starting export of {len(responses)} responses...")
-        print(f"⏳ Progress: 0% (0/{len(responses)} responses processed)")
         
         for response in responses:
             # Get classification answers once per response
@@ -576,10 +561,6 @@ def export_study(study_id):
                 row_data.append(task_num)
                 
                 if task_data:
-                    print(f"🔍 Task {task_num} data: {task_data}")
-                    print(f"🔍 Task {task_num} elements_shown_in_task: {getattr(task_data, 'elements_shown_in_task', 'N/A')}")
-                    print(f"🔍 Task {task_num} elements_shown_content: {getattr(task_data, 'elements_shown_content', 'N/A')}")
-                    
                     # Element/Layer visibility for this task
                     if study.study_type == 'grid' and study.elements:
                         elements_shown = getattr(task_data, 'elements_shown_in_task', {})
@@ -596,13 +577,11 @@ def export_study(study_id):
                         
                     elif study.study_type == 'layer' and study.study_layers:
                         elements_shown_in_task = getattr(task_data, 'elements_shown_in_task', {})
-                        print(f"🔍 Task {task_num} elements_shown_in_task: {elements_shown_in_task}")
                         
                         # For layer studies: use dynamic columns from header
                         for column in layer_columns:
                             # Get the value for this column (1 if visible, 0 if not)
                             element_visible = elements_shown_in_task.get(column, 0)
-                            print(f"🔍 Layer column {column}: {element_visible}")
                             row_data.append(element_visible)
                         
                         # Add rating and response time
@@ -624,14 +603,6 @@ def export_study(study_id):
                 writer.writerow(row_data)
                 total_rows += 1
             
-            # Progress update every 5 responses
-            if (responses.index(response) + 1) % 5 == 0 or (responses.index(response) + 1) == len(responses):
-                progress = ((responses.index(response) + 1) / len(responses)) * 100
-                print(f"⏳ Progress: {progress:.1f}% ({responses.index(response) + 1}/{len(responses)} responses processed)")
-        
-        print(f"🔍 Wrote {total_rows} total task rows")
-        print(f"✅ Export completed successfully!")
-        
         output.seek(0)
         
         # Generate descriptive filename with study details
@@ -642,17 +613,12 @@ def export_study(study_id):
         current_time = datetime.now().strftime('%H%M')
         filename = f"{study_name}_{study_type}_{response_count}_responses_{current_date}_{current_time}.csv"
         
-        print(f"🔍 Generated filename: {filename}")
-        print(f"🔍 CSV content length: {len(output.getvalue())} characters")
-        print(f"🔍 CSV content preview: {output.getvalue()[:200]}...")
-        
         response = current_app.response_class(
             output.getvalue(),
             status=200,
             mimetype='text/csv'
         )
         response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-        print(f"✅ Returning CSV response with {len(output.getvalue())} characters")
         return response
         
     elif export_type == 'json':
@@ -1019,25 +985,16 @@ def get_response_details(response_id):
                                             'element_name': base_name,
                                             'is_active': True
                                         }
-                                        print(f"🖼️ Adding grid vignette: {vignette_data}")
                                         task_data['vignettes'].append(vignette_data)
-                                    else:
-                                        print(f"⚠️ Inactive grid element: {base_name} (active: {element_active})")
-                        except Exception as e:
-                            print(f"Warning: Error processing grid elements for task {i}: {e}")
+                        except Exception:
+                            pass  # Silently handle errors for performance
                     
                     # Add layer information and vignettes for layer studies
                     if hasattr(task, 'elements_shown_content') and task.elements_shown_content:
                         try:
-                            print(f"🔍 Found elements_shown_content for layer study task {i}")
-                            print(f"🔍 Content: {task.elements_shown_content}")
-                            
                             # Process elements_shown_content (this is the actual vignette data)
                             for element_name, element_data in task.elements_shown_content.items():
                                 if isinstance(element_data, dict) and element_data.get('url'):
-                                    print(f"✅ Processing layer element: {element_name}")
-                                    print(f"✅ Element data: {element_data}")
-                                    
                                     # Add to layers_shown for backward compatibility
                                     layer_info = {
                                         'layer_id': str(element_name),
@@ -1057,19 +1014,13 @@ def get_response_details(response_id):
                                         'order': element_data.get('order', 0),
                                         'layer_name': element_data.get('layer_name', element_name)
                                     }
-                                    print(f"🖼️ Adding layer vignette: {vignette_data}")
                                     task_data['vignettes'].append(vignette_data)
-                                else:
-                                    print(f"⚠️ Invalid layer element data for {element_name}: {element_data}")
                         except Exception as e:
-                            print(f"Warning: Error processing elements_shown_content for task {i}: {e}")
+                            pass  # Silently handle errors for performance
                     
                     # Also check the old elements_shown field for backward compatibility
                     elif hasattr(task, 'elements_shown') and task.elements_shown:
                         try:
-                            print(f"🔍 Found elements_shown for grid study task {i} (backward compatibility)")
-                            print(f"🔍 Content: {task.elements_shown}")
-                            
                             # Process grid study elements
                             for element_name, element_data in task.elements_shown.items():
                                 if element_name.endswith('_content') and element_data and element_data != '':
@@ -1078,9 +1029,6 @@ def get_response_details(response_id):
                                     element_active = task.elements_shown.get(base_name, 0)
                                     
                                     if element_active == 1:
-                                        print(f"✅ Active grid element: {base_name}")
-                                        print(f"✅ Element content: {element_data}")
-                                        
                                         # Add to elements_shown for backward compatibility
                                         element_info = {
                                             'element_id': str(base_name),
@@ -1097,16 +1045,12 @@ def get_response_details(response_id):
                                             'element_name': base_name,
                                             'is_active': True
                                         }
-                                        print(f"🖼️ Adding grid vignette: {vignette_data}")
                                         task_data['vignettes'].append(vignette_data)
-                                    else:
-                                        print(f"⚠️ Inactive grid element: {base_name} (active: {element_active})")
-                        except Exception as e:
-                            print(f"Warning: Error processing grid elements for task {i}: {e}")
+                        except Exception:
+                            pass  # Silently handle errors for performance
                     
                     # Fallback: If no vignettes were generated but this is a grid study, generate them from study elements
                     if study.study_type == 'grid' and len(task_data['vignettes']) == 0 and study.elements:
-                        print(f"🔄 Fallback: Generating vignettes from study elements for task {i}")
                         try:
                             for element in study.elements:
                                 if hasattr(element, 'url') and element.url:
@@ -1117,10 +1061,9 @@ def get_response_details(response_id):
                                         'element_name': element.name,
                                         'is_active': True
                                     }
-                                    print(f"🖼️ Fallback grid vignette: {vignette_data}")
                                     task_data['vignettes'].append(vignette_data)
-                        except Exception as e:
-                            print(f"Warning: Error in fallback grid vignette generation for task {i}: {e}")
+                        except Exception:
+                            pass  # Silently handle errors for performance
                     
                     # Also check layers_shown_in_task for backward compatibility
                     elif hasattr(task, 'layers_shown_in_task') and task.layers_shown_in_task:
@@ -1136,12 +1079,8 @@ def get_response_details(response_id):
                                     
                                     # Get actual vignette content from study layers based on z-index
                                     if study.study_type == 'layer' and study.study_layers:
-                                        print(f"🔍 Processing layer {layer_id} for task {i}")
-                                        print(f"🔍 Study has {len(study.study_layers)} layers")
                                         for study_layer in study.study_layers:
-                                            print(f"🔍 Checking layer {study_layer.layer_id} vs {layer_id}")
                                             if str(study_layer.layer_id) == str(layer_id):
-                                                print(f"✅ Found matching layer, adding {len(study_layer.images)} images")
                                                 # Add vignette content for this layer
                                                 for image in study_layer.images:
                                                     vignette_data = {
@@ -1154,20 +1093,15 @@ def get_response_details(response_id):
                                                         'alt_text': image.alt_text,
                                                         'order': image.order
                                                     }
-                                                    print(f"🖼️ Adding vignette: {vignette_data}")
                                                     task_data['vignettes'].append(vignette_data)
-                                            else:
-                                                print(f"❌ Layer ID mismatch: {study_layer.layer_id} != {layer_id}")
-                        except Exception as e:
-                            print(f"Warning: Error processing layers for task {i}: {e}")
+                        except Exception:
+                            pass  # Silently handle errors for performance
                     
                     # Fallback: If no vignettes were generated but this is a layer study, generate them from study layers
                     if study.study_type == 'layer' and len(task_data['vignettes']) == 0 and study.study_layers:
-                        print(f"🔄 Fallback: Generating vignettes from study layers for task {i}")
                         try:
                             # Sort layers by z_index to ensure proper stacking order
                             sorted_layers = sorted(study.study_layers, key=lambda x: getattr(x, 'z_index', 0) or 0)
-                            print(f"🔍 Sorted layers by z_index: {[(layer.name, getattr(layer, 'z_index', 0)) for layer in sorted_layers]}")
                             
                             for study_layer in sorted_layers:
                                 if hasattr(study_layer, 'images') and study_layer.images:
@@ -1182,16 +1116,13 @@ def get_response_details(response_id):
                                             'alt_text': image.alt_text,
                                             'order': image.order
                                         }
-                                        print(f"🖼️ Fallback vignette: {vignette_data}")
                                         task_data['vignettes'].append(vignette_data)
-                        except Exception as e:
-                            print(f"Warning: Error in fallback vignette generation for task {i}: {e}")
+                        except Exception:
+                            pass  # Silently handle errors for performance
                     
-                    print(f"📋 Task {i} data: {task_data}")
                     response_data['tasks'].append(task_data)
                     
-                except Exception as e:
-                    print(f"Warning: Error processing task {i}: {e}")
+                except Exception:
                     # Add a basic task entry if there's an error
                     response_data['tasks'].append({
                         'task_index': i + 1,
@@ -1206,7 +1137,6 @@ def get_response_details(response_id):
                         'vignettes': []
                     })
         
-        print(f"🎯 Final response data: {response_data}")
         return jsonify(response_data)
         
     except Exception as e:

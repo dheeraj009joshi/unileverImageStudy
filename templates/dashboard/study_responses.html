@@ -495,7 +495,7 @@ function viewResponseDetails(responseId) {
                                                              data-layer="${vignette.layer_name || 'Unknown'}"
                                                              data-z-index="${vignette.z_index || index}"
                                                              title="${vignette.layer_name || 'Unknown'} (z-index: ${vignette.z_index || index})"
-                                                             onerror="this.style.display='none'; console.log('❌ Layer image failed to load:', this.src);">
+                                                             onerror="this.style.display='none';">
                                                     </div>
                                                 `).join('')}
                                             </div>
@@ -513,7 +513,7 @@ function viewResponseDetails(responseId) {
                                                             <img src="${vignette.content}" 
                                                                  alt="Grid element ${vignette.element_name || 'Unknown'}" 
                                                                  class="vignette-image" 
-                                                                 onerror="this.style.display='none'; console.log('❌ Grid image failed to load:', this.src);" />
+                                                                 onerror="this.style.display='none';" />
                                                             <div class="vignette-info">
                                                                 <span class="vignette-name">${vignette.element_name || 'Unknown'}</span>
                                                                 <span class="vignette-status">${vignette.is_active ? 'Active' : 'Inactive'}</span>
@@ -533,8 +533,6 @@ function viewResponseDetails(responseId) {
                                 ` : `
                                     <div class="no-vignettes">
                                         <p>No vignettes data available for this task</p>
-                                        <p><small>Debug: Task has ${task.elements_shown ? 'elements_shown' : 'no elements_shown'}, ${task.elements_shown_content ? 'elements_shown_content' : 'no elements_shown_content'}, ${task.layers_shown_in_task ? 'layers_shown_in_task' : 'no layers_shown_in_task'}</small></p>
-                                        <p><small>Task type: ${task.task_type || 'unknown'}, Study type: ${study.study_type || 'unknown'}</small></p>
                                     </div>
                                 `}
                                 
