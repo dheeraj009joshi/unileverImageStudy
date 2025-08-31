@@ -1343,12 +1343,12 @@ def step3b():
                 # Grid study - use step2c data
                 step2c_data = draft.get_step_data('2c')
                 study.iped_parameters = IPEDParameters(
-                num_elements=step2c_data['num_elements'],
-                tasks_per_consumer=step2c_data['tasks_per_consumer'],
-                number_of_respondents=step2c_data['number_of_respondents'],
+                    num_elements=step2c_data['num_elements'],
+                    tasks_per_consumer=step2c_data['tasks_per_consumer'],
+                    number_of_respondents=step2c_data['number_of_respondents'],
                     exposure_tolerance_cv=step2c_data.get('exposure_tolerance_cv', 1.0),
-                total_tasks=step2c_data['total_tasks']
-            )
+                    total_tasks=step2c_data['total_tasks']
+                )
             else:
                 # Layer study - use layer_iped data and calculate from layer_config
                 layer_iped_data = draft.get_step_data('layer_iped')
@@ -1367,7 +1367,8 @@ def step3b():
                 study.iped_parameters = IPEDParameters(
                     number_of_respondents=layer_iped_data['number_of_respondents'],
                     exposure_tolerance_pct=2.0,  # Fixed as per original script
-                    total_tasks=total_tasks
+                    total_tasks=total_tasks,
+                    tasks_per_consumer=tasks_per_consumer  # Save tasks per consumer
                 )
             
             # Set generated tasks based on study type
@@ -1445,10 +1446,46 @@ def step3b():
         'step1c': draft.get_step_data('1c'),
         'step2a': draft.get_step_data('2a'),
         'layer_config': draft.get_step_data('layer_config'),  # Layer configuration data
+        'layer_iped': draft.get_step_data('layer_iped'),  # Layer IPED parameters
         'step2b': draft.get_step_data('2b'),
         'step2c': draft.get_step_data('2c'),
         'step3a': draft.get_step_data('3a')
     }
+    
+    # Calculate IPED parameters for layer studies
+    if preview_data['step1b'] and preview_data['step1b'].get('study_type') == 'layer':
+        layer_config_data = preview_data['layer_config']
+        layer_iped_data = preview_data['layer_iped']
+        
+        if layer_config_data and 'layers' in layer_config_data and layer_iped_data:
+            # Calculate parameters from layer configuration
+            total_layers = len(layer_config_data['layers'])
+            total_images = sum(len(layer.get('images', [])) for layer in layer_config_data['layers'])
+            
+            # Calculate uniqueness capacity (product of images per layer)
+            uniqueness_capacity = 1
+            for layer in layer_config_data['layers']:
+                layer_images = len(layer.get('images', []))
+                if layer_images > 0:
+                    uniqueness_capacity *= layer_images
+            
+            # Calculate tasks per consumer based on original algorithm
+            tasks_per_consumer = 24  # Default
+            if uniqueness_capacity < 24:
+                tasks_per_consumer = uniqueness_capacity
+            
+            # Calculate total tasks
+            total_tasks = tasks_per_consumer * layer_iped_data.get('number_of_respondents', 0)
+            
+            # Add calculated IPED parameters to preview data
+            preview_data['layer_iped_calculated'] = {
+                'total_layers': total_layers,
+                'total_images': total_images,
+                'tasks_per_consumer': tasks_per_consumer,
+                'uniqueness_capacity': uniqueness_capacity,
+                'number_of_respondents': layer_iped_data.get('number_of_respondents', 0),
+                'total_tasks': total_tasks
+            }
     
     # Debug: Print the data structure
     print(f"DEBUG: Step3b preview data structure:")
@@ -1965,13 +2002,61 @@ def layer_iped():
     current_app.logger.info("=" * 80)
     
     render_start = time.time()
-    result = render_template('study_creation/layer_iped.html', form=form, draft=draft)
+    result = render_template('study_creation/layer_iped.html', form=form, draft=draft, layer_config_data=layer_config_data)
     render_duration = time.time() - render_start
     print(f"⏱️  [PERF] Layer IPED template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
     print(f"⏱️  [PERF] Layer IPED total: {total_duration:.3f}s")
     return result
+
+@study_creation_bp.route('/calculate-layer-parameters')
+@login_required
+def calculate_layer_parameters():
+    """Calculate layer study parameters based on current layer configuration."""
+    try:
+        draft = get_study_draft()
+        if not draft:
+            return jsonify({'error': 'No active study draft found'}), 404
+        
+        layer_config_data = draft.get_step_data('layer_config') or {}
+        
+        if not layer_config_data or 'layers' not in layer_config_data:
+            return jsonify({
+                'total_layers': 0,
+                'total_images': 0,
+                'tasks_per_consumer': 0,
+                'uniqueness_capacity': 0,
+                'message': 'No layers configured yet'
+            })
+        
+        layers = layer_config_data['layers']
+        total_layers = len(layers)
+        total_images = sum(len(layer.get('images', [])) for layer in layers)
+        
+        # Calculate uniqueness capacity (product of images per layer)
+        uniqueness_capacity = 1
+        for layer in layers:
+            layer_images = len(layer.get('images', []))
+            if layer_images > 0:
+                uniqueness_capacity *= layer_images
+        
+        # Calculate tasks per consumer based on original algorithm
+        tasks_per_consumer = 24  # Default
+        if uniqueness_capacity < 24:
+            tasks_per_consumer = uniqueness_capacity
+        
+        return jsonify({
+            'total_layers': total_layers,
+            'total_images': total_images,
+            'tasks_per_consumer': tasks_per_consumer,
+            'uniqueness_capacity': uniqueness_capacity,
+            'message': 'Parameters calculated successfully'
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f'Error calculating layer parameters: {str(e)}')
+        return jsonify({'error': str(e)}), 500
 
 @study_creation_bp.route('/reset')
 @login_required

@@ -218,26 +218,51 @@
                     <div class="preview-section">
                         <h4>IPED Parameters</h4>
                         <div class="preview-grid">
-                            <div class="preview-item">
-                                <span class="preview-label">Number of Elements:</span>
-                                <span class="preview-value">{{ study_data.step2c.num_elements }}</span>
-                            </div>
-                            <div class="preview-item">
-                                <span class="preview-label">Tasks per Respondent:</span>
-                                <span class="preview-value">{{ study_data.step2c.tasks_per_consumer }}</span>
-                            </div>
-                            <div class="preview-item">
-                                <span class="preview-label">Number of Respondents:</span>
-                                <span class="preview-value">{{ study_data.step2c.number_of_respondents }}</span>
-                            </div>
-                            <div class="preview-item">
-                                <span class="preview-label">Active Elements Range:</span>
-                                <span class="preview-value">{{ study_data.step2c.min_active_elements }} - {{ study_data.step2c.max_active_elements }}</span>
-                            </div>
-                            <div class="preview-item">
-                                <span class="preview-label">Total Tasks:</span>
-                                <span class="preview-value">{{ study_data.step2c.total_tasks }}</span>
-                            </div>
+                            {% if study_data.step1b.study_type == 'grid' %}
+                                <!-- Grid Study Parameters -->
+                                <div class="preview-item">
+                                    <span class="preview-label">Number of Elements:</span>
+                                    <span class="preview-value">{{ study_data.step2c.num_elements }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Tasks per Respondent:</span>
+                                    <span class="preview-value">{{ study_data.step2c.tasks_per_consumer }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Number of Respondents:</span>
+                                    <span class="preview-value">{{ study_data.step2c.number_of_respondents }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Total Tasks:</span>
+                                    <span class="preview-value">{{ study_data.step2c.total_tasks }}</span>
+                                </div>
+                            {% else %}
+                                <!-- Layer Study Parameters -->
+                                <div class="preview-item">
+                                    <span class="preview-label">Total Layers:</span>
+                                    <span class="preview-value">{{ study_data.layer_iped_calculated.total_layers }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Total Images:</span>
+                                    <span class="preview-value">{{ study_data.layer_iped_calculated.total_images }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Tasks per Respondent:</span>
+                                    <span class="preview-value">{{ study_data.layer_iped_calculated.tasks_per_consumer }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Number of Respondents:</span>
+                                    <span class="preview-value">{{ study_data.layer_iped_calculated.number_of_respondents }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Uniqueness Capacity:</span>
+                                    <span class="preview-value">{{ study_data.layer_iped_calculated.uniqueness_capacity }}</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Total Tasks:</span>
+                                    <span class="preview-value">{{ study_data.layer_iped_calculated.total_tasks }}</span>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     

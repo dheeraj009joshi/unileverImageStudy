@@ -182,15 +182,20 @@
 
 <!-- Matrix Statistics Modal -->
 <div class="modal-overlay" id="matrixStatsModal">
-    <div class="modal-container modal-large modal-scrollable">
+    <div class="modal-container modal-large">
         <div class="modal-header">
-            <h3>Matrix Statistics</h3>
-            <button type="button" class="modal-close" onclick="closeMatrixStats()">&times;</button>
+            <h3 class="modal-title">Matrix Statistics</h3>
+            <button type="button" class="modal-close" onclick="closeMatrixStats()">
+                <span>&times;</span>
+            </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body modal-scrollable">
             <div id="matrixStatsContent">
                 <!-- Matrix statistics will be loaded here -->
             </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn--secondary" onclick="closeMatrixStats()">Close</button>
         </div>
     </div>
 </div>
@@ -240,14 +245,154 @@ window.downloadMatrix = function() {
     console.log('Download matrix functionality');
 };
 
-window.showMatrixStats = function() {
-    // Implementation for showing matrix statistics
-    console.log('Show matrix stats functionality');
-    document.getElementById('matrixStatsModal').style.display = 'flex';
+function showMatrixStats() {
+    console.log('🔍 showMatrixStats function called');
+    
+    const matrix = {{ tasks_matrix|tojson|safe }};
+    console.log('🔍 Matrix data:', matrix);
+    
+    const modal = document.getElementById('matrixStatsModal');
+    console.log('🔍 Modal element:', modal);
+    
+    const content = document.getElementById('matrixStatsContent');
+    console.log('🔍 Content element:', content);
+    
+    if (!modal) {
+        console.error('❌ Matrix stats modal not found!');
+        return;
+    }
+    
+    if (!content) {
+        console.error('❌ Matrix stats content not found!');
+        return;
+    }
+    
+    // Calculate statistics from the actual matrix structure
+    const totalRespondents = Object.keys(matrix).length;
+    let totalTasks = 0;
+    const elementFrequency = {};
+    const activeElementsCounts = {};
+    let totalElementSelections = 0;
+    
+    console.log('🔍 Starting statistics calculation...');
+    console.log('🔍 Matrix structure:', Object.keys(matrix).map(key => `${key}: ${matrix[key].length} tasks`));
+    
+    Object.values(matrix).forEach((tasks, respondentIndex) => {
+        totalTasks += tasks.length;
+        console.log(`🔍 Respondent ${respondentIndex}: ${tasks.length} tasks`);
+        
+        tasks.forEach((task, taskIndex) => {
+            // Count active elements (excluding _content entries)
+            let activeCount = 0;
+            
+            if (task.elements_shown) {
+                Object.entries(task.elements_shown).forEach(([element, isActive]) => {
+                    // Only count actual elements, not content entries
+                    if (isActive && !element.endsWith('_content')) {
+                        activeCount++;
+                        elementFrequency[element] = (elementFrequency[element] || 0) + 1;
+                        totalElementSelections++;
+                    }
+                });
+            } else {
+                console.warn(`⚠️ Task ${taskIndex} has no elements_shown property:`, task);
+            }
+            
+            activeElementsCounts[activeCount] = (activeElementsCounts[activeCount] || 0) + 1;
+            
+            if (respondentIndex === 0 && taskIndex === 0) {
+                console.log('🔍 First task structure:', task);
+                console.log('🔍 First task elements_shown:', task.elements_shown);
+            }
+        });
+    });
+    
+    const tasksPerRespondent = totalRespondents > 0 ? Math.round(totalTasks / totalRespondents) : 0;
+    
+    // Get step2c data for additional context
+    const step2cData = {{ step2c_data|tojson|safe }};
+    const minElements = step2cData.min_active_elements || 0;
+    const maxElements = step2cData.max_active_elements || 0;
+    
+    // Generate statistics HTML
+    let statsHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h6>Overall Statistics</h6>
+                <div class="stat-item">
+                    <span class="stat-label">Total Tasks:</span>
+                    <span class="stat-value">${totalTasks.toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Respondents:</span>
+                    <span class="stat-value">${totalRespondents.toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tasks per Respondent:</span>
+                    <span class="stat-value">${tasksPerRespondent}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Elements per Task Range:</span>
+                    <span class="stat-value">${minElements}-${maxElements}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <h6>Element Frequency</h6>
+                <div class="element-freq-list">
+                    ${Object.entries(elementFrequency)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([element, count]) => {
+                            // Clean up element names (remove underscores if present)
+                            const cleanElementName = element.replace(/_/g, '');
+                            return `
+                                <div class="freq-item">
+                                    <span class="element-name">${cleanElementName}</span>
+                                    <span class="freq-count">${count.toLocaleString()} times</span>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <h6>Active Elements Distribution</h6>
+                <div class="active-elements-dist">
+                    ${Object.entries(activeElementsCounts)
+                        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+                        .map(([count, frequency]) => `
+                            <div class="dist-item">
+                                <span class="dist-label">${count} elements:</span>
+                                <span class="dist-count">${frequency.toLocaleString()} tasks</span>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Update modal content and show
+    content.innerHTML = statsHTML;
+    
+    // Show modal using CSS class system (matches existing CSS)
+    modal.classList.add('active', 'modal-active');
+    
+    console.log('🔍 Modal classes added:', modal.className);
+    console.log('🔍 Modal should now be visible with CSS classes');
+    
+    console.log('Matrix statistics displayed:', {
+        totalRespondents,
+        totalTasks,
+        tasksPerRespondent,
+        elementFrequency,
+        activeElementsCounts
+    });
 };
 
 window.closeMatrixStats = function() {
-    document.getElementById('matrixStatsModal').style.display = 'none';
+    const modal = document.getElementById('matrixStatsModal');
+    modal.classList.remove('active', 'modal-active');
+    console.log('🔍 Modal closed, classes removed:', modal.className);
 };
 
 window.showImagePreview = function(imageUrl, elementName) {

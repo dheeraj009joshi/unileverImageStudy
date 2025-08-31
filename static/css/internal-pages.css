@@ -4215,5 +4215,52 @@
 }
 
 /* ========================================
+   Auto-calculated Parameters Section
+   ======================================== */
+
+.auto-calculated-section {
+    background: var(--color-neutral-50);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-top: var(--space-6);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.section-header h4 {
+    margin: 0;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.info-item strong {
+    color: var(--color-neutral-700);
+    font-weight: var(--font-weight-semibold);
+}
+
+.info-item span {
+    color: var(--color-primary-600);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-lg);
+}
+
+/* ========================================
    End of File
    ======================================== */

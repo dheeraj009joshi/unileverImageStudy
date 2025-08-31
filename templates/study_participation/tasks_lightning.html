@@ -574,9 +574,19 @@ class LightningTaskFlow {
         console.log('✅ startCountdown() called successfully!');
         
         // Add manual countdown test after 5 seconds if it doesn't work
+        // BUT ONLY if we're still on the countdown screen
         setTimeout(() => {
-            console.log('🔄 Manual countdown test after 5 seconds...');
-            this.manualCountdownTest();
+            // Check if we're still on the countdown screen (not showing tasks)
+            const countdownElement = document.getElementById('countdownContainer');
+            const taskContainer = document.getElementById('taskContainer');
+            
+            if (countdownElement && countdownElement.style.display !== 'none' && 
+                (!taskContainer || taskContainer.children.length === 0)) {
+                console.log('🔄 Manual countdown test after 5 seconds...');
+                this.manualCountdownTest();
+            } else {
+                console.log('✅ Manual countdown test skipped - tasks already in progress');
+            }
         }, 5000);
         
         // Add manual button listener
@@ -795,6 +805,13 @@ class LightningTaskFlow {
     
     manualCountdownTest() {
         console.log('🎮 Manual countdown test - forcing countdown to work...');
+        
+        // CRITICAL: Check if tasks are already in progress
+        if (this.currentTaskIndex > 0 || this.taskRatings.length > 0) {
+            console.log('⚠️ Manual countdown test ABORTED - tasks already in progress!');
+            console.log(`Current task index: ${this.currentTaskIndex}, Completed tasks: ${this.taskRatings.length}`);
+            return;
+        }
         
         const countdownNumber = document.getElementById('countdownNumber');
         const countdownText = document.getElementById('countdownText');

@@ -88,18 +88,23 @@ image.png{% extends "base.html" %}
 
                 <!-- Auto-calculated parameters display -->
                 <div class="auto-calculated-section">
-                    <h4>Auto-calculated Parameters</h4>
+                    <div class="section-header">
+                        <h4>Auto-calculated Parameters</h4>
+                        <button type="button" class="btn btn--sm btn--secondary" onclick="refreshParameters()" title="Refresh parameters">
+                            <span class="btn-icon">🔄</span> Refresh
+                        </button>
+                    </div>
                     <div class="info-grid">
                         <div class="info-item">
                             <strong>Total Layers:</strong> 
-                            <span id="total-layers-display">{{ draft.layer_config_data.layers|length if draft.layer_config_data and draft.layer_config_data.layers else 0 }}</span>
+                            <span id="total-layers-display">{{ layer_config_data.layers|length if layer_config_data and layer_config_data.layers else 0 }}</span>
                         </div>
                         <div class="info-item">
                             <strong>Total Images:</strong> 
                             <span id="total-images-display">
-                                {% if draft.layer_config_data and draft.layer_config_data.layers %}
+                                {% if layer_config_data and layer_config_data.layers %}
                                     {% set total_images = 0 %}
-                                    {% for layer in draft.layer_config_data.layers %}
+                                    {% for layer in layer_config_data.layers %}
                                         {% set total_images = total_images + layer.images|length %}
                                     {% endfor %}
                                     {{ total_images }}
@@ -118,7 +123,8 @@ image.png{% extends "base.html" %}
                         </div>
                     </div>
                     <small class="form-help">
-                        These values are automatically calculated based on your layer configuration.
+                        These values are automatically calculated based on your layer configuration. 
+                        Click "Refresh" to recalculate after making changes to layers.
                     </small>
                 </div>
             </div>
@@ -139,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (numRespondents > 0) {
             // Get layer data from the page
-            const totalLayers = {{ draft.layer_config_data.layers|length if draft.layer_config_data and draft.layer_config_data.layers else 0 }};
+            const totalLayers = {{ layer_config_data.layers|length if layer_config_data and layer_config_data.layers else 0 }};
             const totalImages = {{ total_images_calculated }};
             
             if (totalLayers > 0 && totalImages > 0) {
@@ -157,6 +163,69 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('tasks-per-consumer-display').textContent = 'Enter number of respondents';
             document.getElementById('uniqueness-capacity-display').textContent = 'Enter number of respondents';
         }
+    }
+    
+    // Refresh parameters from server
+    window.refreshParameters = function() {
+        const refreshBtn = document.querySelector('button[onclick="refreshParameters()"]');
+        const originalText = refreshBtn.innerHTML;
+        
+        // Show loading state
+        refreshBtn.innerHTML = '<span class="btn-icon">⏳</span> Calculating...';
+        refreshBtn.disabled = true;
+        
+        fetch('{{ url_for("study_creation.calculate_layer_parameters") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error refreshing parameters:', data.error);
+                    return;
+                }
+                
+                // Update display values
+                document.getElementById('total-layers-display').textContent = data.total_layers;
+                document.getElementById('total-images-display').textContent = data.total_images;
+                document.getElementById('tasks-per-consumer-display').textContent = data.tasks_per_consumer;
+                document.getElementById('uniqueness-capacity-display').textContent = data.uniqueness_capacity;
+                
+                // Show success message
+                showToast('Parameters refreshed successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error refreshing parameters:', error);
+                showToast('Error refreshing parameters. Please try again.', 'error');
+            })
+            .finally(() => {
+                // Restore button state
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+            });
+    };
+    
+    // Simple toast notification function
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        `;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
     }
     
     // Update when number of respondents changes
