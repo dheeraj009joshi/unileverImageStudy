@@ -211,6 +211,65 @@ body {
     object-fit: contain;
 }
 
+/* Grid elements container for grid studies */
+.grid-elements-container {
+    display: flex;
+
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    /* Ensure grid elements don't interfere with rating options */
+    position: relative;
+    z-index: 1;
+}
+
+.grid-element-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.grid-image {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+}
+
+.element-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.no-elements-message {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+    font-style: italic;
+    background: #f1f5f9;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+}
+
 /* Vignette preview for layer studies */
 .vignette-preview {
     border: none !important;
@@ -255,6 +314,9 @@ body {
     margin-top: 1vh; /* Add top margin for breathing room */
     overflow: visible; /* Allow rating circles to be fully visible */
     min-height: 15vh; /* Ensure minimum height for rating section */
+    /* Ensure rating section is above content but below loader */
+    position: relative !important;
+    z-index: 50 !important;
 }
 
 .rating-instructions {
@@ -285,10 +347,17 @@ body {
 }
 
 .rating-option {
-    cursor: pointer;
+    cursor: pointer !important;
     transition: all 0.2s ease;
-    position: relative; /* Create positioning context */
-    z-index: 5; /* Ensure rating options are above other elements */
+    position: relative !important;
+    z-index: 50 !important; /* Balanced z-index - above content but below loader */
+    pointer-events: auto !important;
+    user-select: none;
+    /* Ensure the rating option is clickable */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: transparent !important;
 }
 
 .rating-label {
@@ -556,6 +625,37 @@ class LightningTaskFlow {
         console.log('🚀 Lightning Task Flow initialized!');
         console.log(`Total tasks: ${this.totalTasks}`);
         console.log('All tasks loaded:', this.allTasks);
+        console.log('🔍 First task structure:', this.allTasks[0]);
+        console.log('🔍 First task elements_shown:', this.allTasks[0]?.elements_shown);
+        
+        // Debug task data structure for grid studies
+        if (this.allTasks && this.allTasks.length > 0) {
+            const firstTask = this.allTasks[0];
+            console.log('🔍 FIRST TASK DETAILED ANALYSIS:');
+            console.log('- Task keys:', Object.keys(firstTask));
+            console.log('- Task type:', typeof firstTask);
+            console.log('- elements_shown type:', typeof firstTask.elements_shown);
+            console.log('- elements_shown:', firstTask.elements_shown);
+            
+            if (firstTask.elements_shown) {
+                console.log('- elements_shown entries:', Object.entries(firstTask.elements_shown));
+                console.log('- elements_shown length:', Object.keys(firstTask.elements_shown).length);
+                
+                // Check for grid study specific structure
+                const contentKeys = Object.keys(firstTask.elements_shown).filter(key => key.endsWith('_content'));
+                const elementKeys = Object.keys(firstTask.elements_shown).filter(key => !key.endsWith('_content'));
+                
+                console.log('- Content keys (ending with _content):', contentKeys);
+                console.log('- Element keys (not ending with _content):', elementKeys);
+                
+                contentKeys.forEach(key => {
+                    const baseKey = key.replace('_content', '');
+                    const content = firstTask.elements_shown[key];
+                    const isActive = firstTask.elements_shown[baseKey];
+                    console.log(`  • ${key} -> ${baseKey}: content="${content}", active=${isActive}`);
+                });
+            }
+        }
         
         // Calculate and apply screen dimensions
         this.calculateAndApplyDimensions();
@@ -955,7 +1055,8 @@ class LightningTaskFlow {
         this.currentTaskIndex = taskIndex;
         const task = this.allTasks[taskIndex];
         
-        console.log(`Showing task ${taskIndex + 1}:`, task);
+        console.log(`🎯 Showing task ${taskIndex + 1} of ${this.totalTasks}:`, task);
+        console.log(`🔍 Current task index: ${this.currentTaskIndex}`);
         
         // Debug task structure for layer studies
         if ('{{ study.study_type }}' === 'layer') {
@@ -1016,8 +1117,21 @@ class LightningTaskFlow {
             container.classList.remove('fade-out');
             container.classList.add('fade-in');
             
-            // Initialize rating system
-            this.initializeRatingSystem();
+                    // Initialize rating system
+        console.log('🔍 About to initialize rating system...');
+        this.initializeRatingSystem();
+        console.log('🔍 Rating system initialization completed');
+        
+        // Debug: Check for overlapping elements
+        this.debugOverlappingElements();
+        
+        // Debug grid study structure specifically
+        if ('{{ study.study_type }}' === 'grid') {
+            this.debugGridStudyStructure();
+        }
+        
+        // Test rating system functionality
+        this.testRatingSystem();
             
             // Start task timer
             this.startTaskTimer();
@@ -1033,19 +1147,44 @@ class LightningTaskFlow {
         const studyType = '{{ study.study_type }}';
         let imageHTML = '';
         
+        console.log('🔍 Generating task HTML for study type:', studyType);
+        console.log('🔍 Task data:', task);
+        
         if (studyType === 'grid') {
-            // Grid study elements
+            // Grid study elements - show ALL active elements
             if (task.elements_shown) {
+                imageHTML = '<div class="grid-elements-container">';
+                let activeElementsCount = 0;
+                
+                console.log('🔍 Grid study elements_shown:', task.elements_shown);
+                
                 for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
                     if (elementName.endsWith('_content') && elementData && elementData !== '') {
                         const baseName = elementName.replace('_content', '');
                         const elementActive = task.elements_shown[baseName];
+                        console.log(`🔍 Element ${baseName}: active=${elementActive}, content=${elementData}`);
                         if (elementActive === 1) {
-                            imageHTML = `<img src="${elementData}" alt="Element" class="task-image">`;
-                            break; // Show first active element
+                            activeElementsCount++;
+                            imageHTML += `
+                                <div class="grid-element-item">
+                                    <img src="${elementData}" alt="Element ${baseName}" class="task-image grid-image">
+                                    <div class="element-label">${baseName}</div>
+                                </div>
+                            `;
                         }
                     }
                 }
+                
+                // If no active elements found, show a message
+                if (activeElementsCount === 0) {
+                    imageHTML = '<div class="no-elements-message">No elements to display</div>';
+                } else {
+                    imageHTML += '</div>';
+                }
+                
+                console.log(`🔍 Grid study: Found ${activeElementsCount} active elements`);
+            } else {
+                console.warn('⚠️ No elements_shown found in task data');
             }
         } else if (studyType === 'layer') {
             // Layer study elements - show ALL images with proper z-index layering
@@ -1170,38 +1309,97 @@ class LightningTaskFlow {
     }
     
     initializeRatingSystem() {
+        console.log('🔍 Initializing rating system...');
+        
+        // Simple, direct approach - no cloning, no complex logic
         const ratingOptions = document.querySelectorAll('.rating-option');
+        console.log('🔍 Found rating options:', ratingOptions.length);
+        
+        if (ratingOptions.length === 0) {
+            console.error('❌ No rating options found! Check if rating-section HTML is generated correctly.');
+            return;
+        }
+        
         let selectedRating = null;
         
+        // Clear any existing selections
         ratingOptions.forEach(option => {
+            const label = option.querySelector('.rating-label');
+            if (label) {
+                label.classList.remove('active', 'hover');
+            }
+        });
+        
+        // DEBUG: Check for overlapping elements specifically for grid studies
+        if ('{{ study.study_type }}' === 'grid') {
+            console.log('🔍 GRID STUDY DEBUG: Checking for overlapping elements...');
+            ratingOptions.forEach((option, index) => {
+                const rect = option.getBoundingClientRect();
+                const rating = option.dataset.rating;
+                console.log(`Rating ${rating}: position=(${rect.left}, ${rect.top}), size=${rect.width}x${rect.height}, z-index=${window.getComputedStyle(option).zIndex}`);
+                
+                // Check if any other elements are overlapping this rating option
+                const overlappingElements = document.elementsFromPoint(rect.left + rect.width/2, rect.top + rect.height/2);
+                console.log(`Rating ${rating} overlapping elements:`, overlappingElements.map(el => el.className || el.tagName));
+            });
+        }
+        
+        // Simple event listener setup - exactly like working layer study
+        ratingOptions.forEach((option, index) => {
             const rating = option.dataset.rating;
             const label = option.querySelector('.rating-label');
             
-            option.addEventListener('click', () => {
-                if (this.isSubmitting) return;
+            console.log(`🔍 Setting up rating option ${index + 1}: rating=${rating}`);
+            
+            // Direct click event - simple and reliable
+            option.onclick = (event) => {
+                console.log('🎯 CLICK EVENT TRIGGERED on rating option:', rating);
+                console.log('🎯 Event target:', event.target);
+                console.log('🎯 Event currentTarget:', event.currentTarget);
                 
-                console.log('Rating selected:', rating);
+                if (this.isSubmitting) {
+                    console.log('⚠️ Submission in progress, ignoring click');
+                    return;
+                }
+                
+                console.log('🎯 Rating selected:', rating, 'for task', this.currentTaskIndex + 1);
                 selectedRating = parseInt(rating);
                 
-                // Visual feedback
-                ratingOptions.forEach(opt => opt.querySelector('.rating-label').classList.remove('active'));
-                label.classList.add('active');
+                // Simple visual feedback
+                ratingOptions.forEach(opt => {
+                    const optLabel = opt.querySelector('.rating-label');
+                    if (optLabel) optLabel.classList.remove('active');
+                });
+                
+                if (label) {
+                    label.classList.add('active');
+                }
+                
+                console.log('✅ Visual feedback applied, submitting rating...');
                 
                 // Submit rating
                 this.submitRating(selectedRating);
-            });
+            };
             
-            // Hover effects
-            label.addEventListener('mouseenter', function() {
-                if (!this.classList.contains('active')) {
-                    this.classList.add('hover');
-                }
-            });
+            // Simple hover effects
+            if (label) {
+                label.onmouseenter = function() {
+                    if (!this.classList.contains('active')) {
+                        this.classList.add('hover');
+                    }
+                };
+                
+                label.onmouseleave = function() {
+                    this.classList.remove('hover');
+                };
+            }
             
-            label.addEventListener('mouseleave', function() {
-                this.classList.remove('hover');
-            });
+            console.log(`✅ Rating option ${index + 1} (${rating}) setup completed`);
         });
+        
+        console.log('✅ Rating system initialized for', ratingOptions.length, 'options');
+        
+
     }
     
     startTaskTimer() {
@@ -1565,6 +1763,177 @@ class LightningTaskFlow {
             alert('Error submitting ratings. Please try again or contact support.');
         }
     }
+    
+    debugOverlappingElements() {
+        console.log('🔍 Checking for overlapping elements that might block clicks...');
+        
+        const ratingOptions = document.querySelectorAll('.rating-option');
+        const ratingSection = document.querySelector('.rating-section');
+        
+        if (ratingSection) {
+            const rect = ratingSection.getBoundingClientRect();
+            console.log('🔍 Rating section position:', {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                zIndex: window.getComputedStyle(ratingSection).zIndex
+            });
+        }
+        
+        ratingOptions.forEach((option, index) => {
+            const rect = option.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(option);
+            
+            console.log(`🔍 Rating option ${index + 1} (${option.dataset.rating}):`, {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                zIndex: computedStyle.zIndex,
+                pointerEvents: computedStyle.pointerEvents,
+                position: computedStyle.position,
+                display: computedStyle.display,
+                visibility: computedStyle.visibility
+            });
+            
+            // Check if there are any elements overlapping this rating option
+            const elementsAtPoint = document.elementsFromPoint(
+                rect.left + rect.width / 2,
+                rect.top + rect.height / 2
+            );
+            
+            console.log(`🔍 Elements at rating option ${index + 1} center:`, elementsAtPoint.map(el => ({
+                tagName: el.tagName,
+                className: el.className,
+                id: el.id,
+                zIndex: window.getComputedStyle(el).zIndex
+            })));
+        });
+    }
+    
+    debugGridStudyStructure() {
+        console.log('🔍 GRID STUDY STRUCTURE DEBUG:');
+        
+        // Check grid elements container
+        const gridContainer = document.querySelector('.grid-elements-container');
+        if (gridContainer) {
+            const rect = gridContainer.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(gridContainer);
+            
+            console.log('🔍 Grid container:', {
+                exists: true,
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                display: computedStyle.display,
+                position: computedStyle.position,
+                zIndex: computedStyle.zIndex,
+                overflow: computedStyle.overflow
+            });
+        } else {
+            console.log('❌ Grid container not found!');
+        }
+        
+        // Check grid element items
+        const gridItems = document.querySelectorAll('.grid-element-item');
+        console.log(`🔍 Grid items found: ${gridItems.length}`);
+        
+        gridItems.forEach((item, index) => {
+            const rect = item.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(item);
+            
+            console.log(`🔍 Grid item ${index + 1}:`, {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                display: computedStyle.display,
+                position: computedStyle.position,
+                zIndex: computedStyle.zIndex
+            });
+        });
+        
+        // Check if grid elements are interfering with rating system
+        const ratingSection = document.querySelector('.rating-section');
+        if (ratingSection && gridContainer) {
+            const ratingRect = ratingSection.getBoundingClientRect();
+            const gridRect = gridContainer.getBoundingClientRect();
+            
+            console.log('🔍 Layout analysis:', {
+                ratingSectionTop: ratingRect.top,
+                ratingSectionBottom: ratingRect.bottom,
+                gridContainerTop: gridRect.top,
+                gridContainerBottom: gridRect.bottom,
+                overlap: !(ratingRect.bottom < gridRect.top || ratingRect.top > gridRect.bottom)
+            });
+        }
+    }
+    
+    testRatingSystem() {
+        console.log('🧪 Testing rating system functionality...');
+        
+        // Check if rating options exist
+        const ratingOptions = document.querySelectorAll('.rating-option');
+        console.log('🧪 Rating options found:', ratingOptions.length);
+        
+        if (ratingOptions.length === 0) {
+            console.error('🧪 ❌ No rating options found for testing!');
+            return;
+        }
+        
+        // Test each rating option
+        ratingOptions.forEach((option, index) => {
+            const rating = option.dataset.rating;
+            const label = option.querySelector('.rating-label');
+            
+            console.log(`🧪 Rating option ${index + 1} (${rating}):`, {
+                exists: !!option,
+                hasDataset: !!option.dataset.rating,
+                hasLabel: !!label,
+                labelText: label ? label.textContent : 'N/A',
+                isClickable: option.style.pointerEvents !== 'none',
+                zIndex: window.getComputedStyle(option).zIndex,
+                position: window.getComputedStyle(option).position
+            });
+            
+            // Test if element is actually clickable
+            const rect = option.getBoundingClientRect();
+            console.log(`🧪 Rating option ${index + 1} position:`, {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                visible: rect.width > 0 && rect.height > 0
+            });
+        });
+        
+        // Test if any elements are overlapping the rating options
+        const ratingSection = document.querySelector('.rating-section');
+        if (ratingSection) {
+            const ratingRect = ratingSection.getBoundingClientRect();
+            console.log('🧪 Rating section bounds:', {
+                top: ratingRect.top,
+                left: ratingRect.left,
+                width: ratingRect.width,
+                height: ratingRect.height
+            });
+            
+            // Check for overlapping elements
+            const centerX = ratingRect.left + ratingRect.width / 2;
+            const centerY = ratingRect.top + ratingRect.height / 2;
+            const elementsAtCenter = document.elementsFromPoint(centerX, centerY);
+            
+            console.log('🧪 Elements at rating section center:', elementsAtCenter.map(el => ({
+                tagName: el.tagName,
+                className: el.className,
+                id: el.id
+            })));
+        }
+        
+        console.log('🧪 Rating system test completed');
+    }
 }
 
 // Initialize lightning-fast task flow when page loads
@@ -1652,3 +2021,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
