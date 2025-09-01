@@ -21,8 +21,8 @@
                 </div>
             <h1>Study Responses</h1>
                 <p class="header-subtitle">Analyze and export response data for "{{ study.title }}"</p>
-            </div>
-            <div class="header-actions">
+        </div>
+        <div class="header-actions">
                 <a href="{{ url_for('dashboard.study_detail', study_id=study._id) }}" class="btn btn--secondary btn--lg">
                     <span class="btn-icon">←</span>
                     Back to Study
@@ -174,14 +174,14 @@
                             </td>
                         
                             
-                                                          <td>
-                                  <div class="action-buttons">
+                            <td>
+                                <div class="action-buttons">
                                       <button class="btn btn--sm btn--primary" onclick="viewResponseDetails('{{ response._id }}')" title="View full response details">
                                           <span class="btn-icon">👁️</span>
                                           Details
-                                      </button>
-                                  </div>
-                              </td>
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -204,8 +204,8 @@
                                 <span class="status-badge status-{{ 'completed' if response.is_completed else 'abandoned' }}">
                                     {{ '✅' if response.is_completed else '⏸️' }} {{ 'Completed' if response.is_completed else 'Abandoned' }}
                                 </span>
-                            </div>
-                            
+            </div>
+
                             <div class="card-body">
                                 <div class="info-grid">
                                     <div class="info-item">
@@ -315,7 +315,7 @@
                 </div>
                                  <div class="modal-footer">
                      <button type="button" class="btn btn--secondary" onclick="closeResponseModal()">Close</button>
-                 </div>
+                </div>
             </div>
         </div>
     </div>

@@ -2196,7 +2196,7 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
-    padding: 0 var(--space-4);
+    padding: 5px;
     min-width: 100%;
 }
 

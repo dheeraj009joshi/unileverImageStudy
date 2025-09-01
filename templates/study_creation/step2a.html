@@ -121,6 +121,14 @@
                     </div>
                 </div>
                 
+                <!-- Add Element Section - Only show if elements exist -->
+                <div class="add-element-section" id="addElementSection" style="display: none;">
+                    <button type="button" id="addElementBtn" class="btn btn--outline add-element-btn" onclick="addElement()">
+                        📁 Select Images to Add Elements
+                    </button>
+                    <small class="form-help">Click to select multiple images and add them as elements (up to 16 total)</small>
+                </div>
+                
                 <div class="step-actions">
                     <a href="{{ url_for('study_creation.step2b') }}" class="btn btn--secondary step-nav-btn">← Previous</a>
                     <button type="submit" class="btn btn--primary step-nav-btn" onclick="return validateForm()">Continue to IPED Parameters →</button>
@@ -209,6 +217,73 @@ function renderElement(element) {
     elementDiv.addEventListener('dragend', handleDragEnd);
     
     container.appendChild(elementDiv);
+    
+    // Update button visibility after adding element
+    updateAddElementButtonVisibility();
+}
+
+// Remove element function with proper renumbering
+function removeElement(elementId) {
+    // Find the element in the array
+    const elementIndex = elements.findIndex(el => el.id === elementId);
+    if (elementIndex !== -1) {
+        // Remove from array
+        elements.splice(elementIndex, 1);
+        
+        // Update current element count
+        currentElementCount = elements.length;
+        
+        // Update the hidden num_elements field
+        document.getElementById('num_elements').value = elements.length;
+        
+        // Renumber all elements to ensure consistent numbering
+        renumberElements();
+        
+        // Update the add button state after removal
+        const addButton = document.getElementById('addElementBtn');
+        const finalElementCount = elements.length;
+        if (addButton && finalElementCount >= 16) {
+            addButton.disabled = true;
+            addButton.textContent = 'Maximum Elements Reached';
+        } else if (addButton) {
+            addButton.disabled = false;
+            addButton.textContent = '📁 Select Images to Add Elements';
+        }
+        
+        console.log(`Removed element ${elementId}. Total elements: ${currentElementCount}`);
+    }
+}
+
+// Function to show/hide the add element button based on whether elements exist
+function updateAddElementButtonVisibility() {
+    const addElementSection = document.getElementById('addElementSection');
+    const elementsList = document.getElementById('elementsList');
+    
+    if (addElementSection && elementsList) {
+        // Check if there are any element cards in the list
+        const elementCards = elementsList.querySelectorAll('.element-card');
+        const hasElements = elementCards.length > 0;
+        
+        // Show the add element section only if elements exist
+        addElementSection.style.display = hasElements ? 'block' : 'none';
+        
+        console.log(`Add element button visibility: ${hasElements ? 'shown' : 'hidden'} (${elementCards.length} elements)`);
+    }
+}
+
+// Function to renumber all elements consistently
+function renumberElements() {
+    // Update element IDs to be sequential (0, 1, 2, 3...)
+    elements.forEach((element, index) => {
+        element.id = index;
+    });
+    
+    // Re-render all elements to update the display numbers
+    const container = document.getElementById('elementsList');
+    container.innerHTML = '';
+    elements.forEach(element => renderElement(element));
+    
+    console.log(`Renumbered ${elements.length} elements with sequential IDs`);
 }
 
 // Drag and drop functionality for reordering
@@ -377,6 +452,12 @@ function processFiles(files) {
                     setTimeout(() => {
                         showStatus('', '');
                     }, 3000);
+                    
+                    // Renumber elements to ensure consistent numbering
+                    renumberElements();
+                    
+                    // Update button visibility after processing all files
+                    updateAddElementButtonVisibility();
                 }
             }
         };
@@ -629,6 +710,9 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if elements_data %}
         initializeExistingElements();
     {% endif %}
+    
+    // Check if we should show the add element button
+    updateAddElementButtonVisibility();
 });
 
 // Initialize existing elements from database
@@ -709,6 +793,188 @@ function validateForm() {
     }
     
     return true;
+}
+
+// Add element function - opens file browser for multiple image selection
+function addElement() {
+    console.log('addElement function called. Opening file browser...');
+    
+    // Check if we've reached the maximum limit (use actual elements array length)
+    const actualElementCount = elements.length;
+    if (actualElementCount >= 16) {
+        alert('Maximum limit of 16 elements reached.');
+        return;
+    }
+    
+    // Create a hidden file input for multiple image selection
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    
+    // Handle file selection
+    fileInput.onchange = function(event) {
+        const files = Array.from(event.target.files);
+        console.log(`Selected ${files.length} files`);
+        
+        // Check if adding these files would exceed the limit (use actual elements array length)
+        const maxFilesToAdd = 16 - actualElementCount;
+        let filesToAdd = files;
+        let warningMessage = '';
+        
+        if (files.length > maxFilesToAdd) {
+            filesToAdd = files.slice(0, maxFilesToAdd);
+            const skippedFiles = files.length - maxFilesToAdd;
+            warningMessage = `⚠️ Warning: Only ${maxFilesToAdd} images were added. ${skippedFiles} images were skipped due to the 16 element limit.`;
+        }
+        
+        // Process each selected file
+        filesToAdd.forEach((file, index) => {
+            // Check file size (16MB limit per file)
+            if (file.size > 16 * 1024 * 1024) {
+                alert(`File "${file.name}" is too large. Maximum size is 16MB.`);
+                return;
+            }
+            
+            // Create new element object with proper ID
+            const newElement = {
+                id: elements.length, // Use current array length as ID
+                name: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+                description: `Image: ${file.name}`,
+                altText: '',
+                image: null,
+                imageFile: file
+            };
+            
+            // Add to elements array
+            elements.push(newElement);
+            
+            // Render the new element with the selected image
+            renderElementWithImage(newElement, file);
+        });
+        
+        // Update the hidden num_elements field
+        document.getElementById('num_elements').value = elements.length;
+        
+        // Update the add button state (use actual elements array length)
+        const addButton = document.getElementById('addElementBtn');
+        const finalElementCount = elements.length;
+        if (addButton && finalElementCount >= 16) {
+            addButton.disabled = true;
+            addButton.textContent = 'Maximum Elements Reached';
+        } else if (addButton) {
+            addButton.disabled = false;
+            addButton.textContent = '📁 Select Images to Add Elements';
+        }
+        
+        // Show warning message if any files were skipped
+        if (warningMessage) {
+            alert(warningMessage);
+        }
+        
+        console.log(`Added ${filesToAdd.length} elements. Total elements: ${elements.length}`);
+        if (warningMessage) {
+            console.log(warningMessage);
+        }
+        
+        // Renumber elements to ensure consistent numbering
+        renumberElements();
+        
+        // Update button visibility after adding elements
+        updateAddElementButtonVisibility();
+        
+        // Clean up the file input
+        document.body.removeChild(fileInput);
+    };
+    
+    // Add file input to DOM and trigger click
+    document.body.appendChild(fileInput);
+    fileInput.click();
+}
+
+// Render element with image (enhanced version)
+function renderElementWithImage(element, file) {
+    const container = document.getElementById('elementsList');
+    const elementDiv = document.createElement('div');
+    elementDiv.className = 'element-card';
+    elementDiv.setAttribute('data-element-id', element.id);
+    elementDiv.draggable = true;
+    
+    // Read the file and create preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        elementDiv.innerHTML = `
+            <div class="element-header">
+                <div class="drag-handle">⋮⋮</div>
+                <h5>${element.name}</h5>
+                <div class="element-actions">
+                    <button type="button" class="btn btn--sm btn--danger" onclick="removeElement(${element.id})">
+                        🗑️ Remove
+                    </button>
+                </div>
+            </div>
+            <div class="element-content">
+                <div class="element-image">
+                    <img src="${e.target.result}" alt="${element.name}" class="element-preview">
+                    <div class="image-actions">
+                        <button type="button" class="btn btn--sm btn--outline" onclick="replaceImage(${element.id})">
+                            🔄 Replace
+                        </button>
+                    </div>
+                </div>
+                <div class="element-info">
+                    <div class="form-group">
+                        <label class="form-label">Element Name</label>
+                        <input type="text" 
+                               name="element_${element.id}_name" 
+                               value="${element.name}"
+                               class="form-input element-name-input" 
+                               placeholder="Element name"
+                               onchange="updateElementName(${element.id}, this.value)">
+                        <small class="form-help">Give this element a descriptive name</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea name="element_${element.id}_description" 
+                                  class="form-input" 
+                                  placeholder="Element description"
+                                  onchange="updateElementDescription(${element.id}, this.value)">${element.description}</textarea>
+                        <small class="form-help">Describe what this element represents</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Alt Text</label>
+                        <input type="text" 
+                               name="element_${element.id}_alt_text" 
+                               value="${element.altText}"
+                               class="form-input" 
+                               placeholder="Alternative text for accessibility"
+                               onchange="updateElementAltText(${element.id}, this.value)">
+                        <small class="form-help">Alternative text for screen readers</small>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="element_${element.id}_current_image" value="${e.target.result}">
+            <input type="file" name="element_${element.id}_image_file" accept="image/*" style="display: none;">
+            <input type="hidden" name="element_${element.id}_has_file" value="true">
+        `;
+        
+        // Add drag and drop functionality
+        elementDiv.addEventListener('dragstart', handleDragStart);
+        elementDiv.addEventListener('dragover', handleDragOver);
+        elementDiv.addEventListener('drop', handleDrop);
+        elementDiv.addEventListener('dragend', handleDragEnd);
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // Add to container immediately (don't wait for reader)
+    container.appendChild(elementDiv);
+    
+    // Update button visibility after adding element
+    updateAddElementButtonVisibility();
 }
 </script>
 {% endblock %}
