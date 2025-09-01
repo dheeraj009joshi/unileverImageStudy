@@ -365,9 +365,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **Project Maintainer**: [Your Name]
-- **Email**: [your.email@example.com]
-- **GitHub**: [your-github-username]
+- **Project Maintainer**: Dheeraj Joshi
+- **Email**: dlovej009@gmail.com
+- **GitHub**: dheeraj009joshi
 
 ---
 
