@@ -358,6 +358,29 @@ body {
     visibility: visible !important;
     opacity: 1 !important;
     background: transparent !important;
+    /* Force rating options to be clickable */
+    position: relative !important;
+    z-index: 999 !important; /* Higher z-index for grid studies */
+}
+
+/* Specific fix for grid studies */
+.grid-elements-container + .rating-section .rating-option {
+    z-index: 999 !important;
+    pointer-events: auto !important;
+    position: relative !important;
+}
+
+/* Ensure grid elements don't interfere with ratings */
+.grid-elements-container {
+    pointer-events: none !important;
+}
+
+.grid-elements-container img {
+    pointer-events: none !important;
+}
+
+.grid-elements-container .element-label {
+    pointer-events: none !important;
 }
 
 .rating-label {
@@ -1341,6 +1364,19 @@ class LightningTaskFlow {
                 // Check if any other elements are overlapping this rating option
                 const overlappingElements = document.elementsFromPoint(rect.left + rect.width/2, rect.top + rect.height/2);
                 console.log(`Rating ${rating} overlapping elements:`, overlappingElements.map(el => el.className || el.tagName));
+                
+                // Force rating option to be on top
+                option.style.zIndex = '999';
+                option.style.pointerEvents = 'auto';
+                option.style.position = 'relative';
+                
+                // Remove any interfering elements
+                overlappingElements.forEach(el => {
+                    if (el !== option && !el.classList.contains('rating-option') && !el.classList.contains('rating-label')) {
+                        console.log(`⚠️ Found interfering element:`, el.className || el.tagName);
+                        el.style.pointerEvents = 'none';
+                    }
+                });
             });
         }
         
