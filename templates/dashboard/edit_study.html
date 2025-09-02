@@ -17,7 +17,7 @@
     <div class="dashboard-content">
         <div class="content-section">
             <div class="alert alert-warning">
-                <strong>Note:</strong> Some study properties cannot be changed after creation, including elements, IPED parameters, and task matrix.
+                <strong>Note:</strong> Some study properties cannot be changed after creation, including elements, RDE parameters, and task matrix.
             </div>
             
             <form method="POST" class="study-form">
@@ -83,7 +83,7 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">IPED Parameters</label>
+                            <label class="form-label">RDE Parameters</label>
                             <input type="text" class="form-control" value="{{ study.iped_parameters.tasks_per_consumer }} tasks × {{ study.iped_parameters.number_of_respondents }} respondents" readonly>
                             <small class="form-help-text">Cannot be changed after creation</small>
                         </div>

@@ -9,7 +9,7 @@
         <div class="page-header-content">
             <div class="page-header-text">
                 <h1>{{ study.title }}</h1>
-                <p class="page-header-subtitle">{{ study.study_type|title }}-based IPED Research Study</p>
+                <p class="page-header-subtitle">{{ study.study_type|title }}-based RDE Research Study</p>
             </div>
             <div class="page-header-actions">
                 {% if study.status == 'draft' %}
@@ -165,7 +165,7 @@
                 </div>
                 <div class="study-form-row">
                     <div class="study-form-group">
-                        <label class="study-form-label">IPED Parameters</label>
+                        <label class="study-form-label">RDE Parameters</label>
                         <p>{{ study.iped_parameters.tasks_per_consumer }} tasks × {{ study.iped_parameters.number_of_respondents }} respondents</p>
                         <small>{{ study.iped_parameters.min_active_elements }}-{{ study.iped_parameters.max_active_elements }} active elements per task</small>
                     </div>

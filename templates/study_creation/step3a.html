@@ -10,12 +10,12 @@
 
     <div class="step-content">
         <div class="step-header">
-            <h1 class="step-title">Step 3a: Generate IPED Task Matrix</h1>
+            <h1 class="step-title">Step 3a: Generate RDE Task Matrix</h1>
             <p class="step-description">
                 {% if study_type == 'grid' %}
-                    Generate the IPED task matrix based on your configuration using the new algorithm
+                    Generate the RDE task matrix based on your configuration using the new algorithm
                 {% else %}
-                    Generate the IPED task matrix for your layer study using the new algorithm
+                    Generate the RDE task matrix for your layer study using the new algorithm
                 {% endif %}
             </p>
         </div>
@@ -170,13 +170,13 @@
         {% else %}
             <!-- Generate Matrix Form -->
             <div class="study-form-group">
-                <h3 class="section-title">Generate IPED Task Matrix</h3>
+                <h3 class="section-title">Generate RDE Task Matrix</h3>
                 <p class="form-help">
                     {% if study_type == 'grid' %}
-                        Click the button below to generate the IPED task matrix using the new algorithm. 
+                        Click the button below to generate the RDE task matrix using the new algorithm. 
                         This will create a balanced distribution of tasks with optimal exposure balancing and uniqueness constraints.
                     {% else %}
-                        Click the button below to generate the IPED task matrix for your layer study. 
+                        Click the button below to generate the RDE task matrix for your layer study. 
                         The algorithm will automatically calculate optimal tasks per consumer and ensure balanced exposure.
                     {% endif %}
                 </p>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'UnileverImageStudy - Professional IPED Study System') }}">
+    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'UnileverImageStudy - Professional RDE Study System') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <title>{% block title %}{{ config.get('APP_NAME', 'UnileverImageStudy') }}{% endblock %}</title>
@@ -59,11 +59,11 @@
                 <!-- Step 4: IPED Parameters (Different for each study type) -->
                 <div class="progress-step" data-step-id="2c" data-step-name="IPED Parameters" data-grid-only="true">
                     <div class="step-number">4a</div>
-                    <span class="step-label">IPED Parameters</span>
+                    <span class="step-label">RDE Parameters</span>
                 </div>
                 <div class="progress-step" data-step-id="layer_iped" data-step-name="IPED Parameters" data-layer-only="true">
                     <div class="step-number">4b</div>
-                    <span class="step-label">IPED Parameters</span>
+                    <span class="step-label">RDE Parameters</span>
                 </div>
                 
                 <!-- Step 5: Task Generation (Common for both study types) -->
@@ -585,7 +585,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3 class="footer-title">{{ config.get('APP_NAME', 'UnileverImageStudy') }}</h3>
-                    <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional IPED Study System for Research and Data Collection') }}</p>
+                    <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional RDE Study System for Research and Data Collection') }}</p>
                 </div>
                 <div class="footer-section">
                     <h4 class="footer-subtitle">Quick Links</h4>

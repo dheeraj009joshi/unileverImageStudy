@@ -18,7 +18,7 @@ All branding and content is now configurable through environment variables:
 ```bash
 APP_NAME=UnileverImageStudy
 APP_DESCRIPTION=Professional IPED Study System for Research and Data Collection
-APP_TAGLINE=Conduct cutting-edge research with our advanced Individual Parameter Estimation Design platform
+APP_TAGLINE=Conduct cutting-edge research with our advanced Rule Developing Experimentatioplatform
 APP_SUBTAGLINE=Create, manage, and analyze studies with enterprise-grade tools
 ```
 
