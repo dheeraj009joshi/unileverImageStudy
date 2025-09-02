@@ -5,6 +5,100 @@ from datetime import datetime, timezone
 import uuid
 import json
 
+def serialize_study_for_preloading(study):
+    """Serialize study data for image preloading, handling MongoEngine objects"""
+    try:
+        # Create a serializable version of the study data
+        study_data = {
+            'study_type': str(getattr(study, 'study_type', 'unknown')),
+            'elements': [],
+            'study_layers': []
+        }
+        
+        # Serialize elements for grid studies
+        if hasattr(study, 'elements') and study.elements:
+            for element in study.elements:
+                try:
+                    element_data = {
+                        'name': str(getattr(element, 'name', '')),
+                        'description': str(getattr(element, 'description', '')),
+                        'alt_text': str(getattr(element, 'alt_text', '')),
+                        'image': None
+                    }
+                    
+                    # Handle image data safely
+                    if hasattr(element, 'image') and element.image:
+                        try:
+                            element_data['image'] = {
+                                'url': str(getattr(element.image, 'url', '')),
+                                'filename': str(getattr(element.image, 'filename', ''))
+                            }
+                        except Exception as img_error:
+                            print(f"Error serializing element image: {img_error}")
+                            element_data['image'] = None
+                    
+                    study_data['elements'].append(element_data)
+                except Exception as elem_error:
+                    print(f"Error serializing element: {elem_error}")
+                    continue
+        
+        # Serialize study_layers for layer studies
+        if hasattr(study, 'study_layers') and study.study_layers:
+            for layer in study.study_layers:
+                try:
+                    layer_data = {
+                        'name': str(getattr(layer, 'name', '')),
+                        'z_index': int(getattr(layer, 'z_index', 0)),
+                        'images': []
+                    }
+                    
+                    if hasattr(layer, 'images') and layer.images:
+                        for image in layer.images:
+                            try:
+                                image_data = {
+                                    'name': str(getattr(image, 'name', '')),
+                                    'url': str(getattr(image, 'url', '')),
+                                    'alt_text': str(getattr(image, 'alt_text', '')),
+                                    'order': int(getattr(image, 'order', 0)),
+                                    'image_id': str(getattr(image, 'image_id', '')) if hasattr(image, 'image_id') else None
+                                }
+                                layer_data['images'].append(image_data)
+                            except Exception as img_error:
+                                print(f"Error serializing layer image: {img_error}")
+                                continue
+                    
+                    study_data['study_layers'].append(layer_data)
+                except Exception as layer_error:
+                    print(f"Error serializing layer: {layer_error}")
+                    continue
+        
+        # Ensure all values are JSON serializable
+        def make_json_safe(obj):
+            if obj is None:
+                return None
+            elif isinstance(obj, (str, int, float, bool)):
+                return obj
+            elif isinstance(obj, (list, tuple)):
+                return [make_json_safe(item) for item in obj]
+            elif isinstance(obj, dict):
+                return {str(k): make_json_safe(v) for k, v in obj.items()}
+            else:
+                return str(obj)
+        
+        study_data = make_json_safe(study_data)
+        return study_data
+        
+    except Exception as e:
+        print(f"Error serializing study data: {e}")
+        import traceback
+        print(f"Full traceback: {traceback.format_exc()}")
+        # Return minimal data to prevent errors
+        return {
+            'study_type': 'unknown',
+            'elements': [],
+            'study_layers': []
+        }
+
 study_participation = Blueprint('study_participation', __name__)
 
 def safe_datetime_parse(datetime_string):
@@ -37,7 +131,27 @@ def welcome(study_id):
             'task_ratings': []
         }
         
-        return render_template('study_participation/welcome.html', study=study)
+        # Serialize study data for image preloading
+        try:
+            serialized_study_data = serialize_study_for_preloading(study)
+            print(f"DEBUG: Serialized study data for {study_id}: {type(serialized_study_data)}")
+            print(f"DEBUG: Study type: {serialized_study_data.get('study_type', 'unknown')}")
+            print(f"DEBUG: Elements count: {len(serialized_study_data.get('elements', []))}")
+            print(f"DEBUG: Study layers count: {len(serialized_study_data.get('study_layers', []))}")
+        except Exception as e:
+            print(f"ERROR: Failed to serialize study data for {study_id}: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
+            # Provide fallback data
+            serialized_study_data = {
+                'study_type': getattr(study, 'study_type', 'unknown'),
+                'elements': [],
+                'study_layers': []
+            }
+        
+        return render_template('study_participation/welcome.html', 
+                             study=study, 
+                             serialized_study_data=serialized_study_data)
         
     except Study.DoesNotExist:
         flash('Study not found.', 'error')
@@ -50,6 +164,25 @@ def welcome(study_id):
 def participate(study_id):
     """Direct participation link - redirects to welcome"""
     return redirect(url_for('study_participation.welcome', study_id=study_id))
+
+@study_participation.route('/study/<study_id>/debug-data')
+def debug_study_data(study_id):
+    """Debug route to check study data serialization"""
+    try:
+        study = Study.objects.get(_id=study_id)
+        serialized_study_data = serialize_study_for_preloading(study)
+        
+        return {
+            'study_id': str(study_id),
+            'study_title': study.title,
+            'study_type': study.study_type,
+            'serialized_data': serialized_study_data,
+            'serialized_type': str(type(serialized_study_data)),
+            'has_elements': len(serialized_study_data.get('elements', [])) > 0,
+            'has_layers': len(serialized_study_data.get('study_layers', [])) > 0
+        }
+    except Exception as e:
+        return {'error': str(e), 'study_id': str(study_id)}
 
 @study_participation.route('/participate/<share_token>')
 def participate_by_token(share_token):
@@ -236,7 +369,14 @@ def personal_info(study_id):
         
         # Get today's date for max date validation
         today_date = datetime.utcnow().strftime('%Y-%m-%d')
-        return render_template('study_participation/personal_info.html', study=study, today_date=today_date)
+        
+        # Serialize study data for image preloading
+        serialized_study_data = serialize_study_for_preloading(study)
+        
+        return render_template('study_participation/personal_info.html', 
+                             study=study, 
+                             today_date=today_date,
+                             serialized_study_data=serialized_study_data)
         
     except Study.DoesNotExist:
         flash('Study not found.', 'error')
@@ -315,7 +455,12 @@ def classification(study_id):
             # Redirect to lightning-fast tasks interface
             return redirect(url_for('study_participation.load_all_tasks', study_id=study_id))
         
-        return render_template('study_participation/classification.html', study=study)
+        # Serialize study data for image preloading
+        serialized_study_data = serialize_study_for_preloading(study)
+        
+        return render_template('study_participation/classification.html', 
+                             study=study,
+                             serialized_study_data=serialized_study_data)
         
     except Study.DoesNotExist:
         flash('Study not found.', 'error')

@@ -4,9 +4,65 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+<style>
+.preload-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.preload-progress.show {
+    transform: translateY(0);
+}
+
+.preload-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.preload-progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.preload-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.preload-details {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
+<!-- Image Preloading Progress Bar -->
+<div id="preloadProgress" class="preload-progress">
+    <div class="preload-text">Preparing your study...</div>
+    <div class="preload-progress-bar">
+        <div class="preload-progress-fill" id="preloadProgressFill"></div>
+    </div>
+    <div class="preload-details" id="preloadDetails">Loading images...</div>
+</div>
+
 <div class="study-participation-container">
     <div class="welcome-section">
         <div class="welcome-header">
@@ -73,42 +129,158 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/image-preloader.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize welcome page
     console.log('Welcome page loaded for study:', '{{ study._id }}');
     
-    // Add smooth transitions
-    const welcomeSection = document.querySelector('.welcome-section');
-    if (welcomeSection) {
-        welcomeSection.style.opacity = '0';
-        welcomeSection.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            welcomeSection.style.transition = 'all 0.6s ease-out';
-            welcomeSection.style.opacity = '1';
-            welcomeSection.style.transform = 'translateY(0)';
-        }, 100);
+    // Study data for preloading (already serialized by backend)
+    let studyData;
+    try {
+        // Check if serialized_study_data exists and is not None
+        {% if serialized_study_data %}
+        studyData = {{ serialized_study_data|tojson|safe }};
+        console.log('Study data loaded successfully:', studyData);
+        {% else %}
+        console.warn('serialized_study_data is None/undefined, using fallback');
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
+        {% endif %}
+    } catch (error) {
+        console.error('Error loading study data:', error);
+        // Fallback data
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
     }
     
-    // Start study button animation
-    const startBtn = document.querySelector('.start-study-btn');
-    if (startBtn) {
-        startBtn.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px) scale(1.02)';
-        });
-        
-        startBtn.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-        
-        startBtn.addEventListener('click', function() {
-            this.style.transform = 'translateY(1px) scale(0.98)';
-            setTimeout(() => {
-                this.style.transform = 'translateY(0) scale(1)';
-            }, 150);
-        });
+    // Validate studyData structure
+    if (!studyData || typeof studyData !== 'object') {
+        console.error('Invalid studyData structure:', studyData);
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
     }
+    
+    // Study data loaded for preloading
+    
+    // Preload progress elements
+    const preloadProgress = document.getElementById('preloadProgress');
+    const preloadProgressFill = document.getElementById('preloadProgressFill');
+    const preloadDetails = document.getElementById('preloadDetails');
+    
+    // Start image preloading if we have valid data
+    if (studyData && studyData.study_type) {
+        startImagePreloading();
+    } else {
+        console.log('Skipping preloading - no valid study data');
+        hidePreloadProgress();
+    }
+    
+    function startImagePreloading() {
+        // Show progress bar
+        preloadProgress.classList.add('show');
+        
+        // Debug: Log study data structure
+        console.log('Starting preloading with study data:', {
+            study_type: studyData.study_type,
+            elements_count: studyData.elements ? studyData.elements.length : 0,
+            layers_count: studyData.study_layers ? studyData.study_layers.length : 0
+        });
+        
+        // Start preloading silently
+        window.imagePreloader.preloadStudyImages(
+            studyData,
+            // Progress callback
+            function(progress) {
+                updatePreloadProgress(progress);
+            },
+            // Complete callback
+            function() {
+                onPreloadComplete();
+            }
+        );
+    }
+    
+    function updatePreloadProgress(progress) {
+        const percentage = progress.percentage || 0;
+        
+        // Update progress bar
+        preloadProgressFill.style.width = percentage + '%';
+        
+        // Update text with cleaner messaging
+        if (progress.total > 0) {
+            if (progress.failed && progress.failed > 0) {
+                // Show that some images failed but we're continuing
+                preloadDetails.textContent = `Preparing study... ${progress.loaded}/${progress.total} images ready`;
+            } else {
+                preloadDetails.textContent = `Preparing study... ${progress.loaded}/${progress.total} images ready`;
+            }
+        }
+    }
+    
+    function onPreloadComplete() {
+        // Update progress bar to 100%
+        preloadProgressFill.style.width = '100%';
+        preloadDetails.textContent = 'Study ready!';
+        
+        // Hide progress bar after a short delay
+        setTimeout(() => {
+            preloadProgress.classList.remove('show');
+        }, 1000);
+        
+        // Initialize welcome page animations
+        initializeWelcomeAnimations();
+    }
+    
+    function initializeWelcomeAnimations() {
+        // Add smooth transitions
+        const welcomeSection = document.querySelector('.welcome-section');
+        if (welcomeSection) {
+            welcomeSection.style.opacity = '0';
+            welcomeSection.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                welcomeSection.style.transition = 'all 0.6s ease-out';
+                welcomeSection.style.opacity = '1';
+                welcomeSection.style.transform = 'translateY(0)';
+            }, 100);
+        }
+        
+        // Start study button animation
+        const startBtn = document.querySelector('.start-study-btn');
+        if (startBtn) {
+            startBtn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px) scale(1.02)';
+            });
+            
+            startBtn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+            
+            startBtn.addEventListener('click', function() {
+                this.style.transform = 'translateY(1px) scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(0) scale(1)';
+                }, 150);
+            });
+        }
+    }
+    
+    // Fallback: If preloading takes too long, show welcome page anyway
+    setTimeout(() => {
+        if (!window.imagePreloader.getStatus().preloadComplete) {
+            onPreloadComplete();
+        }
+    }, 10000); // 10 second timeout
 });
 </script>
 {% endblock %}

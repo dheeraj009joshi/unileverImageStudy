@@ -615,7 +615,6 @@ body {
             <div class="countdown-number" id="countdownNumber">3</div>
             <div class="countdown-text" id="countdownText">GET READY!</div>
             <div class="countdown-subtext" id="countdownSubtext">Loading your first task...</div>
-            <button id="manualCountdownBtn" style="margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Start Countdown Manually</button>
         </div>
     </div>
 
@@ -628,6 +627,7 @@ body {
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/image-preloader.js') }}"></script>
 <script>
 // Lightning-fast task flow - all tasks loaded upfront with image preloading
 class LightningTaskFlow {
@@ -638,6 +638,7 @@ class LightningTaskFlow {
         this.currentTaskIndex = 0;
         this.taskRatings = [];
         this.isSubmitting = false;
+        this.countdownTimeouts = [];
         this.preloadedImages = new Map();
         
         // Initialize
@@ -687,36 +688,12 @@ class LightningTaskFlow {
         this.showImageCountdown();
         
         // Start countdown immediately (don't wait for images)
-        console.log('🎯 About to call startCountdown()...');
-        
-        // Simple countdown test first
-        this.testSimpleCountdown();
-        
-        // Then try the full countdown
+        console.log('🎯 Starting countdown...');
         this.startCountdown();
-        console.log('✅ startCountdown() called successfully!');
+        console.log('✅ Countdown started successfully!');
         
-        // Add manual countdown test after 5 seconds if it doesn't work
-        // BUT ONLY if we're still on the countdown screen
-        setTimeout(() => {
-            // Check if we're still on the countdown screen (not showing tasks)
-            const countdownElement = document.getElementById('countdownContainer');
-            const taskContainer = document.getElementById('taskContainer');
-            
-            if (countdownElement && countdownElement.style.display !== 'none' && 
-                (!taskContainer || taskContainer.children.length === 0)) {
-                console.log('🔄 Manual countdown test after 5 seconds...');
-                this.manualCountdownTest();
-            } else {
-                console.log('✅ Manual countdown test skipped - tasks already in progress');
-            }
-        }, 5000);
-        
-        // Add manual button listener
-        this.setupManualButton();
-        
-        // Preload images for first few tasks
-        this.preloadInitialImages();
+        // Images are already preloaded by the welcome screen
+        console.log('✅ Images preloaded by welcome screen - ready for instant display!');
         
         // Generate navigation
         this.generateNavigation();
@@ -756,144 +733,7 @@ class LightningTaskFlow {
         }
     }
     
-    preloadInitialImages() {
-        console.log('🖼️  ULTRA-FAST preloading for first task...');
-        
-        // Get first task images immediately
-        const firstTask = this.allTasks[0];
-        if (!firstTask) {
-            console.error('❌ No first task found!');
-            return;
-        }
-        
-        const firstTaskImages = new Set();
-        this.extractImageUrls(firstTask, firstTaskImages);
-        
-        console.log(`📸 First task has ${firstTaskImages.size} images - loading with MAXIMUM priority`);
-        
-        // Load first task images with multiple techniques for speed
-        firstTaskImages.forEach((url, index) => {
-            // Use multiple preloading techniques for first image
-            this.preloadImageUltraFast(url, index === 0);
-        });
-        
-        // Start loading other tasks in background
-        setTimeout(() => {
-            this.preloadRemainingTasks();
-        }, 50);
-    }
-    
-    preloadRemainingTasks() {
-        console.log('🔄 Preloading remaining tasks in background...');
-        
-        // Load images for tasks 2-5
-        for (let i = 1; i < Math.min(5, this.totalTasks); i++) {
-            const task = this.allTasks[i];
-            if (task) {
-                const imageUrls = new Set();
-                this.extractImageUrls(task, imageUrls);
-                imageUrls.forEach(url => {
-                    this.preloadImage(url);
-                });
-            }
-        }
-    }
-    
-    preloadNextTaskImages() {
-        const nextTaskIndex = this.currentTaskIndex + 1;
-        if (nextTaskIndex < this.totalTasks) {
-            console.log(`🔄 Preloading images for next task: ${nextTaskIndex + 1}`);
-            const nextTask = this.allTasks[nextTaskIndex];
-            if (nextTask) {
-                const imageUrls = new Set();
-                this.extractImageUrls(nextTask, imageUrls);
-                
-                console.log(`📸 Preloading ${imageUrls.size} images for next task`);
-                imageUrls.forEach(url => {
-                    this.preloadImage(url);
-                });
-            }
-        }
-    }
-    
-    extractImageUrls(task, imageUrls) {
-        const studyType = '{{ study.study_type }}';
-        
-        if (studyType === 'grid') {
-            // Grid study images
-            if (task.elements_shown) {
-                for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
-                    if (elementName.endsWith('_content') && elementData && elementData !== '') {
-                        imageUrls.add(elementData);
-                    }
-                }
-            }
-        } else if (studyType === 'layer') {
-            // Layer study images
-            if (task.elements_shown_content) {
-                for (const [elementName, elementData] of Object.entries(task.elements_shown_content)) {
-                    if (elementData && elementData !== 'none' && elementData !== '' && typeof elementData === 'object') {
-                        if (elementData.url) {
-                            imageUrls.add(elementData.url);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    preloadImage(url) {
-        if (this.preloadedImages.has(url)) {
-            return; // Already preloaded
-        }
-        
-        console.log(`🔄 Preloading image: ${url}`);
-        
-        const img = new Image();
-        img.onload = () => {
-            console.log(`✅ Image preloaded successfully: ${url}`);
-            this.preloadedImages.set(url, img);
-        };
-        img.onerror = () => {
-            console.log(`❌ Failed to preload image: ${url}`);
-        };
-        img.src = url;
-    }
-    
-    preloadImageUltraFast(url, isFirstImage = false) {
-        if (this.preloadedImages.has(url)) {
-            return; // Already preloaded
-        }
-        
-        console.log(`⚡ ULTRA-FAST preloading: ${url} ${isFirstImage ? '(FIRST IMAGE - MAX PRIORITY)' : ''}`);
-        
-        const img = new Image();
-        
-        // Maximum priority for first image
-        if (isFirstImage) {
-            img.loading = 'eager';
-            img.decoding = 'sync';
-            img.fetchPriority = 'high';
-            console.log(`🚀 Setting MAXIMUM priority for first image: ${url}`);
-        }
-        
-        img.onload = () => {
-            console.log(`✅ ULTRA-FAST image loaded: ${url}`);
-            this.preloadedImages.set(url, img);
-            
-            // If this was the first image, start loading all other images
-            if (isFirstImage) {
-                console.log('🎯 First image loaded! Now starting to load ALL other images...');
-                this.preloadAllRemainingImages();
-            }
-        };
-        
-        img.onerror = () => {
-            console.log(`❌ Failed to load image: ${url}`);
-        };
-        
-        img.src = url;
-    }
+    // Image preloading is now handled by the welcome screen preloader service
     
     showImageCountdown() {
         console.log('🎮 Showing game-style countdown while images load...');
@@ -907,164 +747,69 @@ class LightningTaskFlow {
         countdown.style.display = 'none';
     }
     
-    testSimpleCountdown() {
-        console.log('🧪 Testing simple countdown...');
-        
-        const countdownNumber = document.getElementById('countdownNumber');
-        if (countdownNumber) {
-            console.log('✅ countdownNumber found, current text:', countdownNumber.textContent);
-            
-            // Test if we can update the DOM
-            countdownNumber.textContent = 'TEST';
-            console.log('📱 Updated to TEST, now shows:', countdownNumber.textContent);
-            
-            // Change back to 3
-            countdownNumber.textContent = '3';
-            console.log('📱 Changed back to 3, now shows:', countdownNumber.textContent);
-        } else {
-            console.error('❌ countdownNumber NOT found!');
-        }
-    }
+
     
-    manualCountdownTest() {
-        console.log('🎮 Manual countdown test - forcing countdown to work...');
-        
-        // CRITICAL: Check if tasks are already in progress
-        if (this.currentTaskIndex > 0 || this.taskRatings.length > 0) {
-            console.log('⚠️ Manual countdown test ABORTED - tasks already in progress!');
-            console.log(`Current task index: ${this.currentTaskIndex}, Completed tasks: ${this.taskRatings.length}`);
-            return;
-        }
-        
-        const countdownNumber = document.getElementById('countdownNumber');
-        const countdownText = document.getElementById('countdownText');
-        const countdownSubtext = document.getElementById('countdownSubtext');
-        
-        if (countdownNumber && countdownText && countdownSubtext) {
-            console.log('✅ All elements found, starting manual countdown...');
-            
-            // Manual countdown: 3, 2, 1, GO!
-            countdownNumber.textContent = '3';
-            countdownText.textContent = 'GET READY!';
-            countdownSubtext.textContent = 'Starting in 3...';
-            
-            setTimeout(() => {
-                countdownNumber.textContent = '2';
-                countdownText.textContent = 'GET READY!';
-                countdownSubtext.textContent = 'Starting in 2...';
-                console.log('📱 Manual countdown: 2');
-            }, 1000);
-            
-            setTimeout(() => {
-                countdownNumber.textContent = '1';
-                countdownText.textContent = 'GET READY!';
-                countdownSubtext.textContent = 'Starting in 1...';
-                console.log('📱 Manual countdown: 1');
-            }, 2000);
-            
-            setTimeout(() => {
-                countdownNumber.textContent = 'GO!';
-                countdownText.textContent = 'TASK READY!';
-                countdownSubtext.textContent = 'Your first task is ready!';
-                console.log('📱 Manual countdown: GO!');
-                
-                // After 1 second, hide countdown and show first task
-                setTimeout(() => {
-                    this.hideImageCountdown();
-                    this.showTask(0);
-                }, 1000);
-            }, 3000);
-            
-        } else {
-            console.error('❌ Elements not found for manual countdown');
-        }
-    }
+
     
-    setupManualButton() {
-        const manualBtn = document.getElementById('manualCountdownBtn');
-        if (manualBtn) {
-            manualBtn.addEventListener('click', () => {
-                console.log('🔘 Manual countdown button clicked!');
-                this.startCountdown();
-            });
-            console.log('✅ Manual button listener added');
-        } else {
-            console.error('❌ Manual button not found');
-        }
-    }
+
     
     startCountdown() {
-        console.log('🎮 Starting SIMPLE countdown: 3... 2... 1... GO!');
+        console.log('🎮 Starting countdown: 3... 2... 1... GO!');
         
+        // Get countdown elements
         const countdownNumber = document.getElementById('countdownNumber');
         const countdownText = document.getElementById('countdownText');
         const countdownSubtext = document.getElementById('countdownSubtext');
         
         if (!countdownNumber || !countdownText || !countdownSubtext) {
             console.error('❌ Countdown elements not found!');
+            this.hideImageCountdown();
+            this.showTask(0);
             return;
         }
         
-        console.log('✅ Starting simple countdown...');
+        console.log('✅ Countdown elements found, starting...');
         
-        // Simple countdown using setTimeout instead of setInterval
-        countdownNumber.textContent = '3';
-        countdownText.textContent = 'GET READY!';
-        countdownSubtext.textContent = 'Starting in 3...';
-        console.log('📱 Showed: 3');
+        // Clear any existing timeouts
+        if (this.countdownTimeouts) {
+            this.countdownTimeouts.forEach(timeout => clearTimeout(timeout));
+        }
+        this.countdownTimeouts = [];
         
-        setTimeout(() => {
-            countdownNumber.textContent = '2';
-            countdownText.textContent = 'GET READY!';
-            countdownSubtext.textContent = 'Starting in 2...';
-            console.log('📱 Showed: 2');
-        }, 1000);
+        // Simple countdown sequence
+        let count = 3;
         
-        setTimeout(() => {
-            countdownNumber.textContent = '1';
-            countdownText.textContent = 'GET READY!';
-            countdownSubtext.textContent = 'Starting in 1...';
-            console.log('📱 Showed: 1');
-        }, 2000);
+        const updateCountdown = () => {
+            if (count > 0) {
+                countdownNumber.textContent = count;
+                countdownText.textContent = 'GET READY!';
+                countdownSubtext.textContent = `Starting in ${count}...`;
+                console.log(`📱 Countdown: ${count}`);
+                count--;
+                
+                const timeout = setTimeout(updateCountdown, 1000);
+                this.countdownTimeouts.push(timeout);
+            } else {
+                countdownNumber.textContent = 'GO!';
+                countdownText.textContent = 'TASK READY!';
+                countdownSubtext.textContent = 'Your first task is ready!';
+                console.log('📱 Countdown: GO!');
+                
+                const timeout = setTimeout(() => {
+                    console.log('🎯 Countdown finished, showing first task');
+                    this.hideImageCountdown();
+                    this.showTask(0);
+                }, 1000);
+                this.countdownTimeouts.push(timeout);
+            }
+        };
         
-        setTimeout(() => {
-            countdownNumber.textContent = 'GO!';
-            countdownText.textContent = 'TASK READY!';
-            countdownSubtext.textContent = 'Your first task is ready!';
-            console.log('📱 Showed: GO!');
-        }, 3000);
-        
-        setTimeout(() => {
-            console.log('🎯 Countdown finished, showing first task...');
-            this.hideImageCountdown();
-            this.showTask(0);
-        }, 4000);
-        
-        console.log('⏰ Simple countdown started with setTimeout');
+        // Start the countdown
+        updateCountdown();
+        console.log('⏰ Countdown started');
     }
     
-    preloadAllRemainingImages() {
-        console.log('🔄 Loading ALL remaining images for all tasks...');
-        
-        const allImageUrls = new Set();
-        
-        // Collect all image URLs from all tasks
-        for (let i = 0; i < this.totalTasks; i++) {
-            const task = this.allTasks[i];
-            if (task) {
-                this.extractImageUrls(task, allImageUrls);
-            }
-        }
-        
-        console.log(`📸 Total unique images found: ${allImageUrls.size}`);
-        
-        // Load all remaining images (excluding already loaded ones)
-        allImageUrls.forEach(url => {
-            if (!this.preloadedImages.has(url)) {
-                this.preloadImage(url);
-            }
-        });
-    }
+    // All images are preloaded by the welcome screen preloader service
     
     generateNavigation() {
         // Navigation is now handled by the progress bar
@@ -1113,8 +858,7 @@ class LightningTaskFlow {
         // Save current task to local storage
         this.saveToLocalStorage();
         
-        // Preload images for next task in background
-        this.preloadNextTaskImages();
+        // Images are already preloaded by welcome screen
     }
     
     renderTask(task) {
@@ -1188,9 +932,13 @@ class LightningTaskFlow {
                         console.log(`🔍 Element ${baseName}: active=${elementActive}, content=${elementData}`);
                         if (elementActive === 1) {
                             activeElementsCount++;
+                            // Use preloaded image if available, otherwise fallback to URL
+                            const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(elementData) : null;
+                            const imageSrc = preloadedImg ? preloadedImg.src : elementData;
+                            
                             imageHTML += `
                                 <div class="grid-element-item">
-                                    <img src="${elementData}" alt="Element ${baseName}" class="task-image grid-image">
+                                    <img src="${imageSrc}" alt="Element ${baseName}" class="task-image grid-image">
                                     <div class="element-label">${baseName}</div>
                                 </div>
                             `;
@@ -1276,9 +1024,13 @@ class LightningTaskFlow {
                         console.log(`🔄 Using fallback z-index: ${zIndex} for ${elementName}`);
                     }
                     
+                    // Use preloaded image if available, otherwise fallback to URL
+                    const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(elementData.url) : null;
+                    const imageSrc = preloadedImg ? preloadedImg.src : elementData.url;
+                    
                     imageHTML += `
                         <div class="layer-image" style="z-index: ${zIndex};">
-                            <img src="${elementData.url}" 
+                            <img src="${imageSrc}" 
                                  alt="${elementData.alt_text || elementData.name}" 
                                  class="vignette-layer-img"
                                  data-layer="${elementData.layer_name}"
@@ -2030,10 +1782,20 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Total Tasks:', totalTasks);
     console.log('All Tasks:', allTasks);
     
-    // Create and start the lightning-fast task flow
-    try {
-        window.taskFlow = new LightningTaskFlow(studyId, totalTasks, allTasks);
-        console.log('✅ LightningTaskFlow initialized successfully!');
+    // Start tasks immediately - countdown will handle the timing
+    console.log('🚀 Starting task flow immediately...');
+    startTaskFlow();
+    
+
+    
+    function startTaskFlow() {
+        // Create and start the lightning-fast task flow
+        try {
+            window.taskFlow = new LightningTaskFlow(studyId, totalTasks, allTasks);
+            console.log('✅ LightningTaskFlow initialized successfully!');
+        } catch (error) {
+            console.error('❌ Error initializing LightningTaskFlow:', error);
+        }
         
         // Save progress before page unload (refresh, close, etc.)
         window.addEventListener('beforeunload', () => {
@@ -2050,9 +1812,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.taskFlow.saveToLocalStorage();
             }
         });
-        
-    } catch (error) {
-        console.error('❌ Error initializing LightningTaskFlow:', error);
     }
 });
 </script>

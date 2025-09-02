@@ -4,9 +4,62 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+<style>
+/* Image preloading progress bar */
+.preload-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #f0f0f0;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.preload-progress.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.preload-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.preload-text {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.preload-text.show {
+    opacity: 1;
+    visibility: visible;
+}
+</style>
 {% endblock %}
 
 {% block content %}
+<!-- Image preloading progress bar -->
+<div class="preload-progress" id="preloadProgress">
+    <div class="preload-progress-bar" id="preloadProgressFill"></div>
+</div>
+<div class="preload-text" id="preloadDetails">Preparing study...</div>
+
 <div class="study-participation-container">
 
     
@@ -81,8 +134,108 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/image-preloader.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Study data for preloading (already serialized by backend)
+    let studyData;
+    try {
+        // Check if serialized_study_data exists and is not None
+        {% if serialized_study_data %}
+        studyData = {{ serialized_study_data|tojson|safe }};
+        console.log('Study data loaded successfully:', studyData);
+        {% else %}
+        console.warn('serialized_study_data is None/undefined, using fallback');
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
+        {% endif %}
+    } catch (error) {
+        console.error('Error loading study data:', error);
+        // Fallback data
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
+    }
+    
+    // Validate studyData structure
+    if (!studyData || typeof studyData !== 'object') {
+        console.error('Invalid studyData structure:', studyData);
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
+    }
+    
+    // Preload progress elements
+    const preloadProgress = document.getElementById('preloadProgress');
+    const preloadProgressFill = document.getElementById('preloadProgressFill');
+    const preloadDetails = document.getElementById('preloadDetails');
+    
+    // Start image preloading if not already started and we have valid data
+    if (studyData && studyData.study_type && 
+        (!window.imagePreloader.getStatus().isPreloading && !window.imagePreloader.getStatus().preloadComplete)) {
+        startImagePreloading();
+    } else if (window.imagePreloader.getStatus().preloadComplete) {
+        // Already complete, hide progress
+        hidePreloadProgress();
+    } else {
+        // No valid data or already preloading, hide progress
+        console.log('Skipping preloading - no valid data or already in progress');
+        hidePreloadProgress();
+    }
+    
+    function startImagePreloading() {
+        // Show progress bar
+        preloadProgress.classList.add('show');
+        preloadDetails.classList.add('show');
+        
+        // Start preloading silently
+        window.imagePreloader.preloadStudyImages(
+            studyData,
+            // Progress callback
+            function(progress) {
+                updatePreloadProgress(progress);
+            },
+            // Complete callback
+            function() {
+                onPreloadComplete();
+            }
+        );
+    }
+    
+    function updatePreloadProgress(progress) {
+        const percentage = progress.percentage || 0;
+        
+        // Update progress bar
+        preloadProgressFill.style.width = percentage + '%';
+        
+        // Update text with cleaner messaging
+        if (progress.total > 0) {
+            preloadDetails.textContent = `Preparing study... ${progress.loaded}/${progress.total} images ready`;
+        }
+    }
+    
+    function onPreloadComplete() {
+        // Update progress bar to 100%
+        preloadProgressFill.style.width = '100%';
+        preloadDetails.textContent = 'Study ready!';
+        
+        // Hide progress bar after a short delay
+        setTimeout(() => {
+            hidePreloadProgress();
+        }, 1000);
+    }
+    
+    function hidePreloadProgress() {
+        preloadProgress.classList.remove('show');
+        preloadDetails.classList.remove('show');
+    }
     console.log('Personal info page loaded');
     
     // Set max date to today
