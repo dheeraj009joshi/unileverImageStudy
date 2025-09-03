@@ -7,7 +7,7 @@ class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     MONGODB_SETTINGS = {
-        'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://dlovej009:Dheeraj2006@cluster0.dnu8vna.mongodb.net/iped_system'
+        'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://dlovej009:Dheeraj2006@cluster0.dnu8vna.mongodb.net/RDE_system'
     }
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # Increased to 100MB for multiple file uploads
@@ -34,7 +34,7 @@ class Config:
     
     # Dynamic Application Configuration
     APP_NAME = os.environ.get('APP_NAME', 'UnileverImageStudy')
-    APP_DESCRIPTION = os.environ.get('APP_DESCRIPTION', 'Professional IPED Study System for Research and Data Collection')
+    APP_DESCRIPTION = os.environ.get('APP_DESCRIPTION', 'Professional RDE Study System for Research and Data Collection')
     APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Conduct cutting-edge research with our advanced Rule Developing Experimentatio platform')
     APP_SUBTAGLINE = os.environ.get('APP_SUBTAGLINE', 'Create, manage, and analyze studies with enterprise-grade tools')
     
@@ -47,7 +47,7 @@ class Config:
     # Feature Descriptions
     FEATURES = {
         'algorithm': {
-            'title': 'Advanced IPED Algorithm',
+            'title': 'Advanced RDE Algorithm',
             'description': 'Sophisticated Rule Developing Experimentatio with balanced matrix generation for optimal research outcomes.',
             'icon': '🧠'
         },
