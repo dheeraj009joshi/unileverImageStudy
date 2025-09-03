@@ -7,7 +7,7 @@ class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     MONGODB_SETTINGS = {
-        'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://dlovej009:Dheeraj2006@cluster0.dnu8vna.mongodb.net/RDE_system'
+        'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://dlovej009:Dheeraj2006@cluster0.dnu8vna.mongodb.net/iped_system'
     }
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # Increased to 100MB for multiple file uploads
