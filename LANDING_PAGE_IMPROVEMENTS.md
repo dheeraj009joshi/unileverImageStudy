@@ -18,7 +18,7 @@ All branding and content is now configurable through environment variables:
 ```bash
 APP_NAME=Mindsurve
 APP_DESCRIPTION=Professional IPED Study System for Research and Data Collection
-APP_TAGLINE=Conduct cutting-edge research with our advanced Rule Developing Experimentatio platform
+APP_TAGLINE=Conduct cutting-edge research with our advanced Rule Developing Experimentationplatform
 APP_SUBTAGLINE=Create, manage, and analyze studies with enterprise-grade tools
 ```
 

@@ -35,7 +35,7 @@ class Config:
     # Dynamic Application Configuration
     APP_NAME = os.environ.get('APP_NAME', 'Mindsurve')
     APP_DESCRIPTION = os.environ.get('APP_DESCRIPTION', 'Professional RDE Study System for Research and Data Collection')
-    APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Conduct cutting-edge research with our advanced Rule Developing Experimentatio platform')
+    APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Conduct cutting-edge research with our advanced Rule Developing Experimentation platform')
     APP_SUBTAGLINE = os.environ.get('APP_SUBTAGLINE', 'Create, manage, and analyze studies with enterprise-grade tools')
     
     # Company Information
@@ -48,7 +48,7 @@ class Config:
     FEATURES = {
         'algorithm': {
             'title': 'Advanced RDE Algorithm',
-            'description': 'Sophisticated Rule Developing Experimentatio with balanced matrix generation for optimal research outcomes.',
+            'description': 'Sophisticated Rule Developing Experimentationwith balanced matrix generation for optimal research outcomes.',
             'icon': '🧠'
         },
         'analytics': {
