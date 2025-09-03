@@ -16,7 +16,7 @@ All branding and content is now configurable through environment variables:
 
 #### Application Branding
 ```bash
-APP_NAME=UnileverImageStudy
+APP_NAME=MindSurve
 APP_DESCRIPTION=Professional IPED Study System for Research and Data Collection
 APP_TAGLINE=Conduct cutting-edge research with our advanced Rule Developing Experimentatio platform
 APP_SUBTAGLINE=Create, manage, and analyze studies with enterprise-grade tools
@@ -24,26 +24,26 @@ APP_SUBTAGLINE=Create, manage, and analyze studies with enterprise-grade tools
 
 #### Company Information
 ```bash
-COMPANY_NAME=UnileverImageStudy
+COMPANY_NAME=MindSurve
 COMPANY_YEAR=2024
-COMPANY_WEBSITE=https://unileverimagestudy.com
-COMPANY_EMAIL=contact@unileverimagestudy.com
+COMPANY_WEBSITE=https://MindSurve.com
+COMPANY_EMAIL=contact@MindSurve.com
 ```
 
 #### Social Media Links
 ```bash
-SOCIAL_TWITTER=https://twitter.com/unileverimagestudy
-SOCIAL_LINKEDIN=https://linkedin.com/company/unileverimagestudy
-SOCIAL_GITHUB=https://github.com/unileverimagestudy
-SOCIAL_YOUTUBE=https://youtube.com/@unileverimagestudy
+SOCIAL_TWITTER=https://twitter.com/MindSurve
+SOCIAL_LINKEDIN=https://linkedin.com/company/MindSurve
+SOCIAL_GITHUB=https://github.com/MindSurve
+SOCIAL_YOUTUBE=https://youtube.com/@MindSurve
 ```
 
 #### Contact Information
 ```bash
 CONTACT_ADDRESS=123 Research Drive, Innovation City, IC 12345
 CONTACT_PHONE=+1 (555) 123-4567
-SUPPORT_EMAIL=support@unileverimagestudy.com
-SALES_EMAIL=sales@unileverimagestudy.com
+SUPPORT_EMAIL=support@MindSurve.com
+SALES_EMAIL=sales@MindSurve.com
 ```
 
 ### 📱 **Responsive Design**

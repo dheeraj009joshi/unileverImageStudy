@@ -318,11 +318,11 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.innerHTML = '<span class="loading-spinner"></span> Launching...';
             
             // Show loading overlay with custom message
-            if (window.UnileverImageStudy && window.UnileverImageStudy.app) {
-                window.UnileverImageStudy.app.showLoading('Launching Study...');
-            } else if (window.UnileverImageStudy) {
+            if (window.MindSurve && window.MindSurve.app) {
+                window.MindSurve.app.showLoading('Launching Study...');
+            } else if (window.MindSurve) {
                 // Fallback to global method
-                window.UnileverImageStudy.showLoading('Launching Study...');
+                window.MindSurve.showLoading('Launching Study...');
             } else {
                 // Direct fallback if nothing else works
                 const overlay = document.getElementById('loading-overlay');

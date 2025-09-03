@@ -1,5 +1,5 @@
 /**
- * UnileverImageStudy - Landing Page JavaScript
+ * MindSurve - Landing Page JavaScript
  * Interactive features and animations
  */
 
@@ -454,7 +454,7 @@ function updateLayoutValues() {
 // ========================================
 
 // Make functions available globally if needed
-window.UnileverImageStudyLanding = {
+window.MindSurveLanding = {
     initializePage,
     initializeAnimations,
     initializeInteractiveElements,

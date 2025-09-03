@@ -1,5 +1,5 @@
 /**
- * UnileverImageStudy - Dashboard JavaScript
+ * MindSurve - Dashboard JavaScript
  * Interactive features for dashboard
  */
 
@@ -633,7 +633,7 @@ function createSimpleLineChart(ctx, data, options) {
 // ========================================
 
 // Make functions available globally
-window.UnileverImageStudyDashboard = {
+window.MindSurveDashboard = {
     initializePage,
     initializeDashboardComponents,
     initializeInteractiveFeatures,

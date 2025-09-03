@@ -1,5 +1,5 @@
 /**
- * UnileverImageStudy - Optimized Base JavaScript
+ * MindSurve - Optimized Base JavaScript
  * Lightweight core functionality for maximum performance
  */
 
@@ -7,7 +7,7 @@
 // Performance-Optimized Core
 // ========================================
 
-class UnileverImageStudyApp {
+class MindSurveApp {
     constructor() {
         this.isInitialized = false;
         this.init();
@@ -239,11 +239,11 @@ class UnileverImageStudyApp {
 // Global API
 // ========================================
 
-window.UnileverImageStudy = {
+window.MindSurve = {
     app: null,
     
     init() {
-        this.app = new UnileverImageStudyApp();
+        this.app = new MindSurveApp();
         return this.app;
     },
     
@@ -262,8 +262,8 @@ window.UnileverImageStudy = {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        UnileverImageStudy.init();
+        MindSurve.init();
     });
 } else {
-    UnileverImageStudy.init();
+    MindSurve.init();
 }
