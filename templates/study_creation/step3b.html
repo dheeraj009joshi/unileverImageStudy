@@ -144,7 +144,7 @@
                                             <div class="element-name">{{ element.name or 'Unnamed Element' }}</div>
                                             {% if element.content %}
                                                 <img src="{{ element.content }}" 
-                                                     alt="{{ element.alt_text or element.name }}" 
+                                                     alt="{{ element.name or element.name }}" 
                                                      class="element-simple-image"
                                                      onerror="this.style.display='none';">
                                             {% endif %}

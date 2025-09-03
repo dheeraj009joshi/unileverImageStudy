@@ -161,7 +161,7 @@
                             <div class="element-item">
                                 <div class="element-content">
                                     {% if element.element_type == 'image' %}
-                                    <img src="{{ element.content }}" alt="{{ element.alt_text or element.name }}" class="element-image">
+                                    <img src="{{ element.content }}" alt="{{ element.name or element.name }}" class="element-image">
                                     {% else %}
                                     <div class="element-text">{{ element.content }}</div>
                                     {% endif %}

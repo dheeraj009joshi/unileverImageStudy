@@ -100,7 +100,7 @@
                                         <label class="form-label">Alt Text</label>
                                         <input type="text" 
                                                name="element_{{ loop.index0 }}_alt_text" 
-                                               value="{{ element.alt_text or '' }}"
+                                               value="{{ element.name or '' }}"
                                                class="form-input" 
                                                placeholder="Alternative text for accessibility"
                                                onchange="updateElementAltText({{ loop.index0 }}, this.value)">
