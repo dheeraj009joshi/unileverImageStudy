@@ -33,16 +33,16 @@ class Config:
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour CSRF token expiry
     
     # Dynamic Application Configuration
-    APP_NAME = os.environ.get('APP_NAME', 'MindSurve')
+    APP_NAME = os.environ.get('APP_NAME', 'Mindsurve')
     APP_DESCRIPTION = os.environ.get('APP_DESCRIPTION', 'Professional RDE Study System for Research and Data Collection')
     APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Conduct cutting-edge research with our advanced Rule Developing Experimentatio platform')
     APP_SUBTAGLINE = os.environ.get('APP_SUBTAGLINE', 'Create, manage, and analyze studies with enterprise-grade tools')
     
     # Company Information
-    COMPANY_NAME = os.environ.get('COMPANY_NAME', 'MindSurve')
+    COMPANY_NAME = os.environ.get('COMPANY_NAME', 'Mindsurve')
     COMPANY_YEAR = os.environ.get('COMPANY_YEAR', '2024')
-    COMPANY_WEBSITE = os.environ.get('COMPANY_WEBSITE', 'https://MindSurve.com')
-    COMPANY_EMAIL = os.environ.get('COMPANY_EMAIL', 'contact@MindSurve.com')
+    COMPANY_WEBSITE = os.environ.get('COMPANY_WEBSITE', 'https://Mindsurve.com')
+    COMPANY_EMAIL = os.environ.get('COMPANY_EMAIL', 'contact@Mindsurve.com')
     
     # Feature Descriptions
     FEATURES = {
@@ -65,18 +65,18 @@ class Config:
     
     # Social Media Links
     SOCIAL_LINKS = {
-        'twitter': os.environ.get('SOCIAL_TWITTER', 'https://twitter.com/MindSurve'),
-        'linkedin': os.environ.get('SOCIAL_LINKEDIN', 'https://linkedin.com/company/MindSurve'),
-        'github': os.environ.get('SOCIAL_GITHUB', 'https://github.com/MindSurve'),
-        'youtube': os.environ.get('SOCIAL_YOUTUBE', 'https://youtube.com/@MindSurve')
+        'twitter': os.environ.get('SOCIAL_TWITTER', 'https://twitter.com/Mindsurve'),
+        'linkedin': os.environ.get('SOCIAL_LINKEDIN', 'https://linkedin.com/company/Mindsurve'),
+        'github': os.environ.get('SOCIAL_GITHUB', 'https://github.com/Mindsurve'),
+        'youtube': os.environ.get('SOCIAL_YOUTUBE', 'https://youtube.com/@Mindsurve')
     }
     
     # Contact Information
     CONTACT_INFO = {
         'address': os.environ.get('CONTACT_ADDRESS', '123 Research Drive, Innovation City, IC 12345'),
         'phone': os.environ.get('CONTACT_PHONE', '+1 (555) 123-4567'),
-        'support_email': os.environ.get('SUPPORT_EMAIL', 'support@MindSurve.com'),
-        'sales_email': os.environ.get('SALES_EMAIL', 'sales@MindSurve.com')
+        'support_email': os.environ.get('SUPPORT_EMAIL', 'support@Mindsurve.com'),
+        'sales_email': os.environ.get('SALES_EMAIL', 'sales@Mindsurve.com')
     }
 
 class DevelopmentConfig(Config):

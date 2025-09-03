@@ -1,4 +1,4 @@
-# MindSurve
+# Mindsurve
 
 A production-ready Flask application for conducting IPED (Individual Parameter Estimation Design) research studies with comprehensive task timing analytics and anonymous respondent participation.
 
@@ -373,4 +373,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Note**: This system is designed for research purposes and includes comprehensive data collection. Ensure compliance with relevant privacy regulations (GDPR, CCPA, etc.) when deploying in production environments.
 # inniImage
-# MindSurve
+# Mindsurve

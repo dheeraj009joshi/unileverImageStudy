@@ -1,5 +1,5 @@
 /**
- * MindSurve - Landing Page JavaScript
+ * Mindsurve - Landing Page JavaScript
  * Interactive features and animations
  */
 
@@ -454,7 +454,7 @@ function updateLayoutValues() {
 // ========================================
 
 // Make functions available globally if needed
-window.MindSurveLanding = {
+window.MindsurveLanding = {
     initializePage,
     initializeAnimations,
     initializeInteractiveElements,

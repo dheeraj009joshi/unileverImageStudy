@@ -1,5 +1,5 @@
 /**
- * Main JavaScript file for MindSurve
+ * Main JavaScript file for Mindsurve
  * Optimized for performance - only essential functionality
  */
 

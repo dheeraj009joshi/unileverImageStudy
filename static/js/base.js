@@ -1,5 +1,5 @@
 /**
- * MindSurve - Optimized Base JavaScript
+ * Mindsurve - Optimized Base JavaScript
  * Lightweight core functionality for maximum performance
  */
 
@@ -7,7 +7,7 @@
 // Performance-Optimized Core
 // ========================================
 
-class MindSurveApp {
+class MindsurveApp {
     constructor() {
         this.isInitialized = false;
         this.init();
@@ -239,11 +239,11 @@ class MindSurveApp {
 // Global API
 // ========================================
 
-window.MindSurve = {
+window.Mindsurve = {
     app: null,
     
     init() {
-        this.app = new MindSurveApp();
+        this.app = new MindsurveApp();
         return this.app;
     },
     
@@ -262,8 +262,8 @@ window.MindSurve = {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        MindSurve.init();
+        Mindsurve.init();
     });
 } else {
-    MindSurve.init();
+    Mindsurve.init();
 }

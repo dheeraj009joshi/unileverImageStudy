@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'MindSurve - Professional RDE Study System') }}">
+    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'Mindsurve - Professional RDE Study System') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{% block title %}{{ config.get('APP_NAME', 'MindSurve') }}{% endblock %}</title>
+    <title>{% block title %}{{ config.get('APP_NAME', 'Mindsurve') }}{% endblock %}</title>
     
     <!-- Macros -->
     {% macro study_progress_bar(current_step, study_type='grid', draft=none) %}
@@ -111,7 +111,7 @@
             <div class="nav-brand">
                 <a href="{{ url_for('index.index') }}" class="brand-link" aria-label="Home">
                     <span class="brand-icon">🧠</span>
-                    <span class="brand-text">{{ config.get('APP_NAME', 'MindSurve') }}</span>
+                    <span class="brand-text">{{ config.get('APP_NAME', 'Mindsurve') }}</span>
                 </a>
             </div>
             
@@ -584,7 +584,7 @@
         <div class="footer-container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3 class="footer-title">{{ config.get('APP_NAME', 'MindSurve') }}</h3>
+                    <h3 class="footer-title">{{ config.get('APP_NAME', 'Mindsurve') }}</h3>
                     <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional RDE Study System for Research and Data Collection') }}</p>
                 </div>
                 <div class="footer-section">
@@ -607,7 +607,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-copyright">&copy; {{ config.get('COMPANY_YEAR', '2024') }} {{ config.get('COMPANY_NAME', 'MindSurve') }}. All rights reserved.</p>
+                <p class="footer-copyright">&copy; {{ config.get('COMPANY_YEAR', '2024') }} {{ config.get('COMPANY_NAME', 'Mindsurve') }}. All rights reserved.</p>
             </div>
         </div>
     </footer>

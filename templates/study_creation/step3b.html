@@ -318,11 +318,11 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.innerHTML = '<span class="loading-spinner"></span> Launching...';
             
             // Show loading overlay with custom message
-            if (window.MindSurve && window.MindSurve.app) {
-                window.MindSurve.app.showLoading('Launching Study...');
-            } else if (window.MindSurve) {
+            if (window.Mindsurve && window.Mindsurve.app) {
+                window.Mindsurve.app.showLoading('Launching Study...');
+            } else if (window.Mindsurve) {
                 // Fallback to global method
-                window.MindSurve.showLoading('Launching Study...');
+                window.Mindsurve.showLoading('Launching Study...');
             } else {
                 // Direct fallback if nothing else works
                 const overlay = document.getElementById('loading-overlay');

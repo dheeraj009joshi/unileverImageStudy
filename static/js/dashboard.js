@@ -1,5 +1,5 @@
 /**
- * MindSurve - Dashboard JavaScript
+ * Mindsurve - Dashboard JavaScript
  * Interactive features for dashboard
  */
 
@@ -633,7 +633,7 @@ function createSimpleLineChart(ctx, data, options) {
 // ========================================
 
 // Make functions available globally
-window.MindSurveDashboard = {
+window.MindsurveDashboard = {
     initializePage,
     initializeDashboardComponents,
     initializeInteractiveFeatures,

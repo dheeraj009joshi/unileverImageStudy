@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple startup script for the MindSurve
+Simple startup script for the Mindsurve
 Run this for development purposes
 """
 
@@ -10,7 +10,7 @@ from app import create_app, create_tables
 
 def main():
     """Main startup function."""
-    print("🚀 Starting MindSurve...")
+    print("🚀 Starting Mindsurve...")
     
     # Create application
     app = create_app()
