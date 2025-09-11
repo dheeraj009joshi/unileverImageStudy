@@ -218,7 +218,7 @@ function initializeSorting() {
 function initializeRealTimeUpdates() {
     // Set up periodic refresh for active studies
     if (document.querySelector('.active-studies-section')) {
-        setInterval(refreshActiveStudies, 30000); // Refresh every 30 seconds
+        setInterval(refreshActiveStudies, 55000); // Refresh every 30 seconds
     }
     
     // Set up activity feed updates

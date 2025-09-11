@@ -263,7 +263,7 @@ class ImagePreloader {
      * @param {number} timeout - Maximum time to wait in milliseconds
      * @returns {Promise} Promise that resolves when preloading is complete
      */
-    waitForCompletion(timeout = 30000) {
+    waitForCompletion(timeout = 55000) {
         return new Promise((resolve, reject) => {
             if (this.preloadComplete) {
                 resolve(this.getStatus());

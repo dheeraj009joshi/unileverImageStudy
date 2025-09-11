@@ -38,11 +38,11 @@ RUN useradd --create-home --shell /bin/bash app \
 USER app
 
 # Expose port
-EXPOSE 30000
+EXPOSE 55000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:30000/health || exit 1
+    CMD curl -f http://localhost:55000/health || exit 1
 
 # Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:30000", "--workers", "4", "--worker-class", "sync", "--timeout", "120", "--keep-alive", "2", "app:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:55000", "--workers", "4", "--worker-class", "sync", "--timeout", "120", "--keep-alive", "2", "app:create_app()"]
