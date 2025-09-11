@@ -41,7 +41,7 @@
                         
                         <div class="study-form-group">
                             <label class="study-form-label study-form-label--required">Question Text</label>
-                            <input type="text" name="question_{{ i }}_text" class="study-form-control" placeholder="e.g., What is your age group?" required 
+                            <input type="text" name="question_{{ i }}_text" class="study-form-control" placeholder="e.g., Where do you primarily shop?" required 
                                    value="{{ questions_data[i].question_text if questions_data and questions_data[i] else '' }}">
                         </div>
                         
@@ -172,7 +172,7 @@ function addQuestion() {
         
         <div class="study-form-group">
             <label class="study-form-label study-form-label--required">Question Text</label>
-            <input type="text" name="question_${currentQuestionCount}_text" class="study-form-control" placeholder="e.g., What is your age group?" required>
+            <input type="text" name="question_${currentQuestionCount}_text" class="study-form-control" placeholder="e.g., Which social media platform do you most frequently use??" required>
         </div>
         
         <div class="study-form-group">

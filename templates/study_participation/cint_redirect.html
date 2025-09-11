@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}{{ study.title }} - Redirecting{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/study_participation.css') }}">
+<style>
+    .redirect-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .redirect-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #28a745;
+    }
+    
+    .redirect-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+    
+    .redirect-message {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 2rem;
+        max-width: 600px;
+        line-height: 1.6;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 1rem auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .redirect-info {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        max-width: 500px;
+    }
+    
+    .redirect-info h3 {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+    
+    .redirect-info p {
+        font-size: 0.95rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+    }
+    
+    .manual-link {
+        display: inline-block;
+        background-color: #007bff;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-top: 1rem;
+        transition: background-color 0.3s ease;
+    }
+    
+    .manual-link:hover {
+        background-color: #0056b3;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .countdown {
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="study-participation-container">
+    <div class="redirect-container">
+        <div class="redirect-icon">✅</div>
+        <h1 class="redirect-title">Study Completed!</h1>
+        <p class="redirect-message">
+            Thank you for completing the study "{{ study.title }}". 
+            You will be redirected back to the survey platform in <span id="countdown" class="countdown">3</span> seconds...
+        </p>
+        
+        <div class="loading-spinner"></div>
+        
+        <div class="redirect-info">
+            <h3>Automatic Redirect</h3>
+            <p>You are being automatically redirected to complete your participation.</p>
+            <p>If the redirect doesn't work, please click the button below:</p>
+            <a href="{{ redirect_url }}" class="manual-link" target="_self">
+                Continue to Survey Platform
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Cint redirect page loaded');
+    
+    const redirectUrl = "{{ redirect_url }}";
+    const countdownElement = document.getElementById('countdown');
+    let countdown = 3;
+    
+    // Update countdown every second
+    const countdownInterval = setInterval(function() {
+        countdown--;
+        if (countdownElement) {
+            countdownElement.textContent = countdown;
+        }
+        
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            // Redirect to Cint callback URL
+            console.log('Redirecting to Cint:', redirectUrl);
+            window.location.href = redirectUrl;
+        }
+    }, 1000);
+    
+    // Fallback redirect in case something goes wrong
+    setTimeout(function() {
+        if (window.location.href === window.location.href) {
+            console.log('Fallback redirect to Cint:', redirectUrl);
+            window.location.href = redirectUrl;
+        }
+    }, 5000);
+    
+    // Add animation to completion icon
+    const completionIcon = document.querySelector('.redirect-icon');
+    if (completionIcon) {
+        completionIcon.style.transform = 'scale(0) rotate(-180deg)';
+        completionIcon.style.opacity = '0';
+        
+        setTimeout(() => {
+            completionIcon.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            completionIcon.style.transform = 'scale(1) rotate(0deg)';
+            completionIcon.style.opacity = '1';
+        }, 200);
+    }
+    
+    // Animate the container
+    const redirectContainer = document.querySelector('.redirect-container');
+    if (redirectContainer) {
+        redirectContainer.style.opacity = '0';
+        redirectContainer.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            redirectContainer.style.transition = 'all 0.8s ease-out';
+            redirectContainer.style.opacity = '1';
+            redirectContainer.style.transform = 'translateY(0)';
+        }, 100);
+    }
+    
+    // Prevent form resubmission
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+});
+</script>
+{% endblock %}

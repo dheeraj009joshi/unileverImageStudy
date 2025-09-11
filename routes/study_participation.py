@@ -122,6 +122,9 @@ def welcome(study_id):
         if study.status != 'active':
             return render_template('study_participation/study_inactive.html', study=study)
         
+        # Capture rid parameter for Cint integration
+        rid = request.args.get('rid') or request.args.get('RID')
+        
         # Initialize session for this study (but don't create response yet)
         session['study_id'] = str(study_id)
         session['current_step'] = 'welcome'
@@ -130,6 +133,11 @@ def welcome(study_id):
             'classification_answers': [],
             'task_ratings': []
         }
+        
+        # Store rid in session if provided (for Cint integration)
+        if rid:
+            session['rid'] = rid
+            print(f"Cint RID captured: {rid}")
         
         # Serialize study data for image preloading
         try:
@@ -163,7 +171,13 @@ def welcome(study_id):
 @study_participation.route('/study/<study_id>/participate')
 def participate(study_id):
     """Direct participation link - redirects to welcome"""
-    return redirect(url_for('study_participation.welcome', study_id=study_id))
+    # Capture rid parameter for Cint integration and pass it along
+    rid = request.args.get('rid')
+    
+    if rid:
+        return redirect(url_for('study_participation.welcome', study_id=study_id, rid=rid))
+    else:
+        return redirect(url_for('study_participation.welcome', study_id=study_id))
 
 @study_participation.route('/study/<study_id>/debug-data')
 def debug_study_data(study_id):
@@ -193,8 +207,14 @@ def participate_by_token(share_token):
         if study.status != 'active':
             return render_template('study_participation/study_inactive.html', study=study)
         
-        # Redirect to welcome page with study ID
-        return redirect(url_for('study_participation.welcome', study_id=str(study._id)))
+        # Capture rid parameter for Cint integration and pass it along
+        rid = request.args.get('rid')
+        
+        # Redirect to welcome page with study ID, preserving rid parameter
+        if rid:
+            return redirect(url_for('study_participation.welcome', study_id=str(study._id), rid=rid))
+        else:
+            return redirect(url_for('study_participation.welcome', study_id=str(study._id)))
         
     except Study.DoesNotExist:
         flash('Study not found.', 'error')
@@ -308,6 +328,9 @@ def personal_info(study_id):
                 # Create new response object
                 session_id = str(uuid.uuid4())
                 
+                # Get Cint RID from session if available
+                cint_rid = session.get('rid')
+                
                 # Initialize all required fields with proper defaults
                 response_data = {
                     'study': study,
@@ -326,6 +349,11 @@ def personal_info(study_id):
                     'completion_percentage': 0.0,  # Start at 0%
                     'is_abandoned': True  # Default to abandoned until completed
                 }
+                
+                # Add Cint RID if available
+                if cint_rid:
+                    response_data['cint_rid'] = cint_rid
+                    print(f"Storing Cint RID in response: {cint_rid}")
                 
                 print(f"Creating StudyResponse with data: {response_data}")
                 
@@ -958,6 +986,9 @@ def completed(study_id):
                 
                 print(f"Completed response: {response._id}")
                 
+                # Check for Cint RID before clearing session
+                cint_rid = session.get('rid')
+                
                 # Clear session data
                 session.pop('study_data', None)
                 session.pop('study_id', None)
@@ -965,10 +996,21 @@ def completed(study_id):
                 session.pop('response_id', None)
                 session.pop('session_id', None)
                 session.pop('respondent_id', None)
+                session.pop('rid', None)  # Also clear the rid
                 
                 print(f"Session cleared successfully")
                 
-                return render_template('study_participation/completed.html', study=study, response=response)
+                # If Cint RID was provided, redirect to Cint callback
+                if cint_rid:
+                    cint_redirect_url = f"https://notch.insights.supply/cb?token=446a1929-7cfa-4ee3-9778-a9e9dae498ac&RID={cint_rid}"
+                    print(f"Redirecting to Cint callback: {cint_redirect_url}")
+                    return render_template('study_participation/cint_redirect.html', 
+                                         study=study, 
+                                         response=response, 
+                                         redirect_url=cint_redirect_url)
+                else:
+                    # Normal completion page
+                    return render_template('study_participation/completed.html', study=study, response=response)
             else:
                 print("No response_id in session")
                 flash('No response found. Please start the study again.', 'error')

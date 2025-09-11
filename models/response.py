@@ -85,6 +85,9 @@ class StudyResponse(Document):
     user_agent = StringField(max_length=500)
     browser_info = DictField()
     
+    # External Integration Data
+    cint_rid = StringField(max_length=100)  # Cint RID for external survey integration
+    
     # Progress and Timing
     completion_percentage = FloatField(default=0.0, min_value=0.0, max_value=100.0)
     total_study_duration = FloatField(default=0.0, min_value=0.0)
@@ -182,6 +185,7 @@ class StudyResponse(Document):
             'ip_address': self.ip_address,
             'user_agent': self.user_agent,
             'browser_info': self.browser_info,
+            'cint_rid': self.cint_rid,
             'completion_percentage': self.completion_percentage,
             'total_study_duration': self.total_study_duration,
             'last_activity': self.last_activity.isoformat() if self.last_activity else None,
