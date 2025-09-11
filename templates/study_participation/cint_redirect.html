@@ -149,12 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
     
     // Fallback redirect in case something goes wrong
-    setTimeout(function() {
-        if (window.location.href === window.location.href) {
-            console.log('Fallback redirect to Cint:', redirectUrl_);
-            window.location.href = redirectUrl_;
-        }
-    }, 5000);
+    // setTimeout(function() {
+    //     if (window.location.href === window.location.href) {
+    //         console.log('Fallback redirect to Cint:', redirectUrl_);
+    //         window.location.href = redirectUrl_;
+    //     }
+    // }, 5000);
     
     // Add animation to completion icon
     const completionIcon = document.querySelector('.redirect-icon');
