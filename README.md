@@ -12,6 +12,8 @@ A production-ready Flask application for conducting IPED (Individual Parameter E
 - **IPED Algorithm**: Automated task matrix generation with balanced element distribution
 - **Data Export**: JSON and CSV export with complete timing data
 
+
+
 ### User Management
 - **Study Creators**: Registration, authentication, and profile management
 - **Anonymous Respondents**: No authentication required for study participation
