@@ -718,7 +718,10 @@ def task(study_id, task_number):
 
 @study_participation.route('/study/<study_id>/submit-all-ratings', methods=['POST'])
 def submit_all_ratings(study_id):
-    """Submit all task ratings at once from lightning-fast task flow"""
+    """Submit all task ratings at once from lightning-fast task flow.
+
+    Writes ratings directly to StudyResponse to avoid exceeding cookie size.
+    """
     print(f"=== SUBMIT ALL RATINGS ROUTE CALLED ===")
     print(f"Study ID: {study_id}")
     
@@ -745,26 +748,62 @@ def submit_all_ratings(study_id):
         
         print(f"Processing {len(task_ratings)} task ratings")
         
-        # Ensure session structure is valid
-        if 'study_data' not in session:
-            print("No study_data in session")
-            return {'error': 'Invalid session state'}, 400
+        # Ensure we have a response to write to
+        response_id = session.get('response_id')
+        if not response_id:
+            print("No response_id in session for bulk submit")
+            return {'error': 'No active response session'}, 400
         
-        if 'task_ratings' not in session['study_data']:
-            session['study_data']['task_ratings'] = []
+        try:
+            response = StudyResponse.objects.get(_id=response_id)
+        except StudyResponse.DoesNotExist:
+            print(f"Response not found for id {response_id}")
+            return {'error': 'Response not found'}, 404
         
-        # Store all task ratings in session
-        for task_data in task_ratings:
-            if task_data and 'task_number' in task_data and 'rating' in task_data:
-                session['study_data']['task_ratings'].append(task_data)
-                print(f"Added task {task_data['task_number']} rating: {task_data['rating']}")
+        # Persist each rating directly to Mongo to avoid oversized cookies
+        saved_count = 0
+        for tr in task_ratings:
+            try:
+                if not tr or 'task_number' not in tr or 'rating' not in tr:
+                    continue
+                # Build CompletedTask data (mirror logic in completed())
+                task_id = f"task_{tr['task_number']}"
+                task_data_dict = tr.get('task_data', {})
+                task_payload = {
+                    'task_id': task_id,
+                    'respondent_id': session.get('respondent_id', 0),
+                    'task_index': int(tr['task_number']) - 1,
+                    'elements_shown_in_task': task_data_dict.get('elements_shown', {}),
+                    'elements_shown_content': task_data_dict.get('elements_shown_content', {}),
+                    'task_type': task_data_dict.get('task_type', study.study_type),
+                    'task_context': task_data_dict.get('task_context', {}),
+                    'task_start_time': safe_datetime_parse(tr.get('task_start_time') or datetime.utcnow().isoformat()),
+                    'task_completion_time': safe_datetime_parse(tr.get('task_end_time') or datetime.utcnow().isoformat()),
+                    'task_duration_seconds': float(tr.get('task_duration_seconds', 0.0)),
+                    'rating_given': int(tr['rating']),
+                    'rating_timestamp': safe_datetime_parse(tr.get('timestamp') or datetime.utcnow().isoformat()),
+                    'element_interactions': task_data_dict.get('element_interactions', [])
+                }
+                # De-duplicate by task_id if already added
+                existing_idx = next((i for i, t in enumerate(response.completed_tasks) if t.task_id == task_id), None)
+                if existing_idx is not None:
+                    response.completed_tasks.pop(existing_idx)
+                response.add_completed_task(task_payload)
+                saved_count += 1
+            except Exception as e:
+                print(f"Failed to save task rating {tr}: {e}")
+                continue
         
-        # Mark session as modified
+        response.last_activity = datetime.utcnow()
+        response.save()
+        print(f"Persisted {saved_count} ratings to response {response._id}")
+        
+        # Keep session small: do not store ratings array
+        session.setdefault('study_data', {})
+        session['study_data']['task_ratings_count'] = saved_count
         session.modified = True
         
-        print(f"Total task ratings in session: {len(session['study_data']['task_ratings'])}")
-        
-        return {'success': True, 'message': f'Successfully submitted {len(task_ratings)} task ratings'}
+        return {'success': True, 'message': f'Successfully saved {saved_count} task ratings'}
         
     except Study.DoesNotExist:
         print(f"Study not found: {study_id}")
@@ -775,7 +814,10 @@ def submit_all_ratings(study_id):
 
 @study_participation.route('/study/<study_id>/task-complete', methods=['POST'])
 def task_complete(study_id):
-    """Handle task completion data from sessionStorage"""
+    """Handle a single task completion.
+
+    Writes directly to StudyResponse and avoids storing heavy payloads in the session.
+    """
     print(f"=== TASK COMPLETE ROUTE CALLED ===")
     print(f"Study ID: {study_id}")
     print(f"Request method: {request.method}")
@@ -807,56 +849,51 @@ def task_complete(study_id):
             print(f"Missing required fields: {missing_fields}")
             return {'error': f'Missing required fields: {missing_fields}'}, 400
         
-        # Ensure session structure is valid
-        if 'study_data' not in session:
-            print("No study_data in session")
-            return {'error': 'Invalid session state'}, 400
+        # Persist directly to response
+        response_id = session.get('response_id')
+        if not response_id:
+            print("No response_id in session for task-complete")
+            return {'error': 'No active response session'}, 400
         
-        if 'task_ratings' not in session['study_data']:
-            session['study_data']['task_ratings'] = []
-            print("Initialized task_ratings in session")
+        try:
+            response = StudyResponse.objects.get(_id=response_id)
+        except StudyResponse.DoesNotExist:
+            print(f"Response not found for id {response_id}")
+            return {'error': 'Response not found'}, 404
         
-        # Store task data in session
-        if 'study_data' not in session:
-            session['study_data'] = {}
-        if 'task_ratings' not in session['study_data']:
-            session['study_data']['task_ratings'] = []
-        
-        # Create new task rating data
-        new_task_rating = {
-            'task_number': data.get('task_number'),
-            'rating': data.get('rating'),
-            'timestamp': data.get('timestamp'),
-            'task_start_time': data.get('task_start_time'),
-            'task_end_time': data.get('task_end_time'),
-            'task_duration_seconds': data.get('task_duration_seconds'),
-            'task_data': data.get('task_data', {})
+        task_id = f"task_{data.get('task_number')}"
+        task_data_dict = data.get('task_data', {})
+        task_payload = {
+            'task_id': task_id,
+            'respondent_id': session.get('respondent_id', 0),
+            'task_index': int(data.get('task_number')) - 1,
+            'elements_shown_in_task': task_data_dict.get('elements_shown', {}),
+            'elements_shown_content': task_data_dict.get('elements_shown_content', {}),
+            'task_type': task_data_dict.get('task_type', study.study_type),
+            'task_context': task_data_dict.get('task_context', {}),
+            'task_start_time': safe_datetime_parse(data.get('task_start_time')),
+            'task_completion_time': safe_datetime_parse(data.get('task_end_time')),
+            'task_duration_seconds': float(data.get('task_duration_seconds', 0.0)),
+            'rating_given': int(data.get('rating')),
+            'rating_timestamp': safe_datetime_parse(data.get('timestamp')),
+            'element_interactions': task_data_dict.get('element_interactions', [])
         }
+        # De-duplicate by task_id
+        existing_idx = next((i for i, t in enumerate(response.completed_tasks) if t.task_id == task_id), None)
+        if existing_idx is not None:
+            response.completed_tasks.pop(existing_idx)
+        response.add_completed_task(task_payload)
+        response.last_activity = datetime.utcnow()
+        response.save()
         
-        # Append to existing ratings
-        session['study_data']['task_ratings'].append(new_task_rating)
-        
-        # Mark session as modified (CRITICAL for Flask sessions)
+        # Keep only a lightweight counter in session
+        session.setdefault('study_data', {})
+        prev = int(session['study_data'].get('task_ratings_count', 0))
+        session['study_data']['task_ratings_count'] = max(prev, int(data.get('task_number', prev)))
         session.modified = True
         
-        print(f"Task {data.get('task_number')} completed with duration: {data.get('task_duration_seconds')} seconds")
-        print(f"Updated session task_ratings: {session['study_data']['task_ratings']}")
-        
-        # Update StudyResponse object if it exists
-        if 'response_id' in session:
-            try:
-                response = StudyResponse.objects.get(_id=session['response_id'])
-                response.last_activity = datetime.utcnow()
-                response.save()
-                print(f"Updated task completion for response: {response._id}")
-            except StudyResponse.DoesNotExist:
-                print(f"Response not found: {session['response_id']}")
-            except Exception as e:
-                print(f"Error updating response: {str(e)}")
-        else:
-            print("No response_id in session")
-        
-        return {'success': True, 'message': 'Task data stored'}
+        print(f"Task {data.get('task_number')} persisted to response {response._id}")
+        return {'success': True, 'message': 'Task saved'}
         
     except Study.DoesNotExist:
         print(f"Study not found with ID: {study_id}")
@@ -873,14 +910,10 @@ def completed(study_id):
     try:
         study = Study.objects.get(_id=study_id)
         
-        # Check if all data is available
+        # Prefer database state over session (session may be trimmed by cookie limits)
         study_data = session.get('study_data', {})
-        if not (study_data.get('personal_info') and 
-                study_data.get('classification_answers') and 
-                study_data.get('task_ratings')):
-            print(f"Missing required data in session: {study_data}")
-            print(f"Session keys: {list(session.keys())}")
-            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        if not (study_data.get('personal_info') and study_data.get('classification_answers')):
+            print("Session missing PI/classification; proceeding using DB state")
         
         # Update existing StudyResponse object
         try:
@@ -908,74 +941,72 @@ def completed(study_id):
                 response.session_end_time = completion_time
                 response.total_study_duration = total_time
                 response.last_activity = completion_time
-                response.completed_tasks_count = len(study_data['task_ratings'])
-                
-                # Mark response as completed (this will also update study counters)
-                response.mark_completed()
-                
-                print(f"Updated response fields - Tasks count: {response.completed_tasks_count}")
-                
-                # Add completed tasks with proper timing data from JavaScript
-                print(f"\n--- ADDING COMPLETED TASKS ---")
-                for i, task_rating in enumerate(study_data['task_ratings']):
-                    print(f"Processing task {i+1}/{len(study_data['task_ratings'])}: {task_rating['task_number']}")
+                # If tasks already saved via APIs, skip rebuilding from session
+                if response.completed_tasks and len(response.completed_tasks) >= response.total_tasks_assigned:
+                    print("All tasks already saved in DB; skipping rebuild from session")
+                else:
+                    # Fall back: add from any session buffer if present
+                    buffered = study_data.get('task_ratings') or []
+                    print(f"\n--- ADDING COMPLETED TASKS FROM SESSION BUFFER ({len(buffered)}) ---")
+                    for i, task_rating in enumerate(buffered):
+                        print(f"Processing task {i+1}/{len(study_data['task_ratings'])}: {task_rating['task_number']}")
                     
-                    # Get task timing from JavaScript
-                    task_start_time = None
-                    task_completion_time = None
-                    task_duration = 0.0
-                    
-                    # Use the actual task timestamps from JavaScript
-                    try:
-                        if 'task_start_time' in task_rating:
-                            task_start_time = safe_datetime_parse(task_rating['task_start_time'])
-                        if 'task_end_time' in task_rating:
-                            task_completion_time = safe_datetime_parse(task_rating['task_end_time'])
-                        if 'task_duration_seconds' in task_rating:
-                            task_duration = float(task_rating['task_duration_seconds'])
-                            
-                        print(f"  Task {task_rating['task_number']}: Start={task_start_time}, End={task_completion_time}, Duration={task_duration}s")
-                    except Exception as e:
-                        print(f"  Error parsing task timestamps: {e}")
-                        # Fallback values
-                        task_start_time = completion_time
-                        task_completion_time = completion_time
+                        # Get task timing from JavaScript
+                        task_start_time = None
+                        task_completion_time = None
                         task_duration = 0.0
                     
-                    # Extract comprehensive task data
-                    task_data_dict = task_rating.get('task_data', {})
+                        # Use the actual task timestamps from JavaScript
+                        try:
+                            if 'task_start_time' in task_rating:
+                                task_start_time = safe_datetime_parse(task_rating['task_start_time'])
+                            if 'task_end_time' in task_rating:
+                                task_completion_time = safe_datetime_parse(task_rating['task_end_time'])
+                            if 'task_duration_seconds' in task_rating:
+                                task_duration = float(task_rating['task_duration_seconds'])
+                                
+                            print(f"  Task {task_rating['task_number']}: Start={task_start_time}, End={task_completion_time}, Duration={task_duration}s")
+                        except Exception as e:
+                            print(f"  Error parsing task timestamps: {e}")
+                            # Fallback values
+                            task_start_time = completion_time
+                            task_completion_time = completion_time
+                            task_duration = 0.0
                     
-                    task_data = {
-                        'task_id': f"task_{task_rating['task_number']}",
-                        'respondent_id': session['respondent_id'],
-                        'task_index': task_rating['task_number'] - 1,
-                        # Grid study data
-                        'elements_shown_in_task': task_data_dict.get('elements_shown', {}),
-                        # Layer study data
-                        'elements_shown_content': task_data_dict.get('elements_shown_content', {}),
-                        # Task metadata
-                        'task_type': task_data_dict.get('task_type', study.study_type),
-                        'task_context': task_data_dict.get('task_context', {}),
-                        # Timing data
-                        'task_start_time': task_start_time,
-                        'task_completion_time': task_completion_time,
-                        'task_duration_seconds': task_duration,
-                        # Rating data
-                        'rating_given': task_rating['rating'],
-                        'rating_timestamp': safe_datetime_parse(task_rating['timestamp']),
-                        # Element interactions (if available)
-                        'element_interactions': task_data_dict.get('element_interactions', [])
-                    }
-                    
-                    print(f"  📋 Comprehensive task data prepared:")
-                    print(f"    - Elements shown: {len(task_data['elements_shown_in_task'])} items")
-                    print(f"    - Elements shown content: {len(task_data['elements_shown_content'])} items")
-                    print(f"    - Task type: {task_data['task_type']}")
-                    print(f"    - Element interactions: {len(task_data['element_interactions'])} items")
-                    
-                    print(f"  Adding task data: {task_data}")
-                    response.add_completed_task(task_data)
-                    print(f"  Task added successfully")
+                        # Extract comprehensive task data
+                        task_data_dict = task_rating.get('task_data', {})
+                        
+                        task_data = {
+                            'task_id': f"task_{task_rating['task_number']}",
+                            'respondent_id': session['respondent_id'],
+                            'task_index': task_rating['task_number'] - 1,
+                            # Grid study data
+                            'elements_shown_in_task': task_data_dict.get('elements_shown', {}),
+                            # Layer study data
+                            'elements_shown_content': task_data_dict.get('elements_shown_content', {}),
+                            # Task metadata
+                            'task_type': task_data_dict.get('task_type', study.study_type),
+                            'task_context': task_data_dict.get('task_context', {}),
+                            # Timing data
+                            'task_start_time': task_start_time,
+                            'task_completion_time': task_completion_time,
+                            'task_duration_seconds': task_duration,
+                            # Rating data
+                            'rating_given': task_rating['rating'],
+                            'rating_timestamp': safe_datetime_parse(task_rating['timestamp']),
+                            # Element interactions (if available)
+                            'element_interactions': task_data_dict.get('element_interactions', [])
+                        }
+                        
+                        print(f"  📋 Comprehensive task data prepared:")
+                        print(f"    - Elements shown: {len(task_data['elements_shown_in_task'])} items")
+                        print(f"    - Elements shown content: {len(task_data['elements_shown_content'])} items")
+                        print(f"    - Task type: {task_data['task_type']}")
+                        print(f"    - Element interactions: {len(task_data['element_interactions'])} items")
+                        
+                        print(f"  Adding task data: {task_data}")
+                        response.add_completed_task(task_data)
+                        print(f"  Task added successfully")
                 
                 print(f"\n--- SAVING RESPONSE ---")
                 response.update_completion_percentage()
