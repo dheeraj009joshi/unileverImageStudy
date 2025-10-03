@@ -1,0 +1,3430 @@
+=== QC CERTIFICATE (Professor Gate) ===
+Project: 3row
+Generator: v1.4-prof-gate
+Timestamp: 2025-10-04 00:04:23
+Dataset ID (SHA-256 of design matrix CSV): bf87501eb41d1c1f604de77df1387c3733273321dcf18efbd454836fc2b1e9f5
+Base RNG seed: 12345
+
+Configuration:
+  Study mode: layout
+  Categories: a(5), b(5), c(5)
+  Rows/respondent (T): 21
+  Exposures/element (E): 3
+  Absence policy: ABSENCE_RATIO = 2.0  (A_min used = 6)
+  T ratio knob: T_RATIO = 1.1
+  Row-mix: mode=wide, widen=0.4
+
+Identifiability (main effects, reference coding):
+  P (parameters) = 13 = 1 + Σ(q_j - 1)
+  Identifiable?  = YES (recommend T ≥ P + 2)
+
+Professor Gate thresholds:
+  Condition number ≤ 1.0e+06
+  Min tolerance (1/max VIF) ≥ 1.0e-06
+  Random-DV stress tests: 5/5 must pass (rank=p, residual ≤ 1.0e-06)
+
+Per-respondent QC summary:
+
+  Consumer_ID=1
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6110624388449589 / 2.593316649005564
+      - Condition number κ(X): 4.243947073407911  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.468987916891793 / 0.4050242583847471
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=2
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.654377446368613 / 2.6255875985000015
+      - Condition number κ(X): 4.012344271750771  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.270911112043291 / 0.30572521409036835
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=3
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4782948319762834 / 2.6003573227344505
+      - Condition number κ(X): 5.43672469131632  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.517718914328645 / 0.22135064597054613
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=4
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5304836357211952 / 2.633325137966263
+      - Condition number κ(X): 4.9640082382300905  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.712971621595834 / 0.26932605522317465
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=5
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4996991580026034 / 2.595404798927967
+      - Condition number κ(X): 5.193934705238077  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.245805988621828 / 0.30808988692038275
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=6
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5508173855716776 / 2.6079157740299626
+      - Condition number κ(X): 4.734628648882027  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.037293386267385 / 0.24769069382013228
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=7
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4986116601899854 / 2.6625173570197402
+      - Condition number κ(X): 5.339861799471847  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.475819451907578 / 0.22342277447625902
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=8
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5844284578252832 / 2.595886156531113
+      - Condition number κ(X): 4.44175180344685  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.625818082241797 / 0.38083369398776024
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_4 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=9
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.626982782504691 / 2.6052400307231394
+      - Condition number κ(X): 4.1552018706409175  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.4781378446231166 / 0.4035288037627638
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=10
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4242219622420847 / 2.6689680140360115
+      - Condition number κ(X): 6.291442338180855  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.503923766816145 / 0.22202862476664584
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=11
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3551884672274865 / 2.5863476167381263
+      - Condition number κ(X): 7.281620478633548  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.4827340557159525 / 0.2230781455181121
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=12
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3897604997311927 / 2.6576249808879457
+      - Condition number κ(X): 6.818610358722441  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.624523176511392 / 0.17779284903227113
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=13
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5427222512232244 / 2.6366140007117074
+      - Condition number κ(X): 4.8581276974900645  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.38189982194008 / 0.22821151569760245
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=14
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.42799297042785206 / 2.5969463132748984
+      - Condition number κ(X): 6.067731230909721  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.223206867903633 / 0.1914532633476484
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=15
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4497641169135311 / 2.610753336880032
+      - Condition number κ(X): 5.804716825335268  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.791661024981384 / 0.2637366561545173
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=16
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.34104892459820996 / 2.5984072849763518
+      - Condition number κ(X): 7.6188696036427555  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.385572139303489 / 0.18568129330254018
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=17
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.481334869474992 / 2.6064793719656154
+      - Condition number κ(X): 5.415106067026869  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.8154319885755092 / 0.3551852802901334
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=18
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.59654603326266 / 2.6057691757019517
+      - Condition number κ(X): 4.3680940454005635  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.9554505568680396 / 0.338357885120475
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=19
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3842200457041264 / 2.5964275740618055
+      - Condition number κ(X): 6.757657761722349  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.1164658634538185 / 0.24292682926829248
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=20
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5116661699045962 / 2.617035690907975
+      - Condition number κ(X): 5.11473270041664  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.590124706640284 / 0.2785418562620967
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=21
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4866938085893865 / 2.6459834221214735
+      - Condition number κ(X): 5.436649029480124  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.525606180907595 / 0.22096487410211493
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=22
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48727046728732826 / 2.604941296579162
+      - Condition number κ(X): 5.345986410957898  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.8955900043511305 / 0.2567005251792572
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=23
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5036738917923583 / 2.6259828437507764
+      - Condition number κ(X): 5.213656865171302  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.592303357217617 / 0.27837292693859245
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=24
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3810866479882697 / 2.667888352499804
+      - Condition number κ(X): 7.000739507887259  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.143435553425975 / 0.2413456145524349
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=25
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6963963460446323 / 2.587338532692281
+      - Condition number κ(X): 3.715324681681281  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.809956017841702 / 0.35587745631979306
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=26
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4358962162411214 / 2.628930995692625
+      - Condition number κ(X): 6.031093865330547  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.303106212424854 / 0.23239026662009524
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_4 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=27
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.31618585349847483 / 2.600155716830745
+      - Condition number κ(X): 8.223504271494193  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.754048529951276 / 0.14805934478638016
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=28
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4279006677953991 / 2.624309554773072
+      - Condition number κ(X): 6.132987752260034  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.232703568247717 / 0.19110579969942218
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=29
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5795882512835899 / 2.624500704108894
+      - Condition number κ(X): 4.528215846847347  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.899004011780258 / 0.34494605593384714
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=30
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.570483585050038 / 2.634267484209301
+      - Condition number κ(X): 4.617604350488446  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.606888001712039 / 0.3835991417135156
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=31
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.46466804384071136 / 2.583572847900729
+      - Condition number κ(X): 5.560039865333154  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.6453796505221194 / 0.27431985029509126
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=32
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5180454742616498 / 2.6555976848494707
+      - Condition number κ(X): 5.126186438814838  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.848251572327047 / 0.20625992382652358
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=33
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4645755266324306 / 2.6287998545715006
+      - Condition number κ(X): 5.658498357902936  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.442488047076131 / 0.2250990862334813
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=34
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.40388093218678806 / 2.654667277344991
+      - Condition number κ(X): 6.572895786318658  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.1501266778071315 / 0.19416998115972348
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_1 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=35
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5143729051588251 / 2.5955320763076952
+      - Condition number κ(X): 5.046012436262097  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.135471801871694 / 0.31893126878164185
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=36
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5251284031868374 / 2.5981569965134046
+      - Condition number κ(X): 4.947660383148227  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.798446269345709 / 0.35734114710510595
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=37
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5602780199330752 / 2.608428488556183
+      - Condition number κ(X): 4.655596678355788  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.5307738774414403 / 0.28322402813420766
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=38
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5011014714592199 / 2.632368071135192
+      - Condition number κ(X): 5.253163722448611  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.4839845124956015 / 0.28702768236007264
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=39
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.47798247316563525 / 2.611410603856206
+      - Condition number κ(X): 5.463402426789976  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.907652708895727 / 0.20376339959577344
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_3 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=40
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4567536162385096 / 2.6174757461373273
+      - Condition number κ(X): 5.730607603488623  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.4421914194057743 / 0.2905126061155048
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_3 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=41
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.49903545679097944 / 2.617363233298523
+      - Condition number κ(X): 5.24484422435499  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.831727479725867 / 0.26097889406047814
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=42
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5991838972191567 / 2.58781222340149
+      - Condition number κ(X): 4.318894809108956  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.032969200798955 / 0.32970990926534194
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=43
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6240061344658292 / 2.6102264730998335
+      - Condition number κ(X): 4.1830141226644795  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.2943668252080864 / 0.4358500955527482
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_1 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=44
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3777462234501982 / 2.6091463022807195
+      - Condition number κ(X): 6.907140668276482  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.5472152676082995 / 0.18027063161569956
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=45
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5419287886991878 / 2.608088313412231
+      - Condition number κ(X): 4.812603367450775  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.4137007401752983 / 0.2929372186118015
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=46
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.35341162660583714 / 2.5865120641105324
+      - Condition number κ(X): 7.318695451395803  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.203539823008861 / 0.1921768707482989
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=47
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5198297929310431 / 2.5985140321118934
+      - Condition number κ(X): 4.998778576080177  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.1529920408764873 / 0.31715906257791066
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_1 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=48
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.421520776741747 / 2.6192446576296358
+      - Condition number κ(X): 6.21379728391032  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.1720082145746495 / 0.19334849414624158
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=49
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.535551484898654 / 2.608329669556707
+      - Condition number κ(X): 4.870362127835942  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.663850174216029 / 0.27293692494234556
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=50
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5666192160447814 / 2.7147555228967026
+      - Condition number κ(X): 4.791146233703003  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.0557377049180365 / 0.19779507133592722
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=51
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5499958490998254 / 2.629762240609707
+      - Condition number κ(X): 4.781421977845509  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.938506866891604 / 0.2539033277830063
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=52
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48114520190178284 / 2.5945378669355845
+      - Condition number κ(X): 5.3924217817830655  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.800898752751285 / 0.26309566895886105
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=53
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3527719150192759 / 2.6097090284056055
+      - Condition number κ(X): 7.397723337083134  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.662712464589246 / 0.17659381546446515
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=54
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5539395346560502 / 2.606135594711724
+      - Condition number κ(X): 4.704729364243545  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.68337519981731 / 0.27149012678632317
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=55
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3495243006882966 / 2.6041289802242216
+      - Condition number κ(X): 7.450494787046484  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.452927353632327 / 0.22457137082739143
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=56
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4972461914738184 / 2.6398217365787726
+      - Condition number κ(X): 5.308882766410827  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.3096298571647993 / 0.3021485915819758
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=57
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5182907199853941 / 2.6262445104831946
+      - Condition number κ(X): 5.067126246360738  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.536671111649899 / 0.2204259412660662
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=58
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5094759990859982 / 2.6056836049762695
+      - Condition number κ(X): 5.114438383065886  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.585138326093929 / 0.2789292654962961
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=59
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48111050846329084 / 2.6015486887871155
+      - Condition number κ(X): 5.4073828008801765  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.513859015841549 / 0.22153992769611644
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_3 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=60
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5042784342810902 / 2.6107132631797776
+      - Condition number κ(X): 5.177126535069192  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.994392523364488 / 0.25035095928872236
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=61
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4633960129981555 / 2.6241490898239705
+      - Condition number κ(X): 5.6628650575688395  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.497910572503137 / 0.18188728005168536
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=62
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5437598419618225 / 2.6168396746403455
+      - Condition number κ(X): 4.812491605115764  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.4863913539239486 / 0.286829531881008
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=63
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.40913660868261326 / 2.584031472422019
+      - Condition number κ(X): 6.31581583653047  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.7829954464695477 / 0.26434078870838784
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=64
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.37875907084160715 / 2.6341900946404815
+      - Condition number κ(X): 6.954790782402332  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.19296958855099 / 0.2384944557505319
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=65
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5299541722362244 / 2.5878059876846593
+      - Condition number κ(X): 4.883075034139287  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.9132993944007572 / 0.3432534266550013
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=66
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3595051584697112 / 2.5932239920658633
+      - Condition number κ(X): 7.213315110982881  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.756621872209889 / 0.21023323418714548
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=67
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.42578182026553496 / 2.6260616628515168
+      - Condition number κ(X): 6.167622800836817  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.739056296447118 / 0.21101247536343942
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=68
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5529101257636453 / 2.6206206232651637
+      - Condition number κ(X): 4.739686435739849  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.9187775047417945 / 0.25518162202114847
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=69
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.7598297349647701 / 2.6081376650566663
+      - Condition number κ(X): 3.432529085187215  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.2398399919283762 / 0.4464604630704251
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=70
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.40049450287659544 / 2.5894451618635577
+      - Condition number κ(X): 6.465619735763126  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.331120589813856 / 0.18757782405273193
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=71
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5890542250485578 / 2.5960915365177977
+      - Condition number κ(X): 4.4072199572183575  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.514994687596395 / 0.3976151539929135
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=72
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6407490834282921 / 2.587447527010913
+      - Condition number κ(X): 4.038160325047865  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.3311110017713057 / 0.4289800010553531
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=73
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5209306599365305 / 2.634883108353245
+      - Condition number κ(X): 5.058030388678361  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.990677279819863 / 0.2505840312011247
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=74
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5026043132503549 / 2.6337168092581624
+      - Condition number κ(X): 5.240139688069624  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.7035090556274266 / 0.369889643209618
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_4 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=75
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5880010054382612 / 2.586699462057127
+      - Condition number κ(X): 4.399141222775894  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.792276255652553 / 0.35813075370878755
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_4 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=76
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4069539148027222 / 2.603355370138806
+      - Condition number κ(X): 6.397174902226525  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.20211446140569 / 0.23797543098468585
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=77
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4624016207555227 / 2.6749017688903574
+      - Condition number κ(X): 5.784801888280167  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.866323907455017 / 0.20549392498679325
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=78
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.33485893412487133 / 2.613338333787072
+      - Condition number κ(X): 7.804296279616476  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.977265649330432 / 0.14332262096054266
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=79
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.523427402403428 / 2.6468138735069173
+      - Condition number κ(X): 5.056697187333926  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.010686095932001 / 0.24933389851035465
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=80
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.39500611781434464 / 2.6325690033743774
+      - Condition number κ(X): 6.664628431430273  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.657829354017698 / 0.2733861815892578
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=81
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4706630955438287 / 2.5980132400655447
+      - Condition number κ(X): 5.519900040311563  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.542438286567515 / 0.2201460838680206
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=82
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.54184321406722 / 2.584225576875858
+      - Condition number κ(X): 4.769323505000589  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.7138799118997134 / 0.3684761420780778
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=83
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6043614249893647 / 2.6266393721250885
+      - Condition number κ(X): 4.346140014100521  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.6552587093708087 / 0.3766111364104933
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=84
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3481663863091292 / 2.5949214405784566
+      - Condition number κ(X): 7.45310731482988  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.313596453249753 / 0.1583883302337572
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=85
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5253027171455085 / 2.619435183133092
+      - Condition number κ(X): 4.986525098075041  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.798026083891437 / 0.2632946635730857
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=86
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5313250137606048 / 2.6005105799934825
+      - Condition number κ(X): 4.894387639662633  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.6687632719147376 / 0.37470539651219703
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=87
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5879282903739051 / 2.606104141829816
+      - Condition number κ(X): 4.432690490488917  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.2580187545082957 / 0.30693500416971087
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=88
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.29375941171750625 / 2.5881649876920947
+      - Condition number κ(X): 8.810492138992311  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.57032415570325 / 0.15219949218669346
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=89
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.556055823391654 / 2.5945991923084724
+      - Condition number κ(X): 4.666076827471663  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.647830285861448 / 0.3776677097998593
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=90
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5484230996114006 / 2.614516595983597
+      - Condition number κ(X): 4.767334924141927  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.7257416381042434 / 0.36687262872628723
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=91
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.18806293025455292 / 2.650003436045026
+      - Condition number κ(X): 14.091046185753402  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 11.999222999223079 / 0.08333872952146548
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=92
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6198112512744527 / 2.595907655375705
+      - Condition number κ(X): 4.188222866296817  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.4691647901222074 / 0.40499524535602444
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=93
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5332357267578376 / 2.6192791773382913
+      - Condition number κ(X): 4.91204742274856  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.5790026246719178 / 0.2794074508653563
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=94
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.36747933027706764 / 2.6027452629486
+      - Condition number κ(X): 7.082698395542991  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.92253521126761 / 0.20314735336194545
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=95
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4186460054332986 / 2.5976553482030824
+      - Condition number κ(X): 6.204897012010204  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.700997585751382 / 0.2701974202441903
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=96
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.616576266807761 / 2.6054797897774837
+      - Condition number κ(X): 4.225721828812837  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.537151523302894 / 0.39414279786419226
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=97
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.45739649622766365 / 2.62413525925776
+      - Condition number κ(X): 5.737112725829951  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.1594434910799665 / 0.2404167774233562
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_4 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=98
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5527272492031158 / 2.614484321565813
+      - Condition number κ(X): 4.730152756780487  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.0764150943396236 / 0.32505366452008577
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=99
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5531072431271821 / 2.597648492359663
+      - Condition number κ(X): 4.696464428259814  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.755008467925154 / 0.362975290872016
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=100
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5721302103461827 / 2.585127449984563
+      - Condition number κ(X): 4.518425007517716  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.142234722089809 / 0.3182448443364311
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=101
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6382433561874251 / 2.5970271444648727
+      - Condition number κ(X): 4.069023389414234  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.3404729123017063 / 0.42726407759044027
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=102
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.31993582866189624 / 2.5972939157512873
+      - Condition number κ(X): 8.11817146774165  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.586266589728799 / 0.1790104328065281
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=103
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5613756411878108 / 2.612791004070212
+      - Condition number κ(X): 4.654265009685539  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.5001261988894514 / 0.28570398413556863
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=104
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5162132205686433 / 2.601254470733384
+      - Condition number κ(X): 5.039108583596384  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.5911359279432817 / 0.2784634221775952
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=105
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.39417537542585923 / 2.626161564757539
+      - Condition number κ(X): 6.662419137472214  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.4168746101060545 / 0.22640443487164985
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=106
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.44220843072575844 / 2.601998321316279
+      - Condition number κ(X): 5.884099308205961  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.99813087231522 / 0.2000747930669496
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=107
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.633342302052699 / 2.5920673388165225
+      - Condition number κ(X): 4.092679946397836  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.91390273501359 / 0.3431823540243652
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=108
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.38234466344869295 / 2.586108249872452
+      - Condition number κ(X): 6.7638141632372575  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.635835765960152 / 0.21571083413756026
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=109
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5915459951999132 / 2.584388659014728
+      - Condition number κ(X): 4.3688718713095716  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.342281992156597 / 0.29919677703638436
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=110
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.2916447608049185 / 2.618109976201719
+      - Condition number κ(X): 8.977051289986914  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 7.498091056600192 / 0.13336727874486806
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=111
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4015593799201715 / 2.625850449078752
+      - Condition number κ(X): 6.539133638469014  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.605940648120346 / 0.2171109174861151
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=112
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6232237680563792 / 2.617200781543098
+      - Condition number κ(X): 4.199455983049632  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.0608494380769122 / 0.32670669375632067
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=113
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5096378232791327 / 2.6030180567803045
+      - Condition number κ(X): 5.107584127158888  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.749423585206294 / 0.26670766246459715
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=114
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4737456293434131 / 2.6063864198371425
+      - Condition number κ(X): 5.501657975081394  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.889428751278624 / 0.2045228698216519
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=115
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4690714187484955 / 2.594922827577527
+      - Condition number κ(X): 5.5320420811417215  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.0673028628829755 / 0.24586317609286232
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=116
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5860262376397218 / 2.6321979674192213
+      - Condition number κ(X): 4.491604297481042  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.22588298165212 / 0.30999264563770845
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=117
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4432354082603941 / 2.621750776935006
+      - Condition number κ(X): 5.915030090273761  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.286959640865664 / 0.3042325155342147
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=118
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.36420170763065696 / 2.6278920670106665
+      - Condition number κ(X): 7.215485298261302  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.375073891625621 / 0.1860439540297302
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=119
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.49641198422258337 / 2.609635509404993
+      - Condition number κ(X): 5.2569953835660685  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.452395143834114 / 0.28965398175407975
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=120
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48806912825991505 / 2.599898518254167
+      - Condition number κ(X): 5.32690630838184  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.538924930491198 / 0.22031648800408363
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=121
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5441329152379493 / 2.605148543181222
+      - Condition number κ(X): 4.787706220716295  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.852851133185032 / 0.3505265270829473
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=122
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.56985620416422 / 2.602001867076356
+      - Condition number κ(X): 4.566067453617679  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.545832676473086 / 0.3927987920185578
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=123
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4222987431319645 / 2.619951850183355
+      - Condition number κ(X): 6.204024740288284  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.421493212669687 / 0.2261679373688787
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=124
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.41146464190390547 / 2.5979786997193632
+      - Condition number κ(X): 6.313978007194363  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.517437775065652 / 0.2842978508642801
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_5 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=125
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.39174173178405514 / 2.5954273487724837
+      - Condition number κ(X): 6.625353231968645  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.76521126024965 / 0.26558934701945397
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=126
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5326718360724415 / 2.587838154234474
+      - Condition number κ(X): 4.858222227995808  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.7061356730324193 / 0.36953062256462116
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=127
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.7545262610998804 / 2.621382782718622
+      - Condition number κ(X): 3.4742101340480933  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 1.8962492189995843 / 0.5273568421178183
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=128
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.33052039493880775 / 2.6402002593190743
+      - Condition number κ(X): 7.9880101190363115  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.8699812595831835 / 0.14556080463903218
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=129
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5091281244452946 / 2.5832953303908055
+      - Condition number κ(X): 5.073959198787845  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.834389140271495 / 0.35280970625798186
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=130
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5663142628233024 / 2.589852184500888
+      - Condition number κ(X): 4.573171390014869  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.042171850289934 / 0.24739175795513807
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=131
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6132701970802993 / 2.6066211441711062
+      - Condition number κ(X): 4.250363308996418  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.51570432397736 / 0.28443802659396783
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_3 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=132
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48673620440855525 / 2.589769326602495
+      - Condition number κ(X): 5.320683571811522  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.657449067286792 / 0.27341460717642496
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=133
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5113136230883587 / 2.591007599277926
+      - Condition number κ(X): 5.067354911508354  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.611275685334087 / 0.2769104568950924
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=134
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.521209686945901 / 2.5937792384915923
+      - Condition number κ(X): 4.976460153091541  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.883618744507517 / 0.3467864820565197
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=135
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5822880800388764 / 2.5974680932234855
+      - Condition number κ(X): 4.460795579140252  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.841588526171082 / 0.3519158353822103
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=136
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.37554329096697175 / 2.6279455631869815
+      - Condition number κ(X): 6.997716711754821  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 7.172850296024823 / 0.13941459234890177
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=137
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5201191532862022 / 2.628884335943096
+      - Condition number κ(X): 5.054388632553431  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.121038333836403 / 0.24265729143777917
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=138
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48675519085715135 / 2.656424210195737
+      - Condition number κ(X): 5.457413213237455  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.568901229670766 / 0.21887100414995395
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=139
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5133375713865083 / 2.605102039547884
+      - Condition number κ(X): 5.074832205465864  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.1676198147402355 / 0.2399451112270732
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=140
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5952497789388189 / 2.5970356586901673
+      - Condition number κ(X): 4.3629342682327925  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.4190276665228914 / 0.41338923644366554
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=141
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5274355415910893 / 2.6032159239663835
+      - Condition number κ(X): 4.935609602859504  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.9853287411373763 / 0.3349714844533374
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=142
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.545889583902106 / 2.5840352801153625
+      - Condition number κ(X): 4.7336226158489145  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.6603175248510973 / 0.375894978948414
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=143
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4772499269729134 / 2.607144952661525
+      - Condition number κ(X): 5.462850396223309  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.217791653493521 / 0.23709089546225406
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=144
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.34636601548768914 / 2.604021046192872
+      - Condition number κ(X): 7.518119358581894  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.284243679715911 / 0.1892418405757097
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=145
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4914606291631393 / 2.609769243364358
+      - Condition number κ(X): 5.3102305423901015  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.8503744992161666 / 0.25971499660710234
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=146
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5373481621464322 / 2.591290473520143
+      - Condition number κ(X): 4.822367798131583  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.6989211058664884 / 0.2703491021784704
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=147
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.43289797315357964 / 2.596037118189869
+      - Condition number κ(X): 5.996879817381059  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.4177112875779945 / 0.2925934685105198
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=148
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6980283873720297 / 2.5974144584804963
+      - Condition number κ(X): 3.7210728180545285  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.4678129283159316 / 0.4052171007477513
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_3 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=149
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5049423001979526 / 2.586321286867792
+      - Condition number κ(X): 5.122013516898616  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.0957802322288295 / 0.24415372488279796
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=150
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6075505036523094 / 2.586646461870919
+      - Condition number κ(X): 4.257500316963298  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.12814436748086 / 0.31967834042305227
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=151
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5495719660837649 / 2.6205657477496165
+      - Condition number κ(X): 4.768375953423712  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.898885881980812 / 0.34496011250939584
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=152
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5925778778619913 / 2.5984305330207755
+      - Condition number κ(X): 4.384960407897539  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.72358127145484 / 0.3671636350568072
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_4 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=153
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4707944149323046 / 2.6090970949070598
+      - Condition number κ(X): 5.541903243015788  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.200551644044425 / 0.2380639698640077
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=154
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.47171957089919553 / 2.6080241415415037
+      - Condition number κ(X): 5.528759675096939  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.31231795546369 / 0.23189384695834034
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=155
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.45145863449526036 / 2.599355713605017
+      - Condition number κ(X): 5.757683018979463  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.7204610004761065 / 0.26878389529470414
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=156
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5506304363070961 / 2.645751311064589
+      - Condition number κ(X): 4.804949266533113  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.6677793794097573 / 0.2726445340779811
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=157
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.637137524674699 / 2.6543567250059765
+      - Condition number κ(X): 4.166065601553137  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.333529635916446 / 0.2999823338078956
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=158
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4893975217068377 / 2.6355879956228176
+      - Condition number κ(X): 5.385372583070835  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.094592757104658 / 0.24422453204042535
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_1 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=159
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5728611268816731 / 2.635965630036618
+      - Condition number κ(X): 4.6014042607242365  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.7091215103728374 / 0.36912334724416884
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=160
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5312335794864098 / 2.5963834403114965
+      - Condition number κ(X): 4.88746107281405  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.5088507207641415 / 0.28499360034963944
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=161
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5207609558309588 / 2.585082779538161
+      - Condition number κ(X): 4.9640487647796885  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.8481029075388515 / 0.2598683101849723
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=162
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.45580645726002644 / 2.596418425210337
+      - Condition number κ(X): 5.696317776667968  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.904606091115029 / 0.2561077805711337
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_5 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=163
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3095171286404621 / 2.6084993094664064
+      - Condition number κ(X): 8.427641213021406  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 7.19278089379412 / 0.1390282861059751
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=164
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6140754467799929 / 2.619918201972343
+      - Condition number κ(X): 4.266443505778192  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.351975478608724 / 0.29833153803829776
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=165
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.3738708338633968 / 2.6250555250538152
+      - Condition number κ(X): 7.021289941041364  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.892275276730872 / 0.1697137273862765
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=166
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4367346586876123 / 2.6070741945845097
+      - Condition number κ(X): 5.969469431207425  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.020223691615085 / 0.19919431113602118
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=167
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.42234408585986144 / 2.651335769616502
+      - Condition number κ(X): 6.277667566289174  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.070172302852654 / 0.19723195589178802
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=168
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4485054998254933 / 2.6531056829160815
+      - Condition number κ(X): 5.915436229763881  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.792974221145475 / 0.2636453457619337
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=169
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5688295055129924 / 2.61844879693169
+      - Condition number κ(X): 4.603222532506066  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.798279054569221 / 0.2632771277816011
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=170
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.36429990862320066 / 2.6070931101305455
+      - Condition number κ(X): 7.156447334789452  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.410775127768322 / 0.15598737751204098
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=171
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.39739883307942947 / 2.6355914740322834
+      - Condition number κ(X): 6.632106726658401  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.694004253275716 / 0.14938741628534957
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=172
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5864398632186442 / 2.659377443948126
+      - Condition number κ(X): 4.534782866485702  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.5179916758864134 / 0.2842530887308124
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=173
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.44637058434293614 / 2.586856433292276
+      - Condition number κ(X): 5.795311169754085  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.6707577870757824 / 0.27242331366042677
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_1 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=174
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5980609751600758 / 2.594109159123455
+      - Condition number κ(X): 4.33753290528465  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.435107935201467 / 0.41065941494591934
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_4 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=175
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.49106193740432474 / 2.601093760834671
+      - Condition number κ(X): 5.296875124518179  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.394670625927956 / 0.22754833868552893
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=176
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.590575166100126 / 2.5974213561354516
+      - Condition number κ(X): 4.398121535125785  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.055205217829989 / 0.24659664462927416
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=177
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.549441702088039 / 2.5899293603222384
+      - Condition number κ(X): 4.713747337487763  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.2212765329753825 / 0.2368951648128928
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_4 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=178
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.34774955677214314 / 2.604610904245222
+      - Condition number κ(X): 7.489904310508864  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.411589217082817 / 0.18478860088701674
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_1 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=179
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.503735852927472 / 2.611796373171991
+      - Condition number κ(X): 5.1848530494573275  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.8919168050566624 / 0.25694279967668554
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_5 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=180
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.537243559079557 / 2.631449738627256
+      - Condition number κ(X): 4.898057304094327  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.874528301886795 / 0.2580959337716093
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=181
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.448534427883512 / 2.640965350457475
+      - Condition number κ(X): 5.887988047917149  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.022539402623172 / 0.24859918074335866
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_3 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=182
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.35657333186755075 / 2.5876557753549787
+      - Condition number κ(X): 7.257008710668705  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 6.303126550868492 / 0.15865142353237577
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_1 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=183
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.2979002797255086 / 2.5880559213912715
+      - Condition number κ(X): 8.68765858083772  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.603148806500774 / 0.17847107662744918
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_4 vs b_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=184
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5750364718089765 / 2.602186877832775
+      - Condition number κ(X): 4.5252553627541126  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.599317836672709 / 0.3847163228334028
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_1 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=185
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6136979616690864 / 2.6719386077113736
+      - Condition number κ(X): 4.353833277276088  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.706182023394213 / 0.269819451308054
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_1 vs c_4)
+      - Professor Gate: PASS
+
+  Consumer_ID=186
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6285021379541115 / 2.604792090792982
+      - Condition number κ(X): 4.144444280288454  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.3823301341130114 / 0.41975710489525403
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_1 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=187
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4655652938046794 / 2.6071660122361062
+      - Condition number κ(X): 5.600000788138433  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.087178161131842 / 0.19657263188468926
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=188
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.431027754408158 / 2.630253997344665
+      - Condition number κ(X): 6.102284529116352  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 5.867402407131029 / 0.17043317137829786
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=189
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5310936396071524 / 2.6457513110645903
+      - Condition number κ(X): 4.981704004253639  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.9769008662175183 / 0.335919818946007
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=190
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.539898332575318 / 2.617685659061009
+      - Condition number κ(X): 4.848478873003059  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 2.918591471247577 / 0.3426310293343458
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: b_5 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=191
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.48516668445828465 / 2.5894298402591325
+      - Condition number κ(X): 5.337196314603451  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.467382523226071 / 0.22384472222850105
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=192
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5799785266837165 / 2.590126942066187
+      - Condition number κ(X): 4.46590144789736  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.239419060263593 / 0.30869732547620116
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=193
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4815174243653728 / 2.627746572836849
+      - Condition number κ(X): 5.457220112647324  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.652705214840141 / 0.2149287250802882
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_1 vs c_5)
+      - Professor Gate: PASS
+
+  Consumer_ID=194
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5596917590274249 / 2.666604820641559
+      - Condition number κ(X): 4.764416801982778  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.4855945521215315 / 0.22293588695550615
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: b_2 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=195
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5336694920956958 / 2.588662624592614
+      - Condition number κ(X): 4.850685045583276  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.492132706979063 / 0.2863579605670454
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=196
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.6738158470229668 / 2.625907615048687
+      - Condition number κ(X): 3.897070136670715  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.2251821366998494 / 0.31006000827700375
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_2)
+      - Professor Gate: PASS
+
+  Consumer_ID=197
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.41382426570895053 / 2.6456004858717406
+      - Condition number κ(X): 6.393053054391052  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.834159591521702 / 0.26081334804405465
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs c_3)
+      - Professor Gate: PASS
+
+  Consumer_ID=198
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.47983677413861714 / 2.61992293585932
+      - Condition number κ(X): 5.460029487240731  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 4.344962322076475 / 0.2301515930113051
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.222 (pair: a_2 vs c_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=199
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.5065861768173855 / 2.591626386930546
+      - Condition number κ(X): 5.115864793651441  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.385739112913383 / 0.2953564839611973
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_2 vs b_1)
+      - Professor Gate: PASS
+
+  Consumer_ID=200
+    Element exposures: all exactly 3
+    Per-category absences: a:6, b:6, c:6
+    Row actives (min/max/mean): 2/3/2.14
+      - 2 Actives: 18
+      - 3 Actives: 3
+    Collinearity checks:
+      - Zero-variance columns: 0
+      - Exact duplicate pairs: 0
+      - Rank / p: 15 / 15
+      - s_min / s_max: 0.4978186267756111 / 2.586461652949952
+      - Condition number κ(X): 5.195590349245378  (threshold ≤ 1000000)
+      - Max VIF / Min tolerance: 3.619369772793036 / 0.2762911950906604
+      - Random-DV fits (rank / LS): 5/5  &  5/5
+      - Max cross-cat |r|: 0.611 (pair: a_1 vs c_1)
+      - Professor Gate: PASS
+
+Global QC verdict:
+  All respondents passed Professor Gate: YES
+  Worst-case κ(X) across respondents: 14.09 (Consumer_ID=91)
