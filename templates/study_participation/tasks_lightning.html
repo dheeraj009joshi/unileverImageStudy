@@ -756,11 +756,16 @@ class LightningTaskFlow {
     startCountdown() {
         console.log('🎮 Starting countdown: 3... 2... 1... GO!');
         
-        // Check if images are ready
-        if (window.imagePreloader.isLoadingComplete()) {
+        // Always check if images are ready first
+        const progress = window.imagePreloader.getLoadingProgress();
+        console.log('🔍 Countdown check - Image progress:', progress);
+        
+        if (progress.isComplete) {
+            console.log('✅ Images ready, starting countdown immediately');
             this.normalCountdown();
         } else {
-            this.waitForImagesAndCountdown();
+            console.log('⏳ Images not ready, showing finalizing screen and waiting');
+            this.showFinalizingAndWaitForImages();
         }
     }
 
@@ -818,8 +823,8 @@ class LightningTaskFlow {
         console.log('⏰ Countdown started');
     }
 
-    waitForImagesAndCountdown() {
-        console.log('⏳ Images not ready, waiting...');
+    showFinalizingAndWaitForImages() {
+        console.log('🎯 Showing finalizing screen while images load');
         
         const countdownNumber = document.getElementById('countdownNumber');
         const countdownText = document.getElementById('countdownText');
@@ -827,28 +832,33 @@ class LightningTaskFlow {
         
         if (countdownNumber && countdownText && countdownSubtext) {
             countdownNumber.textContent = '...';
-            countdownText.textContent = 'FINAL PREPARATIONS';
+            countdownText.textContent = 'FINALIZING';
             countdownSubtext.textContent = 'Loading images...';
         }
         
-        let attempts = 0;
-        const maxAttempts = 10; // 5 seconds max wait
+        // Continue loading images in background
+        if (window.studyData && window.studyData.study_type) {
+            window.imagePreloader.continueSilentLoading(window.studyData);
+        }
         
+        // Check every 500ms for completion
         const checkInterval = setInterval(() => {
-            attempts++;
             const progress = window.imagePreloader.getLoadingProgress();
-            console.log(`🔍 Checking images (attempt ${attempts}/${maxAttempts}) - ${progress.loaded}/${progress.total} loaded`);
+            console.log(`🔍 Finalizing check - ${progress.loaded}/${progress.total} loaded`);
             
-            if (window.imagePreloader.isLoadingComplete()) {
+            if (progress.isComplete) {
                 clearInterval(checkInterval);
-                console.log('✅ All images ready, starting countdown');
-                this.normalCountdown();
-            } else if (attempts >= maxAttempts) {
-                clearInterval(checkInterval);
-                console.log('⏰ Timeout reached, starting countdown anyway');
+                console.log('✅ Images loaded, starting countdown');
                 this.normalCountdown();
             }
         }, 500);
+        
+        // Safety timeout - start countdown after 30 seconds regardless
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            console.log('⏰ Timeout reached, starting countdown anyway');
+            this.normalCountdown();
+        }, 30000);
     }
     
     // All images are preloaded by the welcome screen preloader service

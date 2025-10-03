@@ -7,6 +7,8 @@ import threading
 from typing import List, Tuple, Optional
 import time
 import asyncio
+from PIL import Image
+import io
 
 # Global connection pool for better performance
 _blob_service_client = None
@@ -37,7 +39,7 @@ def get_blob_service_client():
     return _blob_service_client
 
 def upload_to_azure(file):
-    """Upload file to Azure Blob Storage and return URL"""
+    """Upload file to Azure Blob Storage with WebP optimization and return URL"""
     try:
         # Get configuration from Flask app
         connection_string = current_app.config.get('AZURE_STORAGE_CONNECTION_STRING')
@@ -50,12 +52,22 @@ def upload_to_azure(file):
         # Create blob service client
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         
-        # Generate unique blob name
-        if hasattr(file, 'filename') and file.filename:
-            file_extension = os.path.splitext(file.filename)[1]
+        # Try WebP conversion first
+        webp_file = convert_to_webp_with_alpha(file)
+        
+        if webp_file:
+            # Use WebP version
+            file_to_upload = webp_file
+            file_extension = '.webp'
+            print("Using WebP optimized version")
         else:
-            # Handle BytesIO objects or files without names
-            file_extension = '.png'  # Default extension
+            # Fallback to original file
+            file_to_upload = file
+            if hasattr(file, 'filename') and file.filename:
+                file_extension = os.path.splitext(file.filename)[1]
+            else:
+                file_extension = '.png'  # Default extension
+            print("Using original file (WebP conversion failed)")
         
         blob_name = f"{uuid.uuid4()}{file_extension}"
         
@@ -63,10 +75,10 @@ def upload_to_azure(file):
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
         
         # Reset file pointer to beginning
-        file.seek(0)
+        file_to_upload.seek(0)
         
         # Read file content
-        file_content = file.read()
+        file_content = file_to_upload.read()
         
         # Upload file content
         blob_client.upload_blob(file_content, overwrite=True)
@@ -86,7 +98,7 @@ def upload_to_azure(file):
 
 def upload_single_file_to_azure_optimized(file_data: Tuple, container_name: str) -> Tuple[int, Optional[str], Optional[str]]:
     """
-    Ultra-optimized single file upload with maximum performance settings.
+    Ultra-optimized single file upload with WebP optimization and maximum performance settings.
     Returns (element_index, azure_url, error_message)
     """
     try:
@@ -97,11 +109,22 @@ def upload_single_file_to_azure_optimized(file_data: Tuple, container_name: str)
         if not blob_service_client:
             return (element_index, None, "Failed to get blob service client")
         
-        # Generate unique blob name
-        if filename:
-            file_extension = os.path.splitext(filename)[1]
+        # Try WebP conversion first
+        webp_file = convert_to_webp_with_alpha(file)
+        
+        if webp_file:
+            # Use WebP version
+            file_to_upload = webp_file
+            file_extension = '.webp'
+            print(f"Element {element_index}: Using WebP optimized version")
         else:
-            file_extension = '.png'  # Default extension
+            # Fallback to original file
+            file_to_upload = file
+            if filename:
+                file_extension = os.path.splitext(filename)[1]
+            else:
+                file_extension = '.png'  # Default extension
+            print(f"Element {element_index}: Using original file (WebP conversion failed)")
         
         blob_name = f"{uuid.uuid4()}{file_extension}"
         
@@ -109,11 +132,11 @@ def upload_single_file_to_azure_optimized(file_data: Tuple, container_name: str)
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
         
         # Reset file pointer to beginning
-        file.seek(0)
+        file_to_upload.seek(0)
         
         # Ultra-fast upload with maximum concurrency and optimized settings
         blob_client.upload_blob(
-            file, 
+            file_to_upload, 
             overwrite=True, 
             max_concurrency=8,           # Maximum parallel chunks
             length=None,                  # Auto-detect file size
@@ -253,6 +276,59 @@ def delete_from_azure(blob_url):
         current_app.logger.error(f"Azure deletion failed: {str(e)}")
         return False
 
+def convert_to_webp_with_alpha(file, quality=85):
+    """
+    Convert image to WebP format while preserving transparency (alpha channel).
+    
+    Args:
+        file: File object (BytesIO or file-like object)
+        quality: WebP quality (0-100, default 85)
+    
+    Returns:
+        BytesIO object containing WebP data, or None if conversion fails
+    """
+    try:
+        # Reset file pointer to beginning
+        file.seek(0)
+        
+        # Open image with PIL
+        image = Image.open(file)
+        
+        # Convert to RGBA to preserve transparency
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+        
+        # Create BytesIO object for WebP output
+        webp_buffer = io.BytesIO()
+        
+        # Save as WebP with transparency support
+        image.save(
+            webp_buffer,
+            format='WEBP',
+            quality=quality,
+            method=6,  # Best compression
+            lossless=False,  # Use lossy compression for smaller files
+            optimize=True
+        )
+        
+        # Reset buffer pointer
+        webp_buffer.seek(0)
+        
+        # Log compression info (safe logging without app context)
+        original_size = file.tell()
+        file.seek(0)  # Reset original file
+        webp_size = webp_buffer.tell()
+        webp_buffer.seek(0)  # Reset WebP buffer
+        
+        compression_ratio = (1 - webp_size / original_size) * 100 if original_size > 0 else 0
+        print(f"✅ WebP conversion: {original_size/1024:.1f}KB → {webp_size/1024:.1f}KB ({compression_ratio:.1f}% reduction)")
+        
+        return webp_buffer
+        
+    except Exception as e:
+        print(f"WebP conversion failed: {str(e)}")
+        return None
+
 def is_valid_image_file(filename):
     """Check if the file is a valid image file"""
     allowed_extensions = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'})
@@ -360,7 +436,7 @@ def upload_layer_images_to_azure(layer_images_data: List[Tuple], max_workers: in
 
 def upload_single_layer_image_to_azure(image_data: Tuple, container_name: str) -> Tuple[str, Optional[str], Optional[str]]:
     """
-    Ultra-optimized single layer image upload with maximum performance settings.
+    Ultra-optimized single layer image upload with WebP optimization and maximum performance settings.
     Returns (image_id, azure_url, error_message)
     """
     try:
@@ -371,11 +447,22 @@ def upload_single_layer_image_to_azure(image_data: Tuple, container_name: str) -
         if not blob_service_client:
             return (image_id, None, "Failed to get blob service client")
         
-        # Generate unique blob name
-        if filename:
-            file_extension = os.path.splitext(filename)[1]
+        # Try WebP conversion first
+        webp_file = convert_to_webp_with_alpha(file)
+        
+        if webp_file:
+            # Use WebP version
+            file_to_upload = webp_file
+            file_extension = '.webp'
+            print(f"Layer image {image_id}: Using WebP optimized version")
         else:
-            file_extension = '.png'  # Default extension
+            # Fallback to original file
+            file_to_upload = file
+            if filename:
+                file_extension = os.path.splitext(filename)[1]
+            else:
+                file_extension = '.png'  # Default extension
+            print(f"Layer image {image_id}: Using original file (WebP conversion failed)")
         
         blob_name = f"{uuid.uuid4()}{file_extension}"
         
@@ -383,11 +470,11 @@ def upload_single_layer_image_to_azure(image_data: Tuple, container_name: str) -
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
         
         # Reset file pointer to beginning
-        file.seek(0)
+        file_to_upload.seek(0)
         
         # Ultra-fast upload with maximum concurrency and optimized settings
         blob_client.upload_blob(
-            file, 
+            file_to_upload, 
             overwrite=True, 
             max_concurrency=8,           # Maximum parallel chunks
             length=None,                  # Auto-detect file size

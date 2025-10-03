@@ -177,6 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const preloadProgressFill = document.getElementById('preloadProgressFill');
     const preloadDetails = document.getElementById('preloadDetails');
     
+    // Debug: Log study data structure
+    console.log('🔍 Personal Info - Study data:', studyData);
+    console.log('🔍 Personal Info - Study type:', studyData?.study_type);
+    console.log('🔍 Personal Info - Elements:', studyData?.elements);
+    console.log('🔍 Personal Info - Study layers:', studyData?.study_layers);
+    console.log('🔍 Personal Info - Elements count:', studyData?.elements ? studyData.elements.length : 0);
+    console.log('🔍 Personal Info - Layers count:', studyData?.study_layers ? studyData.study_layers.length : 0);
+    
     // Continue silent image preloading if we have valid data
     if (studyData && studyData.study_type) {
         continueSilentImagePreloading();
@@ -186,6 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function continueSilentImagePreloading() {
         // Continue silent preloading - no UI indicators
+        console.log('🔄 Personal Info - Starting silent image preloading...');
         window.imagePreloader.continueSilentLoading(studyData);
     }
     

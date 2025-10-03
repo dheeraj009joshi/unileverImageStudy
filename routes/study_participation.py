@@ -8,6 +8,11 @@ import json
 def serialize_study_for_preloading(study):
     """Serialize study data for image preloading, handling MongoEngine objects"""
     try:
+        print(f"🔍 Serializing study {study._id} for preloading...")
+        print(f"🔍 Study type: {getattr(study, 'study_type', 'unknown')}")
+        print(f"🔍 Has elements: {hasattr(study, 'elements')}")
+        print(f"🔍 Has study_layers: {hasattr(study, 'study_layers')}")
+        
         # Create a serializable version of the study data
         study_data = {
             'study_type': str(getattr(study, 'study_type', 'unknown')),
@@ -17,6 +22,7 @@ def serialize_study_for_preloading(study):
         
         # Serialize elements for grid studies
         if hasattr(study, 'elements') and study.elements:
+            print(f"🔍 Found {len(study.elements)} elements to serialize")
             for element in study.elements:
                 try:
                     element_data = {
@@ -47,6 +53,7 @@ def serialize_study_for_preloading(study):
         
         # Serialize study_layers for layer studies
         if hasattr(study, 'study_layers') and study.study_layers:
+            print(f"🔍 Found {len(study.study_layers)} study layers to serialize")
             for layer in study.study_layers:
                 try:
                     layer_data = {
@@ -89,6 +96,7 @@ def serialize_study_for_preloading(study):
                 return str(obj)
         
         study_data = make_json_safe(study_data)
+        print(f"🔍 Serialization complete - Elements: {len(study_data['elements'])}, Layers: {len(study_data['study_layers'])}")
         return study_data
         
     except Exception as e:

@@ -181,6 +181,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Classification questions page loaded with silent image preloading');
     
+    // Check if images are already loaded during page load
+    const initialProgress = window.imagePreloader.getLoadingProgress();
+    console.log('🔍 Initial image check on page load:', initialProgress);
+    
+    if (initialProgress.isComplete) {
+        console.log('✅ Images already loaded during page load - ready for instant countdown');
+        // Images are ready, form submission will go directly to countdown
+    } else {
+        console.log('⏳ Images still loading - will show finalizing screen if needed');
+    }
+    
     // Form validation
     const form = document.querySelector('.classification-form');
     const submitBtn = form.querySelector('.btn-primary');
@@ -219,32 +230,75 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Check if images are still loading
+        // Check if images are loaded on first submission
         const progress = window.imagePreloader.getLoadingProgress();
+        console.log('🔍 First image check on form submission:', progress);
         
         if (!progress.isComplete) {
-            // Show loading indicator
-            document.getElementById('loadingIndicator').classList.add('show');
+            // Show finalizing screen immediately
+            showFinalizingScreen();
             
-            // Wait for images to complete
-            const checkInterval = setInterval(() => {
-                const currentProgress = window.imagePreloader.getLoadingProgress();
-                
-                if (currentProgress.isComplete) {
-                    clearInterval(checkInterval);
-                    document.getElementById('loadingIndicator').classList.remove('show');
-                    // Proceed with form submission
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
-                    form.submit();
-                }
-            }, 500);
+            // Start continuous checking and loading
+            startImageLoadingAndChecking();
         } else {
-            // Images already loaded, proceed immediately
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
+            // Images already loaded, proceed immediately to countdown
+            console.log('✅ Images already loaded, proceeding to countdown');
+            proceedToCountdown();
         }
     });
+    
+    function showFinalizingScreen() {
+        console.log('🎯 Showing finalizing screen');
+        document.getElementById('loadingIndicator').classList.add('show');
+        
+        // Update loading text for finalizing
+        const loadingText = document.querySelector('.loading-text');
+        const loadingSubtext = document.querySelector('.loading-subtext');
+        if (loadingText) loadingText.textContent = 'Finalizing...';
+        if (loadingSubtext) loadingSubtext.textContent = 'Preparing your tasks';
+    }
+    
+    function startImageLoadingAndChecking() {
+        console.log('🔄 Starting continuous image loading and checking');
+        
+        // Continue loading images in background
+        if (studyData && studyData.study_type) {
+            window.imagePreloader.continueSilentLoading(studyData);
+        }
+        
+        // Check every 500ms for completion
+        const checkInterval = setInterval(() => {
+            const currentProgress = window.imagePreloader.getLoadingProgress();
+            console.log('🔍 Continuous check:', currentProgress);
+            
+            if (currentProgress.isComplete) {
+                clearInterval(checkInterval);
+                console.log('✅ Images loaded, proceeding to countdown');
+                proceedToCountdown();
+            }
+        }, 500);
+        
+        // Safety timeout - proceed after 30 seconds regardless
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            console.log('⏰ Timeout reached, proceeding to countdown');
+            proceedToCountdown();
+        }, 30000);
+    }
+    
+    function proceedToCountdown() {
+        console.log('🚀 Proceeding to countdown');
+        document.getElementById('loadingIndicator').classList.remove('show');
+        
+        // Disable submit button and show processing
+        const submitBtn = document.querySelector('.btn-primary');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
+        
+        // Submit the form
+        const form = document.querySelector('.classification-form');
+        form.submit();
+    }
     
     // Option selection animation
     const optionItems = document.querySelectorAll('.option-item');

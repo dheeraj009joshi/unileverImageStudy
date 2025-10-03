@@ -26,8 +26,8 @@ class ImagePreloader {
         this.cacheKey = 'imagePreloaderCache';
         this.loadCacheFromStorage();
         
-        // Parallel loading configuration
-        this.maxConcurrent = 10; // Maximum concurrent image loads
+        // Parallel loading configuration - load ALL images simultaneously
+        this.maxConcurrent = 50; // Increased for simultaneous loading
         this.activeLoads = 0;
         this.loadQueue = [];
     }
@@ -409,8 +409,8 @@ class ImagePreloader {
                 return;
             }
 
-            // Load only uncached images with parallel loading
-            console.log('🔧 Loading uncached images in parallel...');
+            // Load ALL uncached images simultaneously
+            console.log('🔧 Loading ALL uncached images simultaneously...');
             await this.loadImagesInParallel(uncachedUrls);
             
             // Update progress to include cached images
@@ -475,29 +475,153 @@ class ImagePreloader {
         }
 
         const promise = new Promise((resolve) => {
-            // Simply load the image without canvas conversion to avoid CORS issues
-            const testImg = new Image();
-            
-            testImg.onload = () => {
-                // Store the image directly without canvas conversion
-                this.loadedImages.set(url, testImg);
-                this.progress.loaded++;
-                console.log(`✅ Image loaded successfully: ${url}`);
-                resolve(testImg);
-            };
-            
-            testImg.onerror = () => {
-                this.progress.failed++;
-                console.warn(`❌ Failed to load image: ${url}`);
-                resolve(null);
-            };
-            
-            // Load image without CORS to avoid tainted canvas issues
-            testImg.src = url;
+            // Try WebP optimization first, fallback to original
+            this.tryWebPOptimization(url)
+                .then(optimizedImg => {
+                    if (optimizedImg) {
+                        this.loadedImages.set(url, optimizedImg);
+                        this.progress.loaded++;
+                        console.log(`✅ Image optimized and loaded: ${url}`);
+                        resolve(optimizedImg);
+                    } else {
+                        // Fallback to original image
+                        this.loadOriginalImage(url, resolve);
+                    }
+                })
+                .catch(() => {
+                    // Fallback to original image
+                    this.loadOriginalImage(url, resolve);
+                });
         });
 
         this.loadingPromises.set(url, promise);
         return promise;
+    }
+
+    /**
+     * Try to optimize image to WebP format
+     * @param {string} url - Image URL
+     * @returns {Promise} Promise that resolves with optimized image or null
+     */
+    async tryWebPOptimization(url) {
+        try {
+            // Check if browser supports WebP
+            if (!this.supportsWebP()) {
+                console.log('WebP not supported, using original image');
+                return null;
+            }
+
+            // Load original image
+            const originalImg = await this.loadImageAsBlob(url);
+            if (!originalImg) return null;
+
+            // Convert to WebP with transparency preservation
+            const webpBlob = await this.convertToWebPWithTransparency(originalImg);
+            if (!webpBlob) return null;
+
+            // Create optimized image
+            const optimizedImg = new Image();
+            return new Promise((resolve) => {
+                optimizedImg.onload = () => resolve(optimizedImg);
+                optimizedImg.onerror = () => resolve(null);
+                optimizedImg.src = URL.createObjectURL(webpBlob);
+            });
+        } catch (error) {
+            console.warn('WebP optimization failed:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Load image as blob for processing
+     * @param {string} url - Image URL
+     * @returns {Promise} Promise that resolves with blob
+     */
+    loadImageAsBlob(url) {
+        return fetch(url)
+            .then(response => response.blob())
+            .catch(() => null);
+    }
+
+    /**
+     * Convert image to WebP while preserving transparency
+     * @param {Blob} imageBlob - Original image blob
+     * @returns {Promise} Promise that resolves with WebP blob
+     */
+    async convertToWebPWithTransparency(imageBlob) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas size
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Clear canvas to transparent (not white)
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw image preserving transparency
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Convert to WebP with transparency
+                    canvas.toBlob(
+                        (webpBlob) => {
+                            if (webpBlob) {
+                                console.log(`✅ Converted to WebP: ${(webpBlob.size / 1024).toFixed(1)}KB`);
+                                resolve(webpBlob);
+                            } else {
+                                resolve(null);
+                            }
+                        },
+                        'image/webp',
+                        0.85 // 85% quality
+                    );
+                } catch (error) {
+                    console.warn('Canvas conversion failed:', error);
+                    resolve(null);
+                }
+            };
+            img.onerror = () => resolve(null);
+            img.src = URL.createObjectURL(imageBlob);
+        });
+    }
+
+    /**
+     * Load original image without optimization
+     * @param {string} url - Image URL
+     * @param {Function} resolve - Promise resolve function
+     */
+    loadOriginalImage(url, resolve) {
+        const testImg = new Image();
+        
+        testImg.onload = () => {
+            this.loadedImages.set(url, testImg);
+            this.progress.loaded++;
+            console.log(`✅ Original image loaded: ${url}`);
+            resolve(testImg);
+        };
+        
+        testImg.onerror = () => {
+            this.progress.failed++;
+            console.warn(`❌ Failed to load image: ${url}`);
+            resolve(null);
+        };
+        
+        testImg.src = url;
+    }
+
+    /**
+     * Check if browser supports WebP
+     * @returns {boolean} True if WebP is supported
+     */
+    supportsWebP() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
     }
 
     /**
@@ -638,30 +762,26 @@ class ImagePreloader {
     }
 
     /**
-     * Load images in parallel with concurrency control
+     * Load ALL images simultaneously without chunking
      * @param {Array} urls - Array of image URLs to load
      * @returns {Promise} Promise that resolves when all images are loaded
      */
     async loadImagesInParallel(urls) {
-        const promises = [];
-        const chunks = this.chunkArray(urls, this.maxConcurrent);
+        console.log(`🚀 Loading ALL ${urls.length} images simultaneously (no chunking)`);
         
-        console.log(`🚀 Loading ${urls.length} images in ${chunks.length} parallel chunks of ${this.maxConcurrent}`);
+        // Create promises for ALL images at once
+        const allPromises = urls.map((url, index) => 
+            this.preloadSingleImageSilent(url, index)
+        );
         
-        for (let i = 0; i < chunks.length; i++) {
-            const chunk = chunks[i];
-            console.log(`📦 Loading chunk ${i + 1}/${chunks.length}: ${chunk.length} images`);
-            
-            const chunkPromises = chunk.map((url, index) => 
-                this.preloadSingleImageSilent(url, i * this.maxConcurrent + index)
-            );
-            
-            // Wait for current chunk to complete before starting next
-            await Promise.allSettled(chunkPromises);
-            console.log(`✅ Chunk ${i + 1} completed`);
-        }
+        // Wait for ALL images to complete simultaneously
+        const results = await Promise.allSettled(allPromises);
         
-        console.log('🎉 All parallel chunks completed');
+        // Count successful and failed loads
+        const successful = results.filter(result => result.status === 'fulfilled' && result.value !== null).length;
+        const failed = results.filter(result => result.status === 'rejected' || result.value === null).length;
+        
+        console.log(`🎉 All images loaded simultaneously: ${successful} successful, ${failed} failed`);
     }
 
     /**
