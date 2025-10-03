@@ -177,69 +177,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const preloadProgressFill = document.getElementById('preloadProgressFill');
     const preloadDetails = document.getElementById('preloadDetails');
     
-    // Start image preloading if we have valid data
+    // Start silent image preloading if we have valid data
     if (studyData && studyData.study_type) {
-        startImagePreloading();
+        startSilentImagePreloading();
     } else {
         console.log('Skipping preloading - no valid study data');
-        hidePreloadProgress();
     }
     
-    function startImagePreloading() {
-        // Show progress bar
-        preloadProgress.classList.add('show');
-        
+    function startSilentImagePreloading() {
         // Debug: Log study data structure
-        console.log('Starting preloading with study data:', {
-            study_type: studyData.study_type,
-            elements_count: studyData.elements ? studyData.elements.length : 0,
-            layers_count: studyData.study_layers ? studyData.study_layers.length : 0
-        });
+        console.log('🚀 Starting silent preloading with study data:', studyData);
+        console.log('🚀 Study type:', studyData.study_type);
+        console.log('🚀 Elements:', studyData.elements);
+        console.log('🚀 Study layers:', studyData.study_layers);
+        console.log('🚀 Elements count:', studyData.elements ? studyData.elements.length : 0);
+        console.log('🚀 Layers count:', studyData.study_layers ? studyData.study_layers.length : 0);
         
-        // Start preloading silently
-        window.imagePreloader.preloadStudyImages(
-            studyData,
-            // Progress callback
-            function(progress) {
-                updatePreloadProgress(progress);
-            },
-            // Complete callback
-            function() {
-                onPreloadComplete();
-            }
-        );
+        // Start silent preloading - no UI indicators
+        window.imagePreloader.preloadStudyImagesSilent(studyData);
     }
     
-    function updatePreloadProgress(progress) {
-        const percentage = progress.percentage || 0;
-        
-        // Update progress bar
-        preloadProgressFill.style.width = percentage + '%';
-        
-        // Update text with cleaner messaging
-        if (progress.total > 0) {
-            if (progress.failed && progress.failed > 0) {
-                // Show that some images failed but we're continuing
-                preloadDetails.textContent = `Preparing study... ${progress.loaded}/${progress.total} images ready`;
-            } else {
-                preloadDetails.textContent = `Preparing study... ${progress.loaded}/${progress.total} images ready`;
-            }
-        }
-    }
-    
-    function onPreloadComplete() {
-        // Update progress bar to 100%
-        preloadProgressFill.style.width = '100%';
-        preloadDetails.textContent = 'Study ready!';
-        
-        // Hide progress bar after a short delay
-        setTimeout(() => {
-            preloadProgress.classList.remove('show');
-        }, 1000);
-        
-        // Initialize welcome page animations
-        initializeWelcomeAnimations();
-    }
+    // Initialize welcome page animations immediately
+    initializeWelcomeAnimations();
     
     function initializeWelcomeAnimations() {
         // Add smooth transitions
@@ -275,12 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Fallback: If preloading takes too long, show welcome page anyway
-    setTimeout(() => {
-        if (!window.imagePreloader.getStatus().preloadComplete) {
-            onPreloadComplete();
-        }
-    }, 10000); // 10 second timeout
+    console.log('Welcome page initialized with silent image preloading');
 });
 </script>
 {% endblock %}

@@ -23,18 +23,21 @@ def serialize_study_for_preloading(study):
                         'name': str(getattr(element, 'name', '')),
                         'description': str(getattr(element, 'description', '')),
                         'alt_text': str(getattr(element, 'alt_text', '')),
+                        'element_type': str(getattr(element, 'element_type', '')),
+                        'content': str(getattr(element, 'content', '')),
                         'image': None
                     }
                     
-                    # Handle image data safely
-                    if hasattr(element, 'image') and element.image:
+                    # For grid studies, the image URL is in the 'content' field
+                    if hasattr(element, 'content') and element.content:
                         try:
+                            # content field contains the file path/URL
                             element_data['image'] = {
-                                'url': str(getattr(element.image, 'url', '')),
-                                'filename': str(getattr(element.image, 'filename', ''))
+                                'url': str(element.content),
+                                'filename': str(getattr(element, 'name', ''))
                             }
                         except Exception as img_error:
-                            print(f"Error serializing element image: {img_error}")
+                            print(f"Error serializing element content: {img_error}")
                             element_data['image'] = None
                     
                     study_data['elements'].append(element_data)

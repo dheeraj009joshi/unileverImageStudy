@@ -756,6 +756,15 @@ class LightningTaskFlow {
     startCountdown() {
         console.log('🎮 Starting countdown: 3... 2... 1... GO!');
         
+        // Check if images are ready
+        if (window.imagePreloader.isLoadingComplete()) {
+            this.normalCountdown();
+        } else {
+            this.waitForImagesAndCountdown();
+        }
+    }
+
+    normalCountdown() {
         // Get countdown elements
         const countdownNumber = document.getElementById('countdownNumber');
         const countdownText = document.getElementById('countdownText');
@@ -807,6 +816,39 @@ class LightningTaskFlow {
         // Start the countdown
         updateCountdown();
         console.log('⏰ Countdown started');
+    }
+
+    waitForImagesAndCountdown() {
+        console.log('⏳ Images not ready, waiting...');
+        
+        const countdownNumber = document.getElementById('countdownNumber');
+        const countdownText = document.getElementById('countdownText');
+        const countdownSubtext = document.getElementById('countdownSubtext');
+        
+        if (countdownNumber && countdownText && countdownSubtext) {
+            countdownNumber.textContent = '...';
+            countdownText.textContent = 'FINAL PREPARATIONS';
+            countdownSubtext.textContent = 'Loading images...';
+        }
+        
+        let attempts = 0;
+        const maxAttempts = 10; // 5 seconds max wait
+        
+        const checkInterval = setInterval(() => {
+            attempts++;
+            const progress = window.imagePreloader.getLoadingProgress();
+            console.log(`🔍 Checking images (attempt ${attempts}/${maxAttempts}) - ${progress.loaded}/${progress.total} loaded`);
+            
+            if (window.imagePreloader.isLoadingComplete()) {
+                clearInterval(checkInterval);
+                console.log('✅ All images ready, starting countdown');
+                this.normalCountdown();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkInterval);
+                console.log('⏰ Timeout reached, starting countdown anyway');
+                this.normalCountdown();
+            }
+        }, 500);
     }
     
     // All images are preloaded by the welcome screen preloader service

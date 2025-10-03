@@ -177,66 +177,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const preloadProgressFill = document.getElementById('preloadProgressFill');
     const preloadDetails = document.getElementById('preloadDetails');
     
-    // Start image preloading if not already started and we have valid data
-    if (studyData && studyData.study_type && 
-        (!window.imagePreloader.getStatus().isPreloading && !window.imagePreloader.getStatus().preloadComplete)) {
-        startImagePreloading();
-    } else if (window.imagePreloader.getStatus().preloadComplete) {
-        // Already complete, hide progress
-        hidePreloadProgress();
+    // Continue silent image preloading if we have valid data
+    if (studyData && studyData.study_type) {
+        continueSilentImagePreloading();
     } else {
-        // No valid data or already preloading, hide progress
-        console.log('Skipping preloading - no valid data or already in progress');
-        hidePreloadProgress();
+        console.log('Skipping preloading - no valid study data');
     }
     
-    function startImagePreloading() {
-        // Show progress bar
-        preloadProgress.classList.add('show');
-        preloadDetails.classList.add('show');
-        
-        // Start preloading silently
-        window.imagePreloader.preloadStudyImages(
-            studyData,
-            // Progress callback
-            function(progress) {
-                updatePreloadProgress(progress);
-            },
-            // Complete callback
-            function() {
-                onPreloadComplete();
-            }
-        );
+    function continueSilentImagePreloading() {
+        // Continue silent preloading - no UI indicators
+        window.imagePreloader.continueSilentLoading(studyData);
     }
     
-    function updatePreloadProgress(progress) {
-        const percentage = progress.percentage || 0;
-        
-        // Update progress bar
-        preloadProgressFill.style.width = percentage + '%';
-        
-        // Update text with cleaner messaging
-        if (progress.total > 0) {
-            preloadDetails.textContent = `Preparing study... ${progress.loaded}/${progress.total} images ready`;
-        }
-    }
-    
-    function onPreloadComplete() {
-        // Update progress bar to 100%
-        preloadProgressFill.style.width = '100%';
-        preloadDetails.textContent = 'Study ready!';
-        
-        // Hide progress bar after a short delay
-        setTimeout(() => {
-            hidePreloadProgress();
-        }, 1000);
-    }
-    
-    function hidePreloadProgress() {
-        preloadProgress.classList.remove('show');
-        preloadDetails.classList.remove('show');
-    }
-    console.log('Personal info page loaded');
+    console.log('Personal info page loaded with silent image preloading');
     
     // Set max date to today
     const today = new Date();

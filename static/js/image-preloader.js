@@ -14,6 +14,22 @@ class ImagePreloader {
         };
         this.isPreloading = false;
         this.preloadComplete = false;
+        
+        // Progressive loading properties
+        this.batchSize = 5;
+        this.currentBatch = 0;
+        this.totalBatches = 0;
+        this.isSilentMode = false;
+        this.loadingComplete = false;
+        
+        // Image caching
+        this.cacheKey = 'imagePreloaderCache';
+        this.loadCacheFromStorage();
+        
+        // Parallel loading configuration
+        this.maxConcurrent = 10; // Maximum concurrent image loads
+        this.activeLoads = 0;
+        this.loadQueue = [];
     }
 
     /**
@@ -90,47 +106,88 @@ class ImagePreloader {
     collectImageUrls(studyData) {
         const imageUrls = new Set(); // Use Set to avoid duplicates
 
+        console.log('🔍 collectImageUrls called with studyData:', studyData);
+        console.log('🔍 Study type:', studyData?.study_type);
+
         try {
             if (studyData.study_type === 'grid') {
+                console.log('🔍 Processing grid study');
+                console.log('🔍 Elements:', studyData.elements);
+                
                 // For grid studies, collect from elements
                 if (studyData.elements && Array.isArray(studyData.elements)) {
-                    studyData.elements.forEach(element => {
+                    studyData.elements.forEach((element, index) => {
                         try {
+                            console.log(`🔍 Element ${index}:`, element);
                             if (element && element.image && element.image.url && typeof element.image.url === 'string') {
+                                console.log(`✅ Adding grid image URL: ${element.image.url}`);
                                 imageUrls.add(element.image.url);
+                            } else {
+                                console.log(`❌ Invalid grid element ${index}:`, element);
                             }
                         } catch (error) {
                             console.warn('Error processing grid element:', error);
                         }
                     });
+                } else {
+                    console.log('❌ No elements array found in grid study');
                 }
             } else if (studyData.study_type === 'layer') {
+                console.log('🔍 Processing layer study');
+                console.log('🔍 Study layers:', studyData.study_layers);
+                console.log('🔍 Study layers type:', typeof studyData.study_layers);
+                console.log('🔍 Study layers is array:', Array.isArray(studyData.study_layers));
+                console.log('🔍 Study layers length:', studyData.study_layers ? studyData.study_layers.length : 'undefined');
+                
                 // For layer studies, collect from study_layers
                 if (studyData.study_layers && Array.isArray(studyData.study_layers)) {
-                    studyData.study_layers.forEach(layer => {
+                    studyData.study_layers.forEach((layer, layerIndex) => {
                         try {
+                            console.log(`🔍 Layer ${layerIndex}:`, layer);
+                            console.log(`🔍 Layer ${layerIndex} type:`, typeof layer);
+                            console.log(`🔍 Layer ${layerIndex} images:`, layer.images);
+                            console.log(`🔍 Layer ${layerIndex} images type:`, typeof layer.images);
+                            console.log(`🔍 Layer ${layerIndex} images is array:`, Array.isArray(layer.images));
+                            
                             if (layer && layer.images && Array.isArray(layer.images)) {
-                                layer.images.forEach(image => {
+                                console.log(`🔍 Layer ${layerIndex} has ${layer.images.length} images`);
+                                layer.images.forEach((image, imageIndex) => {
                                     try {
-                                        if (image && image.url && typeof image.url === 'string') {
+                                        console.log(`🔍 Layer ${layerIndex} Image ${imageIndex}:`, image);
+                                        console.log(`🔍 Layer ${layerIndex} Image ${imageIndex} type:`, typeof image);
+                                        console.log(`🔍 Layer ${layerIndex} Image ${imageIndex} url:`, image.url);
+                                        console.log(`🔍 Layer ${layerIndex} Image ${imageIndex} url type:`, typeof image.url);
+                                        
+                                        if (image && image.url && typeof image.url === 'string' && image.url.trim() !== '') {
+                                            console.log(`✅ Adding layer image URL: ${image.url}`);
                                             imageUrls.add(image.url);
+                                        } else {
+                                            console.log(`❌ Invalid layer image ${layerIndex}-${imageIndex}:`, image);
                                         }
                                     } catch (error) {
                                         console.warn('Error processing layer image:', error);
                                     }
                                 });
+                            } else {
+                                console.log(`❌ No images array in layer ${layerIndex}:`, layer);
                             }
                         } catch (error) {
                             console.warn('Error processing layer:', error);
                         }
                     });
+                } else {
+                    console.log('❌ No study_layers array found in layer study');
                 }
+            } else {
+                console.log('❌ Unknown study type:', studyData.study_type);
             }
         } catch (error) {
             console.error('Error collecting image URLs:', error);
         }
 
-        return Array.from(imageUrls);
+        const urls = Array.from(imageUrls);
+        console.log(`🔍 Collected ${urls.length} image URLs:`, urls);
+        return urls;
     }
 
     /**
@@ -292,6 +349,333 @@ class ImagePreloader {
         this.progress = { total: 0, loaded: 0, failed: 0 };
         this.isPreloading = false;
         this.preloadComplete = false;
+        this.currentBatch = 0;
+        this.totalBatches = 0;
+        this.isSilentMode = false;
+        this.loadingComplete = false;
+    }
+
+    /**
+     * Start silent loading - load all images at once
+     * @param {Object} studyData - Study data containing image URLs
+     */
+    async preloadStudyImagesSilent(studyData) {
+        console.log('🔧 preloadStudyImagesSilent called with:', studyData);
+        console.log('🔧 Current page:', window.location.pathname);
+        
+        if (this.isPreloading) {
+            console.log('Silent image preloading already in progress');
+            return;
+        }
+
+        // Validate study data
+        if (!studyData || typeof studyData !== 'object') {
+            console.error('Invalid study data provided to silent preloader');
+            return;
+        }
+
+        this.isPreloading = true;
+        this.isSilentMode = true;
+        this.progress = { total: 0, loaded: 0, failed: 0 };
+        
+        console.log('🔧 Starting image preloading on page:', window.location.pathname);
+
+        try {
+            // Collect all image URLs
+            const imageUrls = this.collectImageUrls(studyData);
+            this.progress.total = imageUrls.length;
+            
+            console.log(`🔧 Silent preloader: Found ${imageUrls.length} images to load`);
+
+            if (imageUrls.length === 0) {
+                console.log('🔧 No images found, completing immediately');
+                this.loadingComplete = true;
+                this.isPreloading = false;
+                return;
+            }
+
+            // Check cache and filter out already cached images
+            const uncachedUrls = imageUrls.filter(url => !this.isImageCached(url));
+            const cachedCount = imageUrls.length - uncachedUrls.length;
+            
+            console.log(`🔧 Cache check: ${cachedCount} cached, ${uncachedUrls.length} need loading`);
+
+            // If all images are cached, complete immediately
+            if (uncachedUrls.length === 0) {
+                console.log('🔧 All images already cached, completing immediately');
+                this.progress.loaded = imageUrls.length;
+                this.loadingComplete = true;
+                this.isPreloading = false;
+                return;
+            }
+
+            // Load only uncached images with parallel loading
+            console.log('🔧 Loading uncached images in parallel...');
+            await this.loadImagesInParallel(uncachedUrls);
+            
+            // Update progress to include cached images
+            this.progress.loaded += cachedCount;
+            
+            // Ensure total count is correct
+            if (this.progress.total === 0) {
+                this.progress.total = this.progress.loaded;
+            }
+            
+            console.log('🔧 All images loaded:', this.progress.loaded, 'total (', cachedCount, 'cached,', this.progress.loaded - cachedCount, 'new)');
+            this.loadingComplete = true;
+            this.isPreloading = false;
+            
+            // Save cache to storage
+            this.saveCacheToStorage();
+
+        } catch (error) {
+            console.error('Error in silent preloading:', error);
+            this.isPreloading = false;
+        }
+    }
+
+    /**
+     * Load a batch of images silently
+     * @param {Array} imageUrls - All image URLs
+     * @param {number} batchIndex - Current batch index
+     */
+    async loadBatchSilent(imageUrls, batchIndex) {
+        const start = batchIndex * this.batchSize;
+        const end = Math.min(start + this.batchSize, imageUrls.length);
+        const batchUrls = imageUrls.slice(start, end);
+        
+        console.log(`Loading batch ${batchIndex + 1}/${this.totalBatches}: ${batchUrls.length} images`);
+        
+        // Load batch silently
+        const promises = batchUrls.map((url, index) => 
+            this.preloadSingleImageSilent(url, start + index)
+        );
+        
+        await Promise.allSettled(promises);
+        this.currentBatch++;
+        
+        // Check if all batches are complete
+        if (this.currentBatch >= this.totalBatches) {
+            this.loadingComplete = true;
+            this.isPreloading = false;
+            console.log('Silent preloading complete:', this.progress.loaded, 'images loaded');
+        }
+    }
+
+    /**
+     * Preload a single image silently (no progress callbacks)
+     * @param {string} url - Image URL
+     * @param {number} index - Image index
+     * @returns {Promise} Promise that resolves when image is loaded
+     */
+    preloadSingleImageSilent(url, index) {
+        // Return existing promise if already loading
+        if (this.loadingPromises.has(url)) {
+            return this.loadingPromises.get(url);
+        }
+
+        const promise = new Promise((resolve) => {
+            // Simply load the image without canvas conversion to avoid CORS issues
+            const testImg = new Image();
+            
+            testImg.onload = () => {
+                // Store the image directly without canvas conversion
+                this.loadedImages.set(url, testImg);
+                this.progress.loaded++;
+                console.log(`✅ Image loaded successfully: ${url}`);
+                resolve(testImg);
+            };
+            
+            testImg.onerror = () => {
+                this.progress.failed++;
+                console.warn(`❌ Failed to load image: ${url}`);
+                resolve(null);
+            };
+            
+            // Load image without CORS to avoid tainted canvas issues
+            testImg.src = url;
+        });
+
+        this.loadingPromises.set(url, promise);
+        return promise;
+    }
+
+    /**
+     * Continue silent loading from next page
+     * @param {Object} studyData - Study data containing image URLs
+     */
+    async continueSilentLoading(studyData) {
+        console.log('🔄 continueSilentLoading called on page:', window.location.pathname);
+        console.log('Current state:', {
+            isSilentMode: this.isSilentMode,
+            loadingComplete: this.loadingComplete,
+            loaded: this.progress.loaded,
+            total: this.progress.total
+        });
+
+        // If not in silent mode, start silent loading
+        if (!this.isSilentMode) {
+            console.log('🔄 Not in silent mode, starting silent preloading');
+            await this.preloadStudyImagesSilent(studyData);
+            return;
+        }
+
+        // If already complete, return
+        if (this.loadingComplete) {
+            console.log('✅ Loading already complete');
+            return;
+        }
+
+        // If still loading, just wait for completion
+        console.log('🔄 Images still loading, waiting for completion...');
+    }
+
+    /**
+     * Check if silent loading is complete
+     * @returns {boolean} True if loading is complete
+     */
+    isLoadingComplete() {
+        // If we have loaded images and either loading is complete OR we have images in memory
+        const isComplete = (this.loadingComplete && this.progress.loaded > 0) || 
+                          (this.loadedImages.size > 0 && this.progress.loaded > 0);
+        
+        console.log('🔍 isLoadingComplete check:', {
+            loadingComplete: this.loadingComplete,
+            loaded: this.progress.loaded,
+            total: this.progress.total,
+            loadedImagesSize: this.loadedImages.size,
+            isComplete: isComplete
+        });
+        return isComplete;
+    }
+
+    /**
+     * Get loading progress (for conditional indicator)
+     * @returns {Object} Progress information
+     */
+    getLoadingProgress() {
+        return {
+            loaded: this.progress.loaded,
+            total: this.progress.total,
+            percentage: this.progress.total > 0 ? Math.round((this.progress.loaded / this.progress.total) * 100) : 0,
+            isComplete: this.isLoadingComplete()
+        };
+    }
+
+    /**
+     * Load cache from localStorage
+     */
+    loadCacheFromStorage() {
+        try {
+            const cached = localStorage.getItem(this.cacheKey);
+            if (cached) {
+                const cacheData = JSON.parse(cached);
+                console.log('📦 Loaded image cache from storage:', Object.keys(cacheData).length, 'images');
+                
+                // Convert cached data back to Map
+                Object.entries(cacheData).forEach(([url, imageData]) => {
+                    if (imageData && imageData.url) {
+                        // Create image and load it
+                        const img = new Image();
+                        img.onload = () => {
+                            this.loadedImages.set(url, img);
+                            this.progress.loaded++;
+                        };
+                        img.src = imageData.url;
+                    }
+                });
+                
+                // If we have cached images, mark as complete
+                if (this.loadedImages.size > 0) {
+                    this.loadingComplete = true;
+                    console.log('✅ Images loaded from cache, marking as complete');
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load image cache from storage:', error);
+        }
+    }
+
+    /**
+     * Save cache to localStorage
+     */
+    saveCacheToStorage() {
+        try {
+            const cacheData = {};
+            this.loadedImages.forEach((img, url) => {
+                if (img && img.src) {
+                    // Store the original URL to avoid CORS issues
+                    cacheData[url] = {
+                        url: url, // Store the original URL
+                        timestamp: Date.now()
+                    };
+                }
+            });
+            
+            localStorage.setItem(this.cacheKey, JSON.stringify(cacheData));
+            console.log('💾 Saved image cache to storage:', Object.keys(cacheData).length, 'images');
+        } catch (error) {
+            console.warn('Failed to save image cache to storage:', error);
+        }
+    }
+
+    /**
+     * Check if image is already cached
+     * @param {string} url - Image URL
+     * @returns {boolean} True if image is cached
+     */
+    isImageCached(url) {
+        return this.loadedImages.has(url);
+    }
+
+    /**
+     * Get cached image
+     * @param {string} url - Image URL
+     * @returns {Image|null} Cached image or null
+     */
+    getCachedImage(url) {
+        return this.loadedImages.get(url) || null;
+    }
+
+    /**
+     * Load images in parallel with concurrency control
+     * @param {Array} urls - Array of image URLs to load
+     * @returns {Promise} Promise that resolves when all images are loaded
+     */
+    async loadImagesInParallel(urls) {
+        const promises = [];
+        const chunks = this.chunkArray(urls, this.maxConcurrent);
+        
+        console.log(`🚀 Loading ${urls.length} images in ${chunks.length} parallel chunks of ${this.maxConcurrent}`);
+        
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            console.log(`📦 Loading chunk ${i + 1}/${chunks.length}: ${chunk.length} images`);
+            
+            const chunkPromises = chunk.map((url, index) => 
+                this.preloadSingleImageSilent(url, i * this.maxConcurrent + index)
+            );
+            
+            // Wait for current chunk to complete before starting next
+            await Promise.allSettled(chunkPromises);
+            console.log(`✅ Chunk ${i + 1} completed`);
+        }
+        
+        console.log('🎉 All parallel chunks completed');
+    }
+
+    /**
+     * Split array into chunks
+     * @param {Array} array - Array to chunk
+     * @param {number} chunkSize - Size of each chunk
+     * @returns {Array} Array of chunks
+     */
+    chunkArray(array, chunkSize) {
+        const chunks = [];
+        for (let i = 0; i < array.length; i += chunkSize) {
+            chunks.push(array.slice(i, i + chunkSize));
+        }
+        return chunks;
     }
 }
 
