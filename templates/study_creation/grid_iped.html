@@ -14,6 +14,11 @@
     <div class="form-container">
         <form method="POST" class="study-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            {% if calculated_values %}
+                <input type="hidden" name="calculated_tasks_per_consumer" value="{{ calculated_values.tasks_per_consumer }}">
+                <input type="hidden" name="calculated_total_elements" value="{{ calculated_values.total_elements }}">
+                <input type="hidden" name="calculated_total_categories" value="{{ calculated_values.total_categories }}">
+            {% endif %}
             
             <div class="form-section">
                 <h3>IPED Parameters</h3>
@@ -36,9 +41,16 @@
                     <h4>Auto-calculated Parameters</h4>
                     <p>The following parameters are automatically calculated based on your grid configuration:</p>
                     <ul>
-                        <li><strong>Tasks per Consumer:</strong> Automatically calculated based on total elements</li>
-                        <li><strong>Exposure Tolerance:</strong> Fixed at 1.0% for grid studies</li>
-                        <li><strong>Total Elements:</strong> Sum of all elements across categories</li>
+                        {% if calculated_values %}
+                            <li><strong>Total Categories:</strong> {{ calculated_values.total_categories }}</li>
+                            <li><strong>Total Elements:</strong> {{ calculated_values.total_elements }}</li>
+                            <li><strong>Tasks per Consumer:</strong> {{ calculated_values.tasks_per_consumer }} (calculated using advanced algorithm)</li>
+                            <li><strong>Exposure Tolerance:</strong> Fixed at 1.0% for grid studies</li>
+                        {% else %}
+                            <li><strong>Tasks per Consumer:</strong> Will be calculated based on total elements</li>
+                            <li><strong>Exposure Tolerance:</strong> Fixed at 1.0% for grid studies</li>
+                            <li><strong>Total Elements:</strong> Sum of all elements across categories</li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

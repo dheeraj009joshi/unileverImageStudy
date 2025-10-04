@@ -528,11 +528,11 @@ def step2a():
                     'num_elements': len(elements_data)
                 })
             else:
-                # For layer studies, save as regular elements
+                    # For layer studies, save as regular elements
                 draft.update_step_data('2a', {
                     'elements': elements_data,
                     'study_type': study_type,
-                        'num_elements': len(elements_data)
+                            'num_elements': len(elements_data)
                 })
             
             db_duration = time.time() - db_start_time
@@ -748,6 +748,7 @@ def step2c():
             # Pre-populate with stored data
             form.number_of_respondents.data = stored_step2c.get('number_of_respondents')
             print(f"DEBUG: Step2c - Set form data to: {form.number_of_respondents.data}")
+            
         else:
             print(f"DEBUG: Step2c - No stored data, checking step2a")
             # Set default values based on previous step elements count
@@ -756,8 +757,8 @@ def step2c():
             if step2a_data:
                 print(f"DEBUG: Step2c - Found step2a data, setting default")
                 # Set a reasonable default for number of respondents
-                # This will trigger the auto-calculation in the frontend
                 form.number_of_respondents.data = 20  # Default to 20 respondents
+                
                     
                 # Also store this in the draft so it persists
                 draft.update_step_data('2c', {
@@ -772,30 +773,72 @@ def step2c():
     print(f"DEBUG: Step2c - Final form data: {form.number_of_respondents.data}")
     
     if form.validate_on_submit():
-        # Get number of elements from step2a
+        # Get grid configuration data (new grid flow) or step2a data (legacy grid flow)
+        grid_config_data = draft.get_step_data('grid_config')
         step2a_data = draft.get_step_data('2a')
-        num_elements = len(step2a_data.get('elements', [])) if step2a_data else 0
         
-        # Auto-calculate K based on number of elements (from script logic)
-        if num_elements <= 8:
-            K = 2
-        elif num_elements <= 16:
-            K = 3
+        if grid_config_data and 'categories' in grid_config_data:
+            # New grid flow: use categories from grid_config
+            categories = grid_config_data['categories']
+            category_info = {}
+            total_elements = 0
+            
+            for category in categories:
+                category_name = category.get('category_name', f"category_{len(category_info)+1}")
+                elements = category.get('elements', [])
+                category_info[category_name] = [f"element_{i+1}" for i in range(len(elements))]
+                total_elements += len(elements)
+            
+            print(f"DEBUG: Using grid_config data - {len(category_info)} categories, {total_elements} total elements")
+        elif step2a_data and 'elements' in step2a_data:
+            # Legacy grid flow: use elements from step2a
+            elements = step2a_data['elements']
+            total_elements = len(elements)
+            category_info = {"All": [f"element_{i+1}" for i in range(total_elements)]}
+            print(f"DEBUG: Using step2a data - {total_elements} elements")
         else:
-            K = 4
+            # No data available
+            total_elements = 0
+            category_info = {}
+            print(f"DEBUG: No grid data found - grid_config: {grid_config_data}, step2a: {step2a_data}")
         
         # Get calculated tasks per consumer from form (if available)
         calculated_tasks = request.form.get('calculated_tasks_per_consumer')
         if calculated_tasks and calculated_tasks.isdigit():
             tasks_per_consumer = int(calculated_tasks)
         else:
-            # Fallback to auto-calculation if not provided
-            max_tasks = math.comb(num_elements, K) if num_elements >= K else 0
-            tasks_per_consumer = min(24, max(1, math.floor(max_tasks / 2)))
+            # Use advanced algorithm from latest grid task generation
+            if total_elements > 0 and category_info:
+                from utils.task_generation import plan_T_E_auto
+                
+                # Plan using the same algorithm as actual task generation
+                try:
+                    T, E, A_map, avg_k, A_min_used = plan_T_E_auto(
+                        category_info=category_info, 
+                        study_mode="grid", 
+                        max_active_per_row=min(4, len(category_info))  # GRID_MAX_ACTIVE = 4
+                    )
+                    tasks_per_consumer = T
+                    print(f"DEBUG: Advanced algorithm calculated tasks_per_consumer: {tasks_per_consumer}")
+                except Exception as e:
+                    print(f"DEBUG: Advanced algorithm failed ({e}), falling back to simple calculation")
+                    # Fallback to simple calculation
+                    if total_elements <= 8:
+                        K = 2
+                    elif total_elements <= 16:
+                        K = 3
+                    else:
+                        K = 4
+                    max_tasks = math.comb(total_elements, K) if total_elements >= K else 0
+                    tasks_per_consumer = min(24, max(1, math.floor(max_tasks / 2)))
+            else:
+                # No elements available, use default
+                tasks_per_consumer = 8
+                print(f"DEBUG: No elements available, using default tasks_per_consumer: {tasks_per_consumer}")
         
         # Grid study parameters
         step2c_data = {
-            'num_elements': num_elements,
+            'num_elements': total_elements,
             'tasks_per_consumer': tasks_per_consumer,
             'number_of_respondents': form.number_of_respondents.data,
             'exposure_tolerance_cv': 1.0,  # Default from script
@@ -809,8 +852,62 @@ def step2c():
         flash('IPED parameters saved successfully!', 'success')
         return redirect(url_for('study_creation.step3a'))
     
+    # Calculate tasks_per_consumer for template display
+    calculated_tasks_per_consumer = None
+    if request.method == 'GET':
+        # Get grid configuration data (new grid flow) or step2a data (legacy grid flow)
+        grid_config_data = draft.get_step_data('grid_config')
+        step2a_data = draft.get_step_data('2a')
+        
+        if grid_config_data and 'categories' in grid_config_data:
+            # New grid flow: use categories from grid_config
+            categories = grid_config_data['categories']
+            category_info = {}
+            total_elements = 0
+            
+            for category in categories:
+                category_name = category.get('category_name', f"category_{len(category_info)+1}")
+                elements = category.get('elements', [])
+                category_info[category_name] = [f"element_{i+1}" for i in range(len(elements))]
+                total_elements += len(elements)
+            
+            print(f"DEBUG: Template - Using grid_config data - {len(category_info)} categories, {total_elements} total elements")
+        elif step2a_data and 'elements' in step2a_data:
+            # Legacy grid flow: use elements from step2a
+            elements = step2a_data['elements']
+            total_elements = len(elements)
+            category_info = {"All": [f"element_{i+1}" for i in range(total_elements)]}
+            print(f"DEBUG: Template - Using step2a data - {total_elements} elements")
+        else:
+            total_elements = 0
+            category_info = {}
+            print(f"DEBUG: Template - No grid data found")
+        
+        if total_elements > 0 and category_info:
+            try:
+                from utils.task_generation import plan_T_E_auto
+                T, E, A_map, avg_k, A_min_used = plan_T_E_auto(
+                    category_info=category_info, 
+                    study_mode="grid", 
+                    max_active_per_row=min(4, len(category_info))
+                )
+                calculated_tasks_per_consumer = T
+                print(f"DEBUG: Template - Advanced algorithm calculated tasks_per_consumer: {calculated_tasks_per_consumer}")
+            except Exception as e:
+                print(f"DEBUG: Template - Advanced algorithm failed ({e}), using simple calculation")
+                # Fallback to simple calculation
+                if total_elements <= 8:
+                    K = 2
+                elif total_elements <= 16:
+                    K = 3
+                else:
+                    K = 4
+                max_tasks = math.comb(total_elements, K) if total_elements >= K else 0
+                calculated_tasks_per_consumer = min(24, max(1, math.floor(max_tasks / 2)))
+    
     render_start = time.time()
-    result = render_template(template, form=form, current_step='2c', draft=draft, study_type=study_type)
+    result = render_template(template, form=form, current_step='2c', draft=draft, study_type=study_type, 
+                           calculated_tasks_per_consumer=calculated_tasks_per_consumer)
     render_duration = time.time() - render_start
     print(f"⏱️  [PERF] Step2c template rendering took {render_duration:.3f}s")
     
@@ -1250,8 +1347,8 @@ def step3b():
                     for i, category_data in enumerate(grid_config_data['categories']):
                         category = GridCategory(
                             category_id=category_data.get('category_id', str(uuid.uuid4())),
-                            name=category_data.get('name', f'Category {i+1}'),
-                            description=category_data.get('description', ''),
+                            name=category_data.get('category_name', f'Category {i+1}'),
+                            description=category_data.get('category_description', ''),
                             order=category_data.get('order', i)
                         )
                         
@@ -1398,6 +1495,14 @@ def step3b():
                 study.classification_questions = questions
                 print(f"DEBUG: Set {len(questions)} classification questions")
             
+            # Get step3a_data first to access task generation results
+            if study_type == 'grid':
+                step3a_data = draft.get_step_data('3a_grid')
+            else:
+                step3a_data = draft.get_step_data('3a_layer')
+            
+            print(f"DEBUG: Step3a data for {study_type} study: {step3a_data}")
+            
             # Set IPED parameters based on study type
             if study_type == 'grid':
                 # Grid study - use grid_iped data
@@ -1408,11 +1513,20 @@ def step3b():
                 if grid_config_data and 'categories' in grid_config_data:
                     total_elements = sum(len(category['elements']) for category in grid_config_data['categories'])
                 
-                # Use ACTUAL tasks_per_consumer from task generation result
-                actual_tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
-                total_tasks = actual_tasks_per_consumer * grid_iped_data['number_of_respondents']
+                # Use ACTUAL tasks_per_consumer from task generation result if available
+                if step3a_data and 'tasks_matrix' in step3a_data and 'metadata' in step3a_data['tasks_matrix']:
+                    actual_tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
+                    print(f"DEBUG: Found metadata in step3a_data: {step3a_data['tasks_matrix']['metadata']}")
+                    print(f"DEBUG: Using ACTUAL tasks_per_consumer from metadata: {actual_tasks_per_consumer}")
+                    print(f"DEBUG: This replaces the configured value: {grid_iped_data.get('tasks_per_consumer', 8)}")
+                else:
+                    actual_tasks_per_consumer = grid_iped_data.get('tasks_per_consumer', 8)
+                    print(f"DEBUG: WARNING - No metadata found, using fallback tasks_per_consumer: {actual_tasks_per_consumer}")
+                    print(f"DEBUG: step3a_data keys: {list(step3a_data.keys()) if step3a_data else 'None'}")
+                    if step3a_data and 'tasks_matrix' in step3a_data:
+                        print(f"DEBUG: tasks_matrix keys: {list(step3a_data['tasks_matrix'].keys()) if isinstance(step3a_data['tasks_matrix'], dict) else 'Not a dict'}")
                 
-                print(f"DEBUG: Using actual tasks_per_consumer: {actual_tasks_per_consumer} (was {grid_iped_data.get('tasks_per_consumer', 8)})")
+                total_tasks = actual_tasks_per_consumer * grid_iped_data['number_of_respondents']
                 
                 study.iped_parameters = IPEDParameters(
                     num_elements=total_elements,
@@ -1421,6 +1535,9 @@ def step3b():
                     exposure_tolerance_cv=grid_iped_data.get('exposure_tolerance_cv', 1.0),
                     total_tasks=total_tasks
                 )
+                
+                print(f"✅ SAVED: IPED Parameters set with ACTUAL tasks_per_consumer: {actual_tasks_per_consumer}")
+                print(f"✅ SAVED: Total tasks: {total_tasks} = {actual_tasks_per_consumer} × {grid_iped_data['number_of_respondents']}")
             else:
                 # Layer study - use layer_iped data and calculate from layer_config
                 layer_iped_data = draft.get_step_data('layer_iped')
@@ -1443,15 +1560,7 @@ def step3b():
                     tasks_per_consumer=tasks_per_consumer  # Save tasks per consumer
                 )
             
-            # Set generated tasks based on study type
-            study_type = draft.get_step_data('1b').get('study_type', 'grid')
-            
-            if study_type == 'grid':
-                step3a_data = draft.get_step_data('3a_grid')
-            else:
-                step3a_data = draft.get_step_data('3a_layer')
-            
-            print(f"DEBUG: Step3a data for {study_type} study: {step3a_data}")
+            # Set generated tasks based on study type (step3a_data already retrieved above)
             
             if not step3a_data:
                 flash('Step 3a data not found. Please go back to step 3a and generate the task matrix first.', 'error')
@@ -1478,13 +1587,30 @@ def step3b():
                 # Fallback for old format
                 study.tasks = step3a_data['tasks_matrix']
                 print(f"DEBUG: Tasks matrix set directly (legacy format)")
-            
+                
             # Generate share URL
             study.generate_share_url(request.host_url.rstrip('/'))
             
             # Save study
             study.save()
             print(f"DEBUG: Study saved with ID: {study._id}")
+            
+            # Verify the saved values
+            print(f"🔍 VERIFICATION: Study IPED Parameters after save:")
+            print(f"  - tasks_per_consumer: {study.iped_parameters.tasks_per_consumer}")
+            print(f"  - number_of_respondents: {study.iped_parameters.number_of_respondents}")
+            print(f"  - total_tasks: {study.iped_parameters.total_tasks}")
+            print(f"  - num_elements: {study.iped_parameters.num_elements}")
+            
+            # Also verify tasks structure
+            if hasattr(study, 'tasks') and study.tasks:
+                first_respondent_tasks = study.tasks.get('0', [])
+                actual_tasks_count = len(first_respondent_tasks) if first_respondent_tasks else 0
+                print(f"🔍 VERIFICATION: Actual tasks per consumer in study.tasks: {actual_tasks_count}")
+                if actual_tasks_count != study.iped_parameters.tasks_per_consumer:
+                    print(f"⚠️  MISMATCH: IPED says {study.iped_parameters.tasks_per_consumer} but actual tasks show {actual_tasks_count}")
+                else:
+                    print(f"✅ MATCH: IPED and actual tasks both show {actual_tasks_count} tasks per consumer")
             
             # Update user's studies list
             current_user.studies.append(study)
@@ -1539,6 +1665,13 @@ def step3b():
         'step3a': draft.get_step_data('3a')
     }
     
+    # Get step3a_data for both layer and grid studies to access task generation metadata
+    study_type = preview_data['step1b'].get('study_type', 'grid') if preview_data['step1b'] else 'grid'
+    if study_type == 'grid':
+        step3a_data = draft.get_step_data('3a_grid')
+    else:
+        step3a_data = draft.get_step_data('3a_layer')
+    
     # Calculate IPED parameters for layer studies
     if preview_data['step1b'] and preview_data['step1b'].get('study_type') == 'layer':
         layer_config_data = preview_data['layer_config']
@@ -1556,12 +1689,18 @@ def step3b():
                 if layer_images > 0:
                     uniqueness_capacity *= layer_images
             
-            # Calculate tasks per consumer based on original algorithm
-            tasks_per_consumer = 24  # Default
-            if uniqueness_capacity < 24:
-                tasks_per_consumer = uniqueness_capacity
+            # Use ACTUAL tasks_per_consumer from task generation metadata if available
+            if step3a_data and 'tasks_matrix' in step3a_data and 'metadata' in step3a_data['tasks_matrix']:
+                tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
+                print(f"DEBUG: Using ACTUAL tasks_per_consumer from layer task metadata: {tasks_per_consumer}")
+            else:
+                # Fallback to calculated value if metadata not available
+                tasks_per_consumer = 24  # Default
+                if uniqueness_capacity < 24:
+                    tasks_per_consumer = uniqueness_capacity
+                print(f"DEBUG: Using fallback tasks_per_consumer for layer: {tasks_per_consumer}")
             
-            # Calculate total tasks
+            # Calculate total tasks using ACTUAL tasks_per_consumer
             total_tasks = tasks_per_consumer * layer_iped_data.get('number_of_respondents', 0)
             
             # Add calculated IPED parameters to preview data
@@ -1574,10 +1713,48 @@ def step3b():
                 'total_tasks': total_tasks
             }
     
+    # Calculate IPED parameters for grid studies
+    if preview_data['step1b'] and preview_data['step1b'].get('study_type') == 'grid':
+        grid_config_data = preview_data['grid_config']
+        grid_iped_data = preview_data['grid_iped']
+        
+        if grid_config_data and 'categories' in grid_config_data and grid_iped_data:
+            # Calculate parameters from grid configuration
+            total_categories = len(grid_config_data['categories'])
+            total_elements = sum(len(category.get('elements', [])) for category in grid_config_data['categories'])
+            
+            # Use ACTUAL tasks_per_consumer from task generation metadata if available
+            if step3a_data and 'tasks_matrix' in step3a_data and 'metadata' in step3a_data['tasks_matrix']:
+                tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
+                print(f"DEBUG: Using ACTUAL tasks_per_consumer from grid task metadata: {tasks_per_consumer}")
+            else:
+                # Fallback to configured value if metadata not available
+                tasks_per_consumer = grid_iped_data.get('tasks_per_consumer', 8)
+                print(f"DEBUG: Using fallback tasks_per_consumer for grid: {tasks_per_consumer}")
+            
+            # Calculate total tasks using ACTUAL tasks_per_consumer
+            total_tasks = tasks_per_consumer * grid_iped_data.get('number_of_respondents', 0)
+            
+            # Add calculated IPED parameters to preview data
+            preview_data['grid_iped_calculated'] = {
+                'total_categories': total_categories,
+                'total_elements': total_elements,
+                'tasks_per_consumer': tasks_per_consumer,
+                'number_of_respondents': grid_iped_data.get('number_of_respondents', 0),
+                'total_tasks': total_tasks
+            }
+    
     # Debug: Print the data structure
     print(f"DEBUG: Step3b preview data structure:")
     print(f"DEBUG: Step2a data: {preview_data['step2a']}")
     print(f"DEBUG: Grid config data: {preview_data['grid_config']}")
+    print(f"DEBUG: Layer IPED calculated: {preview_data.get('layer_iped_calculated')}")
+    print(f"DEBUG: Grid IPED calculated: {preview_data.get('grid_iped_calculated')}")
+    print(f"DEBUG: Step3a data available: {step3a_data is not None}")
+    if step3a_data:
+        print(f"DEBUG: Step3a data keys: {list(step3a_data.keys())}")
+        if 'tasks_matrix' in step3a_data and 'metadata' in step3a_data['tasks_matrix']:
+            print(f"DEBUG: Task metadata: {step3a_data['tasks_matrix']['metadata']}")
     if preview_data['step2a']:
         print(f"DEBUG: Step2a elements: {preview_data['step2a'].get('elements', [])}")
         if 'elements' in preview_data['step2a']:
@@ -2476,7 +2653,7 @@ def grid_iped():
             # Process IPED parameters
             number_of_respondents = int(request.form.get('number_of_respondents', 100))
             
-            # Get grid configuration data
+            # Get grid configuration data first (needed for both cases)
             grid_config_data = draft.get_step_data('grid_config')
             categories_data = grid_config_data.get('categories', []) if grid_config_data else []
             
@@ -2487,8 +2664,32 @@ def grid_iped():
             # Calculate total elements across all categories
             total_elements = sum(len(cat.get('elements', [])) for cat in categories_data)
             
-            # Auto-calculate tasks per consumer (similar to layer logic)
-            tasks_per_consumer = max(8, min(24, total_elements * 2))  # 2 tasks per element, min 8, max 24
+            # Get calculated tasks_per_consumer from form (if provided)
+            calculated_tasks = request.form.get('calculated_tasks_per_consumer')
+            if calculated_tasks and calculated_tasks.isdigit():
+                tasks_per_consumer = int(calculated_tasks)
+                print(f"DEBUG: Grid IPED - Using calculated value from form: {tasks_per_consumer}")
+            else:
+                # Use advanced algorithm from latest grid task generation
+                category_info = {}
+                for category in categories_data:
+                    category_name = category.get('category_name', f"category_{len(category_info)+1}")
+                    elements = category.get('elements', [])
+                    category_info[category_name] = [f"element_{i+1}" for i in range(len(elements))]
+                
+                try:
+                    from utils.task_generation import plan_T_E_auto
+                    T, E, A_map, avg_k, A_min_used = plan_T_E_auto(
+                        category_info=category_info, 
+                        study_mode="grid", 
+                        max_active_per_row=min(4, len(category_info))  # GRID_MAX_ACTIVE = 4
+                    )
+                    tasks_per_consumer = T
+                    print(f"DEBUG: Grid IPED - Advanced algorithm calculated tasks_per_consumer: {tasks_per_consumer}")
+                except Exception as e:
+                    print(f"DEBUG: Grid IPED - Advanced algorithm failed ({e}), using fallback calculation")
+                    # Fallback to simple calculation
+                    tasks_per_consumer = max(8, min(24, total_elements * 2))  # 2 tasks per element, min 8, max 24
             
             # Save IPED parameters
             iped_data = {
@@ -2518,9 +2719,44 @@ def grid_iped():
     if grid_iped_data:
         form.number_of_respondents.data = grid_iped_data.get('number_of_respondents', 100)
     
+    # Calculate and show current values for display
+    grid_config_data = draft.get_step_data('grid_config')
+    calculated_values = {}
+    
+    if grid_config_data and 'categories' in grid_config_data:
+        categories_data = grid_config_data.get('categories', [])
+        total_elements = sum(len(cat.get('elements', [])) for cat in categories_data)
+        
+        # Use advanced algorithm to calculate tasks_per_consumer for display
+        category_info = {}
+        for category in categories_data:
+            category_name = category.get('category_name', f"category_{len(category_info)+1}")
+            elements = category.get('elements', [])
+            category_info[category_name] = [f"element_{i+1}" for i in range(len(elements))]
+        
+        try:
+            from utils.task_generation import plan_T_E_auto
+            T, E, A_map, avg_k, A_min_used = plan_T_E_auto(
+                category_info=category_info, 
+                study_mode="grid", 
+                max_active_per_row=min(4, len(category_info))
+            )
+            calculated_tasks_per_consumer = T
+            print(f"DEBUG: Grid IPED GET - Advanced algorithm calculated tasks_per_consumer: {calculated_tasks_per_consumer}")
+        except Exception as e:
+            print(f"DEBUG: Grid IPED GET - Advanced algorithm failed ({e}), using fallback")
+            calculated_tasks_per_consumer = max(8, min(24, total_elements * 2))
+        
+        calculated_values = {
+            'total_elements': total_elements,
+            'tasks_per_consumer': calculated_tasks_per_consumer,
+            'total_categories': len(categories_data)
+        }
+    
     render_start = time.time()
     result = render_template('study_creation/grid_iped.html', 
-                           form=form, current_step='grid_iped', draft=draft)
+                           form=form, current_step='grid_iped', draft=draft,
+                           calculated_values=calculated_values)
     render_duration = time.time() - render_start
     print(f"⏱️  [PERF] Grid IPED template rendering took {render_duration:.3f}s")
     

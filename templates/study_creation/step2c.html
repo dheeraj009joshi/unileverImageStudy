@@ -208,12 +208,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 K = 4;
             }
             
-            // Calculate maximum possible tasks per consumer (uniqueness capacity)
-            const maxTasksPerConsumer = calculateCombination(numElements, K);
+            // Use backend-calculated value if available, otherwise fallback to simple calculation
+            const backendCalculatedTasks = {{ calculated_tasks_per_consumer|default('null') }};
+            let tasksPerConsumer;
             
-            // For now, set tasks per consumer to a reasonable value
-            // In the actual script, this would be optimized based on the algorithm
-            const tasksPerConsumer = Math.min(24, Math.floor(maxTasksPerConsumer / 2));
+            if (backendCalculatedTasks !== null) {
+                tasksPerConsumer = backendCalculatedTasks;
+                console.log('Using backend-calculated tasks per consumer:', tasksPerConsumer);
+            } else {
+                // Fallback to simple calculation
+                const maxTasksPerConsumer = calculateCombination(numElements, K);
+                tasksPerConsumer = Math.min(24, Math.floor(maxTasksPerConsumer / 2));
+                console.log('Using fallback calculation:', tasksPerConsumer);
+            }
             
             // Calculate total tasks
             const totalTasks = tasksPerConsumer * numRespondents;

@@ -489,7 +489,67 @@
     display: block;
 }
 
-/* Grid Study Vignettes - Grid layout */
+/* Grid Study Vignettes - Same layout as task display */
+.grid-elements-container {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* 2 elements: 2 rows, 1 column (stacked vertically) */
+.grid-elements-container.elements-2 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+/* 3 elements: 2 rows - first row 2 columns, second row 1 centered column */
+.grid-elements-container.elements-3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.grid-elements-container.elements-3 .grid-element-item:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 50%;
+}
+
+/* 4 elements: 2 rows, 2 columns */
+.grid-elements-container.elements-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+/* Fallback for other numbers of elements */
+.grid-elements-container:not(.elements-2):not(.elements-3):not(.elements-4) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-auto-rows: 1fr;
+}
+
+.grid-element-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    justify-content: center;
+}
+
+.grid-element-item .task-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+/* Legacy grid vignettes for backward compatibility */
 .vignettes-grid.grid-vignettes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1262,28 +1322,37 @@
 }
 
 .task-header {
-    
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-primary-50);
+    padding: var(--space-4);
+    background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%);
     border-bottom: 1px solid var(--color-primary-200);
 }
 
 .task-header h5 {
     margin: 0;
-    color: var(--color-primary-700);
+    color: var(--color-primary-800);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.task-header h5::before {
+    content: '📋';
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
 }
 
 .task-duration {
-    background: var(--color-primary-100);
-    color: var(--color-primary-700);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
+    background: var(--color-primary-600);
+    color: white;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full);
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .task-details {
@@ -1291,31 +1360,45 @@
 }
 
 .task-info-grid {
-    margin-bottom: 3rem;
+    margin-bottom: var(--space-6);
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-gray-200);
 }
-.info-item{
-    padding: 0 !important;
-}
+
 .task-info-grid .info-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-gray-200);
+    transition: all 0.2s ease;
+}
+
+.task-info-grid .info-item:hover {
+    border-color: var(--color-primary-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .task-info-grid .label {
     font-weight: var(--font-weight-medium);
     color: var(--color-gray-600);
     font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
 }
 
 .task-info-grid .value {
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-900);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
+    line-height: 1.2;
 }
 
 /* Vignettes Section */

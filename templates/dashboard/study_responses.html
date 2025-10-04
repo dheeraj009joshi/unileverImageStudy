@@ -500,25 +500,13 @@ function viewResponseDetails(responseId) {
                                                 `).join('')}
                                             </div>
                                         ` : task.vignettes[0].type === 'grid' ? `
-                                            <!-- Grid Study: Grid layout -->
-                                            <div class="vignettes-grid grid-vignettes">
+                                            <!-- Grid Study: Same layout as task display -->
+                                            <div class="grid-elements-container elements-${task.vignettes.length}">
                                                 ${task.vignettes.map(vignette => `
-                                                    <div class="vignette-item grid-vignette">
-                                                        <div class="vignette-header">
-                                                            <span class="vignette-type">Grid Element</span>
-                                                            <span class="vignette-element-id">ID: ${vignette.element_id || 'N/A'}</span>
-                                                            ${vignette.is_active ? '<span class="vignette-active">Active</span>' : ''}
-                                                        </div>
-                                                        <div class="vignette-content">
-                                                            <img src="${vignette.content}" 
-                                                                 alt="Grid element ${vignette.element_name || 'Unknown'}" 
-                                                                 class="vignette-image" 
-                                                                 onerror="this.style.display='none';" />
-                                                            <div class="vignette-info">
-                                                                <span class="vignette-name">${vignette.element_name || 'Unknown'}</span>
-                                                                <span class="vignette-status">${vignette.is_active ? 'Active' : 'Inactive'}</span>
-                                                            </div>
-                                                        </div>
+                                                    <div class="grid-element-item">
+                                                        <img src="${vignette.content}" 
+                                                             alt="${vignette.alt_text || vignette.element_name || 'Element'}" 
+                                                             class="task-image grid-image">
                                                     </div>
                                                 `).join('')}
                                             </div>

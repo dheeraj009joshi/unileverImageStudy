@@ -213,15 +213,12 @@ body {
 
 /* Grid elements container for grid studies */
 .grid-elements-container {
-    display: flex;
-
-    justify-content: center;
-    align-items: flex-start;
+    display: grid;
     gap: 1rem;
     padding: 1rem;
-    background: #f8fafc;
+ 
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
+   
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
@@ -230,16 +227,44 @@ body {
     z-index: 1;
 }
 
+/* 2 elements: 2 rows, 1 column (stacked vertically) */
+.grid-elements-container.elements-2 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+/* 3 elements: 2 rows - first row 2 columns, second row 1 centered column */
+.grid-elements-container.elements-3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.grid-elements-container.elements-3 .grid-element-item:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 50%;
+}
+
+/* 4 elements: 2 rows, 2 columns */
+.grid-elements-container.elements-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+/* Fallback for other numbers of elements */
+.grid-elements-container:not(.elements-2):not(.elements-3):not(.elements-4) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-auto-rows: 1fr;
+}
+
 .grid-element-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    background: white;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    min-height: 200px;
+    justify-content: center;
 }
 
 .grid-image {
@@ -972,74 +997,115 @@ class LightningTaskFlow {
         if (studyType === 'grid' || studyType === 'grid_v2') {
             // Grid study elements - show ALL active elements
             if (task.elements_shown_content) {
-                imageHTML = '<div class="grid-elements-container">';
                 let activeElementsCount = 0;
                 
                 console.log('🔍 Grid study elements_shown_content:', task.elements_shown_content);
                 
+                // First pass: count active elements
                 for (const [elementName, elementContent] of Object.entries(task.elements_shown_content)) {
                     if (elementContent && elementContent !== null) {
                         const elementActive = task.elements_shown[elementName];
-                        console.log(`🔍 Element ${elementName}: active=${elementActive}, content=`, elementContent);
                         if (elementActive === 1) {
                             activeElementsCount++;
-                            
-                            // Use preloaded image if available, otherwise fallback to URL
-                            // For grid studies, URL is in elementContent.content, not elementContent.url
-                            const imageUrl = elementContent.content || elementContent.url;
-                            const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(imageUrl) : null;
-                            const imageSrc = preloadedImg ? preloadedImg.src : imageUrl;
-                            
-                            imageHTML += `
-                                <div class="grid-element-item">
-                                    <img src="${imageSrc}" alt="${elementContent.alt_text || elementContent.name}" class="task-image grid-image">
-                                    <div class="element-label">${elementContent.name}</div>
-                                </div>
-                            `;
                         }
                     }
                 }
+                
+                // Create container with appropriate class based on element count
+                let containerClass = 'grid-elements-container';
+                if (activeElementsCount >= 2 && activeElementsCount <= 4) {
+                    containerClass += ` elements-${activeElementsCount}`;
+                }
+                
+                console.log(`🔍 Grid study: Using container class "${containerClass}" for ${activeElementsCount} active elements`);
                 
                 // If no active elements found, show a message
                 if (activeElementsCount === 0) {
                     imageHTML = '<div class="no-elements-message">No elements to display</div>';
                 } else {
+                    imageHTML = `<div class="${containerClass}">`;
+                    
+                    // Second pass: build HTML for active elements
+                    for (const [elementName, elementContent] of Object.entries(task.elements_shown_content)) {
+                        if (elementContent && elementContent !== null) {
+                            const elementActive = task.elements_shown[elementName];
+                            console.log(`🔍 Element ${elementName}: active=${elementActive}, content=`, elementContent);
+                            if (elementActive === 1) {
+                                console.log(`✅ Active element ${elementName}:`, elementContent);
+                                
+                                // Use preloaded image if available, otherwise fallback to URL
+                                // For grid studies, URL is in elementContent.content, not elementContent.url
+                                const imageUrl = elementContent.content || elementContent.url;
+                                const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(imageUrl) : null;
+                                const imageSrc = preloadedImg ? preloadedImg.src : imageUrl;
+                                
+                                imageHTML += `
+                                    <div class="grid-element-item">
+                                        <img src="${imageSrc}" alt="${elementContent.alt_text || elementContent.name}" class="task-image grid-image">
+                                      
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                    
                     imageHTML += '</div>';
                 }
                 
                 console.log(`🔍 Grid study: Found ${activeElementsCount} active elements`);
             } else if (task.elements_shown) {
                 // Legacy grid study format
-                imageHTML = '<div class="grid-elements-container">';
                 let activeElementsCount = 0;
                 
                 console.log('🔍 Legacy grid study elements_shown:', task.elements_shown);
                 
+                // First pass: count active elements
                 for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
                     if (elementName.endsWith('_content') && elementData && elementData !== '') {
                         const baseName = elementName.replace('_content', '');
                         const elementActive = task.elements_shown[baseName];
-                        console.log(`🔍 Element ${baseName}: active=${elementActive}, content=${elementData}`);
                         if (elementActive === 1) {
                             activeElementsCount++;
-                            // Use preloaded image if available, otherwise fallback to URL
-                            const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(elementData) : null;
-                            const imageSrc = preloadedImg ? preloadedImg.src : elementData;
-                            
-                            imageHTML += `
-                                <div class="grid-element-item">
-                                    <img src="${imageSrc}" alt="Element ${baseName}" class="task-image grid-image">
-                                    <div class="element-label">${baseName}</div>
-                                </div>
-                            `;
                         }
                     }
                 }
+                
+                // Create container with appropriate class based on element count
+                let containerClass = 'grid-elements-container';
+                if (activeElementsCount >= 2 && activeElementsCount <= 4) {
+                    containerClass += ` elements-${activeElementsCount}`;
+                }
+                
+                console.log(`🔍 Legacy grid study: Using container class "${containerClass}" for ${activeElementsCount} active elements`);
                 
                 // If no active elements found, show a message
                 if (activeElementsCount === 0) {
                     imageHTML = '<div class="no-elements-message">No elements to display</div>';
                 } else {
+                    imageHTML = `<div class="${containerClass}">`;
+                    
+                    // Second pass: build HTML for active elements
+                    for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
+                        if (elementName.endsWith('_content') && elementData && elementData !== '') {
+                            const baseName = elementName.replace('_content', '');
+                            const elementActive = task.elements_shown[baseName];
+                            console.log(`🔍 Element ${baseName}: active=${elementActive}, content=${elementData}`);
+                            if (elementActive === 1) {
+                                console.log(`✅ Active legacy element ${baseName}:`, elementData);
+                                // Use preloaded image if available, otherwise fallback to URL
+                                const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(elementData) : null;
+                                const imageSrc = preloadedImg ? preloadedImg.src : elementData;
+                                
+                                imageHTML += `
+                                    <div class="grid-element-item">
+                                        <img src="${imageSrc}" alt="Element ${baseName}" class="task-image grid-image">
+                                       
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                    
                     imageHTML += '</div>';
                 }
                 
