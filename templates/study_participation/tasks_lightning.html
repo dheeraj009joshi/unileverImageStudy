@@ -969,13 +969,51 @@ class LightningTaskFlow {
         console.log('🔍 Generating task HTML for study type:', studyType);
         console.log('🔍 Task data:', task);
         
-        if (studyType === 'grid') {
+        if (studyType === 'grid' || studyType === 'grid_v2') {
             // Grid study elements - show ALL active elements
-            if (task.elements_shown) {
+            if (task.elements_shown_content) {
                 imageHTML = '<div class="grid-elements-container">';
                 let activeElementsCount = 0;
                 
-                console.log('🔍 Grid study elements_shown:', task.elements_shown);
+                console.log('🔍 Grid study elements_shown_content:', task.elements_shown_content);
+                
+                for (const [elementName, elementContent] of Object.entries(task.elements_shown_content)) {
+                    if (elementContent && elementContent !== null) {
+                        const elementActive = task.elements_shown[elementName];
+                        console.log(`🔍 Element ${elementName}: active=${elementActive}, content=`, elementContent);
+                        if (elementActive === 1) {
+                            activeElementsCount++;
+                            
+                            // Use preloaded image if available, otherwise fallback to URL
+                            // For grid studies, URL is in elementContent.content, not elementContent.url
+                            const imageUrl = elementContent.content || elementContent.url;
+                            const preloadedImg = window.imagePreloader ? window.imagePreloader.getPreloadedImage(imageUrl) : null;
+                            const imageSrc = preloadedImg ? preloadedImg.src : imageUrl;
+                            
+                            imageHTML += `
+                                <div class="grid-element-item">
+                                    <img src="${imageSrc}" alt="${elementContent.alt_text || elementContent.name}" class="task-image grid-image">
+                                    <div class="element-label">${elementContent.name}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
+                // If no active elements found, show a message
+                if (activeElementsCount === 0) {
+                    imageHTML = '<div class="no-elements-message">No elements to display</div>';
+                } else {
+                    imageHTML += '</div>';
+                }
+                
+                console.log(`🔍 Grid study: Found ${activeElementsCount} active elements`);
+            } else if (task.elements_shown) {
+                // Legacy grid study format
+                imageHTML = '<div class="grid-elements-container">';
+                let activeElementsCount = 0;
+                
+                console.log('🔍 Legacy grid study elements_shown:', task.elements_shown);
                 
                 for (const [elementName, elementData] of Object.entries(task.elements_shown)) {
                     if (elementName.endsWith('_content') && elementData && elementData !== '') {
@@ -1005,9 +1043,9 @@ class LightningTaskFlow {
                     imageHTML += '</div>';
                 }
                 
-                console.log(`🔍 Grid study: Found ${activeElementsCount} active elements`);
+                console.log(`🔍 Legacy grid study: Found ${activeElementsCount} active elements`);
             } else {
-                console.warn('⚠️ No elements_shown found in task data');
+                console.warn('⚠️ No elements_shown_content or elements_shown found in task data');
             }
         } else if (studyType === 'layer') {
             // Layer study elements - show ALL images with proper z-index layering
@@ -1646,7 +1684,7 @@ class LightningTaskFlow {
             console.log(`🔍 Elements at rating option ${index + 1} center:`, elementsAtPoint.map(el => ({
                 tagName: el.tagName,
                 className: el.className,
-                id: el.id,
+                id: el.element_id,
                 zIndex: window.getComputedStyle(el).zIndex
             })));
         });
@@ -1768,7 +1806,7 @@ class LightningTaskFlow {
             console.log('🧪 Elements at rating section center:', elementsAtCenter.map(el => ({
                 tagName: el.tagName,
                 className: el.className,
-                id: el.id
+                id: el.element_id
             })));
         }
         

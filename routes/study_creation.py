@@ -3,17 +3,19 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 import uuid
+import json
 from datetime import datetime
 import time
-from models.study import Study, RatingScale, StudyElement, ClassificationQuestion, IPEDParameters, LayerImage, StudyLayer
+from models.study import Study, RatingScale, StudyElement, ClassificationQuestion, IPEDParameters, LayerImage, StudyLayer, GridCategory
 from models.study_draft import StudyDraft
 from models.user import User
 from forms.study import (
     Step1aBasicDetailsForm, Step1bStudyTypeForm, Step1cRatingScaleForm,
     Step2cIPEDParametersForm, Step3aTaskGenerationForm, Step3bLaunchForm,
-    LayerConfigForm, LayerIPEDForm
+    LayerConfigForm, LayerIPEDForm,GridConfigForm,GridIPEDForm
 )
 from utils.azure_storage import upload_to_azure, upload_multiple_files_to_azure, upload_layer_images_to_azure, is_valid_image_file, get_file_size_mb
+from utils.task_generation import generate_grid_tasks_v2, generate_layer_tasks_v2
 import math
 import base64
 import io
@@ -89,9 +91,9 @@ def navigate_to_step(step_id):
     draft_duration = time.time() - draft_start
     print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
     
-    # Check if step is accessible
+    # Check if step is accessible (step1a is always accessible)
     access_start = time.time()
-    if not draft.can_access_step(step_id):
+    if step_id != '1a' and not draft.can_access_step(step_id):
         flash('You cannot access this step yet. Please complete previous steps first.', 'warning')
         return redirect(url_for('study_creation.index'))
     access_duration = time.time() - access_start
@@ -107,6 +109,10 @@ def navigate_to_step(step_id):
         result = redirect(url_for('study_creation.step1c'))
     elif step_id == 'layer_config':
         result = redirect(url_for('study_creation.layer_config'))
+    elif step_id == 'grid_config':
+        result = redirect(url_for('study_creation.grid_config'))
+    elif step_id == 'grid_iped':
+        result = redirect(url_for('study_creation.grid_iped'))
     elif step_id == '2a':
         result = redirect(url_for('study_creation.step2a'))
     elif step_id == '2b':
@@ -140,22 +146,7 @@ def step1a():
     draft_duration = time.time() - draft_start
     print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
     
-    if request.method == 'GET':
-        # For GET requests (viewing/navigating), use can_access_step
-        access_start = time.time()
-        if not draft.can_access_step('1a'):
-            flash('Please complete previous steps first.', 'warning')
-            return redirect(url_for('study_creation.index'))
-        access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
-    else:
-        # For POST requests (submitting), use can_proceed_to_step
-        proceed_start = time.time()
-        if not draft.can_proceed_to_step('1a'):
-            flash('Please complete previous steps first.', 'warning')
-            return redirect(url_for('study_creation.index'))
-        proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+    # Step1a is always accessible - no validation needed
     
     form_start = time.time()
     form = Step1aBasicDetailsForm()
@@ -521,21 +512,38 @@ def step2a():
             print(f"⚡ Starting ultra-fast database save for {len(elements_data)} elements")
             db_start_time = time.time()
             
-            draft.update_step_data('2a', {
-                'elements': elements_data,
-                'study_type': study_type,
-                'num_elements': len(elements_data)  # Auto-calculate from actual elements
-            })
+            if study_type == 'grid':
+                # For grid studies, save as categories with a single default category
+                categories_data = [{
+                    'category_id': 'default_category',
+                    'name': 'Default Category',
+                    'description': 'Default category for grid elements',
+                    'elements': elements_data,
+                    'order': 0
+                }]
+                draft.update_step_data('2a', {
+                    'categories': categories_data,
+                    'elements': elements_data,  # Keep for backward compatibility
+                    'study_type': study_type,
+                    'num_elements': len(elements_data)
+                })
+            else:
+                # For layer studies, save as regular elements
+                draft.update_step_data('2a', {
+                    'elements': elements_data,
+                    'study_type': study_type,
+                        'num_elements': len(elements_data)
+                })
             
             db_duration = time.time() - db_start_time
             print(f"⚡ Database save completed in {db_duration:.3f} seconds")
             
             # Redirect based on study type
             if study_type == 'grid':
-                draft.current_step = '2c'  # Go to IPED parameters for grid studies
+                draft.current_step = 'grid_config'  # Go to grid category configuration for grid studies
                 draft.save()
                 flash(f'Study elements saved successfully! Created {len(elements_data)} elements.', 'success')
-                return redirect(url_for('study_creation.step2c'))
+                return redirect(url_for('study_creation.grid_config'))
             else:  # layer study
                 draft.current_step = 'layer_config'  # Go to layer configuration for layer studies
                 draft.save()
@@ -651,10 +659,10 @@ def step2b():
         # Redirect based on study type
         study_type = draft.get_step_data('1b').get('study_type', 'grid')
         if study_type == 'grid':
-            draft.current_step = '2a'
+            draft.current_step = 'grid_config'
             draft.save()
             flash('Classification questions saved successfully!', 'success')
-            return redirect(url_for('study_creation.step2a'))
+            return redirect(url_for('study_creation.grid_config'))
         elif study_type == 'layer':
             draft.current_step = 'layer_config'
             draft.save()
@@ -824,7 +832,12 @@ def step3a():
     
     # Get study type to determine which previous step to check
     study_type = draft.get_step_data('1b').get('study_type', 'grid')
-    previous_step = 'layer_iped' if study_type == 'layer' else 'step2c'
+    if study_type == 'layer':
+        previous_step = 'layer_iped'
+    elif study_type == 'grid':
+        previous_step = 'grid_iped'  # Grid studies use grid_iped for IPED
+    else:
+        previous_step = 'step2c'
     
     if request.method == 'GET':
         print(f"DEBUG: Checking access to step3a for {study_type} study")
@@ -854,71 +867,63 @@ def step3a():
                 # Grid study task generation
                 print(f"DEBUG: Starting task generation for grid study")
                 
-                # Create temporary study object to generate tasks
-                temp_study = Study()
-                step2c_data = draft.get_step_data('2c')
+                # Get grid IPED data
+                grid_iped_data = draft.get_step_data('grid_iped')
+                print(f"DEBUG: Grid IPED data: {grid_iped_data}")
                 
-                print(f"DEBUG: Step 2c data: {step2c_data}")
-                
-                if not step2c_data:
-                    flash('IPED parameters not found. Please complete step 2c first.', 'error')
+                if not grid_iped_data:
+                    flash('IPED parameters not found. Please complete grid IPED step first.', 'error')
                     return render_template('study_creation/step3a_grid.html', 
                                         form=form, tasks_matrix={}, 
-                                        step2c_data={},
+                                        grid_iped_data={},
                                         matrix_summary={},
                                         current_step='3a', draft=draft)
                 
-                # Set IPED parameters
-                temp_study.iped_parameters = IPEDParameters(
-                    num_elements=step2c_data['num_elements'],
-                    tasks_per_consumer=step2c_data['tasks_per_consumer'],
-                    number_of_respondents=step2c_data['number_of_respondents'],
-                    exposure_tolerance_cv=step2c_data.get('exposure_tolerance_cv', 1.0),
-                    seed=step2c_data.get('seed'),
-                    total_tasks=step2c_data['total_tasks']
-                )
+                # Get grid configuration data
+                grid_config_data = draft.get_step_data('grid_config')
+                print(f"DEBUG: Grid config data: {grid_config_data}")
                 
-                print(f"DEBUG: IPED parameters set: {temp_study.iped_parameters}")
+                if not grid_config_data:
+                    flash('Grid configuration not found. Please complete grid configuration step first.', 'error')
+                    return render_template('study_creation/step3a_grid.html', 
+                                        form=form, tasks_matrix={}, 
+                                        grid_iped_data={},
+                                        matrix_summary={},
+                                        current_step='3a', draft=draft)
                 
-                # Get elements from step2a data
-                step2a_data = draft.get_step_data('2a')
-                print(f"DEBUG: Step 2a data: {step2a_data}")
+                # Generate task matrix using new category-based approach
+                print(f"DEBUG: Calling generate_grid_tasks_v2 from utils")
+                from utils.task_generation import generate_grid_tasks_v2
                 
-                if step2a_data and 'elements' in step2a_data:
-                    temp_study.elements = []
-                    for i, element_data in enumerate(step2a_data['elements']):
-                        print(f"DEBUG: Processing element {i}: {element_data}")
-                        element = StudyElement(
-                            name=element_data.get('name', ''),
-                            description=element_data.get('description', ''),
-                            element_type=element_data.get('element_type', 'image'),
-                            content=element_data.get('content', ''),
-                            alt_text=element_data.get('alt_text', '')
-                        )
-                        print(f"DEBUG: Created element: {element}")
-                        print(f"DEBUG: Element content: {element.content}")
-                        temp_study.elements.append(element)
-                    
-                    print(f"DEBUG: Created {len(temp_study.elements)} elements")
-                    print(f"DEBUG: All elements: {temp_study.elements}")
-                else:
-                    print(f"DEBUG: No step2a data or no elements found")
-                    print(f"DEBUG: step2a_data: {step2a_data}")
-                
-                # Generate task matrix
-                print(f"DEBUG: Calling generate_grid_tasks from utils")
-                from utils.task_generation import generate_grid_tasks
-                
-                tasks_matrix = generate_grid_tasks(
-                    num_elements=step2c_data['num_elements'],
-                    tasks_per_consumer=step2c_data['tasks_per_consumer'],
-                    number_of_respondents=step2c_data['number_of_respondents'],
-                    exposure_tolerance_cv=step2c_data.get('exposure_tolerance_cv', 1.0),
-                    seed=step2c_data.get('seed'),
-                    elements=temp_study.elements
+                task_generation_start = time.time()
+                print(f"🔄 Starting task generation at {time.strftime('%H:%M:%S', time.localtime(task_generation_start))}")
+                tasks_matrix = generate_grid_tasks_v2(
+                    categories_data=grid_config_data['categories'],
+                    number_of_respondents=grid_iped_data['number_of_respondents'],
+                    exposure_tolerance_cv=grid_iped_data.get('exposure_tolerance_cv', 1.0),
+                    seed=grid_iped_data.get('seed')
                 )['tasks']
+                task_generation_duration = time.time() - task_generation_start
+                print(f"⏱️ Task generation completed in {task_generation_duration:.2f} seconds")
                 
                 print(f"DEBUG: Task matrix generated successfully: {len(tasks_matrix)} respondents")
+                
+                # Save grid study task matrix
+                draft.update_step_data('3a_grid', {
+                    'tasks_matrix': tasks_matrix,
+                    'generated_at': datetime.utcnow().isoformat(),
+                    'regenerate_matrix': bool(getattr(form, 'regenerate_matrix', False) and form.regenerate_matrix.data),
+                    'step_completed': True
+                })
+                
+                draft.current_step = '3b'
+                draft.save()
+                
+                print(f"DEBUG: Step 3a marked as complete for grid study")
+                print(f"DEBUG: Draft saved with current_step: {draft.current_step}")
+                
+                flash('Task matrix generated successfully!', 'success')
+                return redirect(url_for('study_creation.step3b'))
                 
             else:
                 # Layer study task generation
@@ -947,42 +952,22 @@ def step3a():
                 
                 from utils.task_generation import generate_layer_tasks_v2
                 
+                task_generation_start = time.time()
+                print(f"🔄 Starting layer task generation at {time.strftime('%H:%M:%S', time.localtime(task_generation_start))}")
                 result = generate_layer_tasks_v2(
                     layers_data=layer_config_data['layers'],
                     number_of_respondents=layer_iped_data['number_of_respondents'],
                     exposure_tolerance_pct=2.0,  # Fixed as per original script
                     seed=None  # Not used in original logic
                 )
+                task_generation_duration = time.time() - task_generation_start
+                print(f"⏱️ Layer task generation completed in {task_generation_duration:.2f} seconds")
                 
                 tasks_matrix = result['tasks']
                 print(f"DEBUG: Layer task matrix generated successfully: {len(tasks_matrix)} respondents")
                 
             # Mark step 3a as complete by ensuring data is properly saved
-            if study_type == 'grid':
-                # Ensure 3a_grid data is saved and step is marked complete
-                draft.update_step_data('3a_grid', {
-                    'tasks_matrix': tasks_matrix,
-                    'generated_at': datetime.utcnow().isoformat(),
-                    'regenerate_matrix': bool(getattr(form, 'regenerate_matrix', False) and form.regenerate_matrix.data),
-                    'step_completed': True
-                })
-            else:
-                # Ensure 3a_layer data is saved and step is marked complete
-                draft.update_step_data('3a_layer', {
-                    'tasks_matrix': tasks_matrix,
-                    'generated_at': datetime.utcnow().isoformat(),
-                    'regenerate_matrix': bool(getattr(form, 'regenerate_matrix', False) and form.regenerate_matrix.data),
-                    'step_completed': True
-                })
-            
-                draft.current_step = '3b'
-                draft.save()
-            
-                print(f"DEBUG: Step 3a marked as complete for {study_type} study")
-                print(f"DEBUG: Draft saved with current_step: {draft.current_step}")
-                    
-                flash('Task matrix generated successfully!', 'success')
-                return redirect(url_for('study_creation.step3b'))
+                # Layer study task matrix saving is handled above in the layer section
                 
         except Exception as e:
                 error_msg = f'Error generating task matrix: {str(e)}'
@@ -998,41 +983,70 @@ def step3a():
         stored_step3a = draft.get_step_data('3a_grid') or {}
         tasks_matrix = stored_step3a.get('tasks_matrix', {})
         
+        # Get grid IPED data for display
+        grid_iped_data = draft.get_step_data('grid_iped') or {}
+        
+        # Ensure grid_iped_data is properly structured
+        if not isinstance(grid_iped_data, dict):
+            print(f"WARNING: grid_iped_data is not a dict: {type(grid_iped_data)} = {grid_iped_data}")
+            grid_iped_data = {}
+        
+        # Set default values for any missing keys and ensure all values are JSON serializable
+        grid_iped_data.setdefault('number_of_respondents', 100)
+        grid_iped_data.setdefault('tasks_per_consumer', 8)
+        grid_iped_data.setdefault('exposure_tolerance_cv', 1.0)
+        grid_iped_data.setdefault('seed', None)
+        
+        # Ensure all values are JSON serializable (replace Undefined with None)
+        for key, value in grid_iped_data.items():
+            if value is None or value == 'Undefined' or str(value) == 'Undefined':
+                grid_iped_data[key] = None
+                print(f"WARNING: Replaced undefined value for {key}: {value}")
+        
         # Calculate matrix summary for display
         matrix_summary = {}
-        if tasks_matrix:
+        if tasks_matrix and isinstance(tasks_matrix, (dict, list)):
             matrix_summary['total_respondents'] = len(tasks_matrix)
-            matrix_summary['total_tasks'] = sum(len(respondent_tasks) for respondent_tasks in tasks_matrix.values())
-            if matrix_summary['total_respondents'] > 0:
-                matrix_summary['tasks_per_respondent'] = matrix_summary['total_tasks'] // matrix_summary['total_respondents']
-                # Calculate elements per task for grid studies
-                if tasks_matrix and any(tasks_matrix.values()):
-                    first_respondent_tasks = next(iter(tasks_matrix.values()))
-                    if first_respondent_tasks:
-                        first_task = first_respondent_tasks[0]
-                        print(f"DEBUG: Grid study - First task structure: {type(first_task)}")
-                        print(f"DEBUG: Grid study - First task data: {first_task}")
-                        
-                        # Count active elements (excluding _content entries)
-                        if hasattr(first_task, 'elements_shown'):
-                            print(f"DEBUG: Grid study - Using elements_shown attribute")
-                            active_elements = sum(1 for element, is_active in first_task.elements_shown.items() 
-                                               if is_active and not element.endswith('_content'))
-                            matrix_summary['elements_per_task'] = active_elements
-                            print(f"DEBUG: Grid study - Active elements counted: {active_elements}")
-                        elif isinstance(first_task, dict) and 'elements_shown' in first_task:
-                            print(f"DEBUG: Grid study - Using elements_shown dict key")
-                            active_elements = sum(1 for element, is_active in first_task['elements_shown'].items() 
-                                               if is_active and not element.endswith('_content'))
-                            matrix_summary['elements_per_task'] = active_elements
-                            print(f"DEBUG: Grid study - Active elements counted: {active_elements}")
+            try:
+                matrix_summary['total_tasks'] = sum(len(respondent_tasks) for respondent_tasks in tasks_matrix.values() if isinstance(respondent_tasks, list))
+                if matrix_summary['total_respondents'] > 0:
+                    matrix_summary['tasks_per_respondent'] = matrix_summary['total_tasks'] // matrix_summary['total_respondents']
+                    # Calculate elements per task for grid studies
+                    if tasks_matrix and any(tasks_matrix.values()):
+                        first_respondent_tasks = next(iter(tasks_matrix.values()))
+                        if first_respondent_tasks:
+                            first_task = first_respondent_tasks[0]
+                            print(f"DEBUG: Grid study - First task structure: {type(first_task)}")
+                            print(f"DEBUG: Grid study - First task data: {first_task}")
+                            
+                            # Count active elements (excluding _content entries)
+                            if hasattr(first_task, 'elements_shown'):
+                                print(f"DEBUG: Grid study - Using elements_shown attribute")
+                                active_elements = sum(1 for element, is_active in first_task.elements_shown.items() 
+                                                if is_active and not element.endswith('_content'))
+                                matrix_summary['elements_per_task'] = active_elements
+                                print(f"DEBUG: Grid study - Active elements counted: {active_elements}")
+                            elif isinstance(first_task, dict) and 'elements_shown' in first_task:
+                                print(f"DEBUG: Grid study - Using elements_shown dict key")
+                                active_elements = sum(1 for element, is_active in first_task['elements_shown'].items() 
+                                                if is_active and not element.endswith('_content'))
+                                matrix_summary['elements_per_task'] = active_elements
+                                print(f"DEBUG: Grid study - Active elements counted: {active_elements}")
+                            else:
+                                print(f"DEBUG: Grid study - No elements_shown found, available keys: {list(first_task.keys()) if isinstance(first_task, dict) else 'N/A'}")
+                                matrix_summary['elements_per_task'] = 0
                         else:
-                            print(f"DEBUG: Grid study - No elements_shown found, available keys: {list(first_task.keys()) if isinstance(first_task, dict) else 'N/A'}")
                             matrix_summary['elements_per_task'] = 0
                     else:
                         matrix_summary['elements_per_task'] = 0
-                else:
-                    matrix_summary['elements_per_task'] = 0
+            except Exception as e:
+                print(f"ERROR: Failed to calculate matrix summary: {e}")
+                matrix_summary = {
+                    'total_respondents': 0,
+                    'total_tasks': 0,
+                    'tasks_per_respondent': 0,
+                    'elements_per_task': 0
+                }
         else:
             # Set default values when no tasks matrix exists
             matrix_summary = {
@@ -1045,7 +1059,7 @@ def step3a():
         render_start = time.time()
         result = render_template('study_creation/step3a_grid.html', 
                              form=form, tasks_matrix=tasks_matrix, 
-                             step2c_data=draft.get_step_data('2c') or {},
+                             grid_iped_data=grid_iped_data,
                              matrix_summary=matrix_summary,
                              current_step='3a', draft=draft)
         render_duration = time.time() - render_start
@@ -1113,10 +1127,24 @@ def step3a():
                 'elements_per_task': 0
             }
         
+        # Get layer IPED data with defensive checks
+        layer_iped_data = draft.get_step_data('layer_iped') or {}
+        
+        # Ensure layer_iped_data is properly structured and JSON serializable
+        if not isinstance(layer_iped_data, dict):
+            print(f"WARNING: layer_iped_data is not a dict: {type(layer_iped_data)} = {layer_iped_data}")
+            layer_iped_data = {}
+        
+        # Ensure all values are JSON serializable (replace Undefined with None)
+        for key, value in layer_iped_data.items():
+            if value is None or value == 'Undefined' or str(value) == 'Undefined':
+                layer_iped_data[key] = None
+                print(f"WARNING: Replaced undefined value for {key}: {value}")
+        
         render_start = time.time()
         result = render_template('study_creation/step3a_layer.html', 
                              form=form, tasks_matrix=tasks_matrix, 
-                             layer_iped_data=draft.get_step_data('layer_iped') or {},
+                             layer_iped_data=layer_iped_data,
                              matrix_summary=matrix_summary,
                              current_step='3a', draft=draft)
         render_duration = time.time() - render_start
@@ -1214,13 +1242,44 @@ def step3b():
             study_type = draft.get_step_data('1b').get('study_type', 'grid')
             
             if study_type == 'grid':
-                # Grid study - traditional elements
+                # Grid study - new category-based structure
+                grid_categories = []
+                grid_config_data = draft.get_step_data('grid_config')
+                
+                if grid_config_data and 'categories' in grid_config_data:
+                    for i, category_data in enumerate(grid_config_data['categories']):
+                        category = GridCategory(
+                            category_id=category_data.get('category_id', str(uuid.uuid4())),
+                            name=category_data.get('name', f'Category {i+1}'),
+                            description=category_data.get('description', ''),
+                            order=category_data.get('order', i)
+                        )
+                        
+                        # Add elements to this category
+                        category_elements = []
+                        for j, element_data in enumerate(category_data['elements']):
+                            element = StudyElement(
+                                element_id=element_data.get('element_id', str(uuid.uuid4())),
+                                name=element_data['name'],
+                                description=element_data.get('description', ''),
+                                element_type=element_data.get('element_type', 'image'),
+                                content=element_data['content'],
+                                alt_text=element_data.get('alt_text', '')
+                            )
+                            category_elements.append(element)
+                        
+                        category.elements = category_elements
+                        grid_categories.append(category)
+                
+                study.grid_categories = grid_categories
+                
+                # Keep legacy elements for backward compatibility if they exist
                 elements = []
                 step2a_data = draft.get_step_data('2a')
                 if step2a_data and 'elements' in step2a_data:
                     for i, element_data in enumerate(step2a_data['elements']):
                         element = StudyElement(
-                            element_id=f"E{i+1}",
+                            element_id=str(uuid.uuid4()),
                             name=element_data['name'],
                             description=element_data.get('description', ''),
                             element_type=element_data['element_type'],
@@ -1229,6 +1288,7 @@ def step3b():
                         )
                         elements.append(element)
                 study.elements = elements
+                
                 # Ensure study_layers is empty for grid studies
                 study.study_layers = []
             else:
@@ -1340,14 +1400,26 @@ def step3b():
             
             # Set IPED parameters based on study type
             if study_type == 'grid':
-                # Grid study - use step2c data
-                step2c_data = draft.get_step_data('2c')
+                # Grid study - use grid_iped data
+                grid_iped_data = draft.get_step_data('grid_iped')
+                
+                # Calculate total elements from grid categories
+                total_elements = 0
+                if grid_config_data and 'categories' in grid_config_data:
+                    total_elements = sum(len(category['elements']) for category in grid_config_data['categories'])
+                
+                # Use ACTUAL tasks_per_consumer from task generation result
+                actual_tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
+                total_tasks = actual_tasks_per_consumer * grid_iped_data['number_of_respondents']
+                
+                print(f"DEBUG: Using actual tasks_per_consumer: {actual_tasks_per_consumer} (was {grid_iped_data.get('tasks_per_consumer', 8)})")
+                
                 study.iped_parameters = IPEDParameters(
-                    num_elements=step2c_data['num_elements'],
-                    tasks_per_consumer=step2c_data['tasks_per_consumer'],
-                    number_of_respondents=step2c_data['number_of_respondents'],
-                    exposure_tolerance_cv=step2c_data.get('exposure_tolerance_cv', 1.0),
-                    total_tasks=step2c_data['total_tasks']
+                    num_elements=total_elements,
+                    tasks_per_consumer=actual_tasks_per_consumer,
+                    number_of_respondents=grid_iped_data['number_of_respondents'],
+                    exposure_tolerance_cv=grid_iped_data.get('exposure_tolerance_cv', 1.0),
+                    total_tasks=total_tasks
                 )
             else:
                 # Layer study - use layer_iped data and calculate from layer_config
@@ -1391,8 +1463,21 @@ def step3b():
                 return render_template('study_creation/step3b.html', 
                                      form=form, study_data=preview_data, current_step='3b', draft=draft)
             
-            study.tasks = step3a_data['tasks_matrix']
-            print(f"DEBUG: Tasks matrix set successfully")
+            # Extract the tasks from the tasks_matrix (which contains both 'tasks' and 'metadata')
+            print(f"DEBUG: step3a_data['tasks_matrix'] type: {type(step3a_data['tasks_matrix'])}")
+            print(f"DEBUG: step3a_data['tasks_matrix'] keys: {list(step3a_data['tasks_matrix'].keys()) if isinstance(step3a_data['tasks_matrix'], dict) else 'Not a dict'}")
+            
+            if isinstance(step3a_data['tasks_matrix'], dict) and 'tasks' in step3a_data['tasks_matrix']:
+                study.tasks = step3a_data['tasks_matrix']['tasks']
+                print(f"DEBUG: Tasks extracted from tasks_matrix and set successfully")
+                print(f"DEBUG: study.tasks type: {type(study.tasks)}")
+                print(f"DEBUG: study.tasks keys: {list(study.tasks.keys()) if isinstance(study.tasks, dict) else 'Not a dict'}")
+                if isinstance(study.tasks, dict) and '0' in study.tasks:
+                    print(f"DEBUG: Respondent 0 has {len(study.tasks['0'])} tasks")
+            else:
+                # Fallback for old format
+                study.tasks = step3a_data['tasks_matrix']
+                print(f"DEBUG: Tasks matrix set directly (legacy format)")
             
             # Generate share URL
             study.generate_share_url(request.host_url.rstrip('/'))
@@ -1447,6 +1532,8 @@ def step3b():
         'step2a': draft.get_step_data('2a'),
         'layer_config': draft.get_step_data('layer_config'),  # Layer configuration data
         'layer_iped': draft.get_step_data('layer_iped'),  # Layer IPED parameters
+        'grid_config': draft.get_step_data('grid_config'),  # Grid configuration data
+        'grid_iped': draft.get_step_data('grid_iped'),  # Grid IPED parameters
         'step2b': draft.get_step_data('2b'),
         'step2c': draft.get_step_data('2c'),
         'step3a': draft.get_step_data('3a')
@@ -1490,11 +1577,17 @@ def step3b():
     # Debug: Print the data structure
     print(f"DEBUG: Step3b preview data structure:")
     print(f"DEBUG: Step2a data: {preview_data['step2a']}")
+    print(f"DEBUG: Grid config data: {preview_data['grid_config']}")
     if preview_data['step2a']:
         print(f"DEBUG: Step2a elements: {preview_data['step2a'].get('elements', [])}")
         if 'elements' in preview_data['step2a']:
             for i, elem in enumerate(preview_data['step2a']['elements']):
                 print(f"DEBUG: Element {i}: {elem}")
+    if preview_data['grid_config']:
+        print(f"DEBUG: Grid config categories: {preview_data['grid_config'].get('categories', [])}")
+        if 'categories' in preview_data['grid_config']:
+            for i, cat in enumerate(preview_data['grid_config']['categories']):
+                print(f"DEBUG: Category {i}: {cat}")
     
     render_start = time.time()
     result = render_template('study_creation/step3b.html', 
@@ -2212,6 +2305,229 @@ def cleanup_base64_images():
         print(f"Error during cleanup: {str(e)}")
         return f"Error: {str(e)}"
 
+@study_creation_bp.route('/grid-config', methods=['GET', 'POST'])
+@login_required
+def grid_config():
+    """Grid configuration page for grid studies."""
+    start_time = time.time()
+    print(f"⏱️  [PERF] Grid config started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    
+    draft_start = time.time()
+    draft = get_study_draft()
+    draft_duration = time.time() - draft_start
+    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    
+    if not draft:
+        flash('No active study draft found. Please start creating a study.', 'error')
+        return redirect(url_for('study_creation.step1a'))
+    
+    # Check if user can access this step
+    access_start = time.time()
+    if not draft.can_access_step('grid_config'):
+        flash('Please complete the previous steps first.', 'error')
+        return redirect(url_for('study_creation.step2b'))
+    access_duration = time.time() - access_start
+    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    
+    form_start = time.time()
+    form = GridConfigForm()
+    form_duration = time.time() - form_start
+    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    
+    if request.method == 'POST':
+        try:
+            # Get categories data from JSON
+            categories_data_json = request.form.get('categories_data')
+            if not categories_data_json:
+                flash('No categories data received.', 'error')
+                return render_template('study_creation/grid_config.html', 
+                                    form=form, categories_data=[], 
+                                    current_step='grid_config', draft=draft)
+            
+            categories_data = json.loads(categories_data_json)
+            
+            if not categories_data or len(categories_data) < 2:
+                flash('Please add at least 2 categories.', 'error')
+                return render_template('study_creation/grid_config.html', 
+                                    form=form, categories_data=categories_data, 
+                                    current_step='grid_config', draft=draft)
+            
+            if len(categories_data) > 12:
+                flash('Maximum 12 categories allowed.', 'error')
+                return render_template('study_creation/grid_config.html', 
+                                    form=form, categories_data=categories_data, 
+                                    current_step='grid_config', draft=draft)
+            
+            # Check if files are already uploaded
+            files_already_uploaded = request.form.get('files_already_uploaded') == 'true'
+            
+            if not files_already_uploaded:
+                # Process uploaded files (legacy mode)
+                uploaded_files = {}
+                for key, file in request.files.items():
+                    if file and file.filename:
+                        uploaded_files[key] = file
+                
+                # Upload files and update content URLs
+                from utils.azure_storage import upload_to_azure
+                for category_index, category in enumerate(categories_data):
+                    for element_index, element in enumerate(category['elements']):
+                        if element.get('file'):  # New element with file
+                            file_key = f'category_{category_index}_element_{element_index}_file'
+                            if file_key in uploaded_files:
+                                try:
+                                    element_content = upload_to_azure(uploaded_files[file_key])
+                                    element['content'] = element_content
+                                    print(f"✅ Uploaded element: {element['name']} -> {element_content}")
+                                except Exception as e:
+                                    print(f"❌ Error uploading element file: {str(e)}")
+                                    flash(f'Error uploading element file: {str(e)}', 'error')
+                                    continue
+                            else:
+                                # File not found, remove this element
+                                print(f"⚠️  File not found for element: {element['name']}")
+                                category['elements'].remove(element)
+                                continue
+                        
+                        # Clean up the element data (remove file object)
+                        if 'file' in element:
+                            del element['file']
+            else:
+                # Files are already uploaded, just clean up the data
+                print("📁 Files already uploaded, skipping upload process")
+                for category in categories_data:
+                    print(f"📂 Processing category: {category.get('category_name', 'Unknown')}")
+                    for element in category['elements']:
+                        print(f"  🔗 Element: {element.get('name', 'Unknown')} -> Content: {element.get('content', 'None')}")
+                        if 'file' in element:
+                            del element['file']
+            
+            # Remove empty categories
+            categories_data = [cat for cat in categories_data if cat['elements']]
+            
+            if len(categories_data) < 2:
+                flash('Please add at least 2 categories with elements.', 'error')
+                return render_template('study_creation/grid_config.html', 
+                                    form=form, categories_data=categories_data, 
+                                    current_step='grid_config', draft=draft)
+            
+            # Save grid configuration data
+            draft.update_step_data('grid_config', {'categories': categories_data})
+            draft.current_step = 'grid_iped'
+            draft.save()
+            
+            flash(f'Grid configuration saved successfully! Created {len(categories_data)} categories.', 'success')
+            return redirect(url_for('study_creation.grid_iped'))
+            
+        except Exception as e:
+            print(f"ERROR in grid_config: {str(e)}")
+            flash(f'An error occurred while saving grid configuration: {str(e)}', 'error')
+            return render_template('study_creation/grid_config.html', 
+                                form=form, categories_data=[], 
+                                current_step='grid_config', draft=draft)
+    
+    # GET request - show the form
+    # Get existing grid configuration data
+    grid_config_data = draft.get_step_data('grid_config')
+    categories_data = grid_config_data.get('categories', []) if grid_config_data else []
+    
+    render_start = time.time()
+    result = render_template('study_creation/grid_config.html', 
+                           form=form, categories_data=categories_data,
+                           current_step='grid_config', draft=draft)
+    render_duration = time.time() - render_start
+    print(f"⏱️  [PERF] Grid config template rendering took {render_duration:.3f}s")
+    
+    total_duration = time.time() - start_time
+    print(f"⏱️  [PERF] Grid config total: {total_duration:.3f}s")
+    return result
+
+@study_creation_bp.route('/grid-iped', methods=['GET', 'POST'])
+@login_required
+def grid_iped():
+    """IPED parameters configuration for grid studies after categories are configured."""
+    start_time = time.time()
+    print(f"⏱️  [PERF] Grid IPED started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    
+    draft_start = time.time()
+    draft = get_study_draft()
+    draft_duration = time.time() - draft_start
+    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    
+    if not draft:
+        flash('No active study draft found. Please start creating a study.', 'error')
+        return redirect(url_for('study_creation.step1a'))
+    
+    # Check if user can access this step
+    access_start = time.time()
+    if not draft.can_access_step('grid_iped'):
+        flash('Please complete the previous steps first.', 'error')
+        return redirect(url_for('study_creation.grid_config'))
+    access_duration = time.time() - access_start
+    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    
+    form_start = time.time()
+    form = GridIPEDForm()
+    form_duration = time.time() - form_start
+    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    
+    if request.method == 'POST':
+        try:
+            # Process IPED parameters
+            number_of_respondents = int(request.form.get('number_of_respondents', 100))
+            
+            # Get grid configuration data
+            grid_config_data = draft.get_step_data('grid_config')
+            categories_data = grid_config_data.get('categories', []) if grid_config_data else []
+            
+            if not categories_data:
+                flash('No grid categories found. Please configure categories first.', 'error')
+                return redirect(url_for('study_creation.grid_config'))
+            
+            # Calculate total elements across all categories
+            total_elements = sum(len(cat.get('elements', [])) for cat in categories_data)
+            
+            # Auto-calculate tasks per consumer (similar to layer logic)
+            tasks_per_consumer = max(8, min(24, total_elements * 2))  # 2 tasks per element, min 8, max 24
+            
+            # Save IPED parameters
+            iped_data = {
+                'number_of_respondents': number_of_respondents,
+                'tasks_per_consumer': tasks_per_consumer,
+                'total_elements': total_elements,
+                'exposure_tolerance_cv': 1.0,  # Fixed at 1.0% for grid studies
+                'seed': None  # Optional
+            }
+            
+            draft.update_step_data('grid_iped', iped_data)
+            draft.current_step = '3a'
+            draft.save()
+            
+            flash(f'IPED parameters saved successfully! Tasks per consumer: {tasks_per_consumer}', 'success')
+            return redirect(url_for('study_creation.step3a'))
+            
+        except Exception as e:
+            print(f"ERROR in grid_iped: {str(e)}")
+            flash(f'An error occurred while saving IPED parameters: {str(e)}', 'error')
+            return render_template('study_creation/grid_iped.html', 
+                                form=form, current_step='grid_iped', draft=draft)
+    
+    # GET request - show the form
+    # Get existing IPED data
+    grid_iped_data = draft.get_step_data('grid_iped')
+    if grid_iped_data:
+        form.number_of_respondents.data = grid_iped_data.get('number_of_respondents', 100)
+    
+    render_start = time.time()
+    result = render_template('study_creation/grid_iped.html', 
+                           form=form, current_step='grid_iped', draft=draft)
+    render_duration = time.time() - render_start
+    print(f"⏱️  [PERF] Grid IPED template rendering took {render_duration:.3f}s")
+    
+    total_duration = time.time() - start_time
+    print(f"⏱️  [PERF] Grid IPED total: {total_duration:.3f}s")
+    return result
+
 @study_creation_bp.route('/debug-draft')
 @login_required
 def debug_draft():
@@ -2263,3 +2579,36 @@ def debug_draft():
     <pre>layer_config complete: {draft.is_step_complete('layer_config')}</pre>
     <pre>layer_iped complete: {draft.is_step_complete('layer_iped')}</pre>
     """
+
+@study_creation_bp.route('/upload-immediate', methods=['POST'])
+@login_required
+def upload_immediate():
+    """Handle immediate file uploads for grid category elements."""
+    try:
+        print(f"📤 Immediate upload request received")
+        print(f"📤 Files in request: {list(request.files.keys())}")
+        print(f"📤 Form data: {list(request.form.keys())}")
+        
+        if 'file' not in request.files:
+            print("❌ No file in request")
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            print("❌ Empty filename")
+            return jsonify({'error': 'No file selected'}), 400
+        
+        print(f"📤 Uploading file: {file.filename}")
+        
+        # Upload to Azure
+        from utils.azure_storage import upload_to_azure
+        file_url = upload_to_azure(file)
+        
+        print(f"✅ Upload successful: {file_url}")
+        return jsonify({'url': file_url, 'success': True})
+        
+    except Exception as e:
+        print(f"❌ Error in immediate upload: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500

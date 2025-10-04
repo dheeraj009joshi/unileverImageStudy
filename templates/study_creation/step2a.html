@@ -152,15 +152,15 @@ function renderElement(element) {
     const container = document.getElementById('elementsList');
     const elementDiv = document.createElement('div');
     elementDiv.className = 'element-card';
-    elementDiv.setAttribute('data-element-id', element.id);
+    elementDiv.setAttribute('data-element-id', element.element_id);
     elementDiv.draggable = true;
     
     elementDiv.innerHTML = `
         <div class="element-header">
             <div class="drag-handle">⋮⋮</div>
-            <h5>Element ${element.id + 1}</h5>
+            <h5>Element ${element.element_id + 1}</h5>
             <div class="element-actions">
-                <button type="button" class="btn btn--sm btn--danger" onclick="removeElement(${element.id})">
+                <button type="button" class="btn btn--sm btn--danger" onclick="removeElement(${element.element_id})">
                     🗑️ Remove
                 </button>
             </div>
@@ -176,38 +176,38 @@ function renderElement(element) {
                 <div class="form-group">
                     <label class="form-label">Element Name</label>
                     <input type="text" 
-                           name="element_${element.id}_name" 
+                           name="element_${element.element_id}_name" 
                            value="${element.name}"
                            class="form-input element-name-input" 
                            placeholder="Element name"
-                           onchange="updateElementName(${element.id}, this.value)">
+                           onchange="updateElementName(${element.element_id}, this.value)">
                     <small class="form-help">Give this element a descriptive name</small>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Description</label>
-                    <textarea name="element_${element.id}_description" 
+                    <textarea name="element_${element.element_id}_description" 
                               class="form-input" 
                               placeholder="Element description"
-                              onchange="updateElementDescription(${element.id}, this.value)">${element.description || ''}</textarea>
+                              onchange="updateElementDescription(${element.element_id}, this.value)">${element.description || ''}</textarea>
                     <small class="form-help">Describe what this element represents</small>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Alt Text</label>
                     <input   type="text" 
-                           name="element_${element.id}_alt_text" 
+                           name="element_${element.element_id}_alt_text" 
                            value="${element.altText || ''}"
                            class="form-input" 
                            placeholder="Alternative text for accessibility"
-                           onchange="updateElementAltText(${element.id}, this.value)">
+                           onchange="updateElementAltText(${element.element_id}, this.value)">
                     <small class="form-help">Alternative text for screen readers</small>
                 </div>
             </div>
         </div>
-        <input type="hidden" name="element_${element.id}_current_image" value="${element.image || ''}">
-        <input type="file" name="element_${element.id}_image_file" accept="image/*" style="display: none;">
-        <input type="hidden" name="element_${element.id}_has_file" value="${element.imageFile ? 'true' : 'false'}">
+        <input type="hidden" name="element_${element.element_id}_current_image" value="${element.image || ''}">
+        <input type="file" name="element_${element.element_id}_image_file" accept="image/*" style="display: none;">
+        <input type="hidden" name="element_${element.element_id}_has_file" value="${element.imageFile ? 'true' : 'false'}">
     `;
     
     // Add drag event listeners
@@ -225,7 +225,7 @@ function renderElement(element) {
 // Remove element function with proper renumbering
 function removeElement(elementId) {
     // Find the element in the array
-    const elementIndex = elements.findIndex(el => el.id === elementId);
+    const elementIndex = elements.findIndex(el => el.element_id === elementId);
     if (elementIndex !== -1) {
         // Remove from array
         elements.splice(elementIndex, 1);
@@ -275,7 +275,7 @@ function updateAddElementButtonVisibility() {
 function renumberElements() {
     // Update element IDs to be sequential (0, 1, 2, 3...)
     elements.forEach((element, index) => {
-        element.id = index;
+        element.element_id = index;
     });
     
     // Re-render all elements to update the display numbers
@@ -313,7 +313,7 @@ function handleDrop(e) {
         
         // Update element IDs to match new order
         elements.forEach((element, index) => {
-            element.id = index;
+            element.element_id = index;
         });
         
         // Re-render all elements to update IDs and hidden inputs
@@ -551,7 +551,7 @@ function closeDeleteModal() {
 
 // Confirm and execute element deletion
 function confirmDeleteElement(elementId) {
-    elements = elements.filter(e => e.id !== elementId);
+    elements = elements.filter(e => e.element_id !== elementId);
     const elementDiv = document.querySelector(`[data-element-id="${elementId}"]`);
     if (elementDiv) {
         elementDiv.remove();
@@ -559,7 +559,7 @@ function confirmDeleteElement(elementId) {
     
     // Re-index remaining elements
     elements.forEach((element, index) => {
-        element.id = index;
+        element.element_id = index;
     });
     
     // Re-render all elements to update IDs and input names
@@ -898,7 +898,7 @@ function renderElementWithImage(element, file) {
     const container = document.getElementById('elementsList');
     const elementDiv = document.createElement('div');
     elementDiv.className = 'element-card';
-    elementDiv.setAttribute('data-element-id', element.id);
+    elementDiv.setAttribute('data-element-id', element.element_id);
     elementDiv.draggable = true;
     
     // Read the file and create preview
@@ -909,7 +909,7 @@ function renderElementWithImage(element, file) {
                 <div class="drag-handle">⋮⋮</div>
                 <h5>${element.name}</h5>
                 <div class="element-actions">
-                    <button type="button" class="btn btn--sm btn--danger" onclick="removeElement(${element.id})">
+                    <button type="button" class="btn btn--sm btn--danger" onclick="removeElement(${element.element_id})">
                         🗑️ Remove
                     </button>
                 </div>
@@ -918,7 +918,7 @@ function renderElementWithImage(element, file) {
                 <div class="element-image">
                     <img src="${e.target.result}" alt="${element.name}" class="element-preview">
                     <div class="image-actions">
-                        <button type="button" class="btn btn--sm btn--outline" onclick="replaceImage(${element.id})">
+                        <button type="button" class="btn btn--sm btn--outline" onclick="replaceImage(${element.element_id})">
                             🔄 Replace
                         </button>
                     </div>
@@ -927,38 +927,38 @@ function renderElementWithImage(element, file) {
                     <div class="form-group">
                         <label class="form-label">Element Name</label>
                         <input type="text" 
-                               name="element_${element.id}_name" 
+                               name="element_${element.element_id}_name" 
                                value="${element.name}"
                                class="form-input element-name-input" 
                                placeholder="Element name"
-                               onchange="updateElementName(${element.id}, this.value)">
+                               onchange="updateElementName(${element.element_id}, this.value)">
                         <small class="form-help">Give this element a descriptive name</small>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label">Description</label>
-                        <textarea name="element_${element.id}_description" 
+                        <textarea name="element_${element.element_id}_description" 
                                   class="form-input" 
                                   placeholder="Element description"
-                                  onchange="updateElementDescription(${element.id}, this.value)">${element.description}</textarea>
+                                  onchange="updateElementDescription(${element.element_id}, this.value)">${element.description}</textarea>
                         <small class="form-help">Describe what this element represents</small>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label">Alt Text</label>
                         <input type="text" 
-                               name="element_${element.id}_alt_text" 
+                               name="element_${element.element_id}_alt_text" 
                                value="${element.altText}"
                                class="form-input" 
                                placeholder="Alternative text for accessibility"
-                               onchange="updateElementAltText(${element.id}, this.value)">
+                               onchange="updateElementAltText(${element.element_id}, this.value)">
                         <small class="form-help">Alternative text for screen readers</small>
                     </div>
                 </div>
             </div>
-            <input type="hidden" name="element_${element.id}_current_image" value="${e.target.result}">
-            <input type="file" name="element_${element.id}_image_file" accept="image/*" style="display: none;">
-            <input type="hidden" name="element_${element.id}_has_file" value="true">
+            <input type="hidden" name="element_${element.element_id}_current_image" value="${e.target.result}">
+            <input type="file" name="element_${element.element_id}_image_file" accept="image/*" style="display: none;">
+            <input type="hidden" name="element_${element.element_id}_has_file" value="true">
         `;
         
         // Add drag and drop functionality

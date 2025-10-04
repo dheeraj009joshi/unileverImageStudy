@@ -15,7 +15,7 @@ class RatingScale(EmbeddedDocument):
 
 class StudyElement(EmbeddedDocument):
     """Embedded document for study elements (images or text)."""
-    element_id = StringField(required=True, max_length=10)  # E1, E2, E3, etc.
+    element_id = StringField(required=True, max_length=100)  # UUID for element
     name = StringField(required=True, max_length=100)
     description = StringField(max_length=500)
     element_type = StringField(required=True, choices=['image', 'text'])
@@ -38,6 +38,14 @@ class StudyLayer(EmbeddedDocument):
     description = StringField(max_length=500)
     z_index = IntField(required=True)  # Z-index for stacking order (0, 1, 2, 3...)
     images = ListField(EmbeddedDocumentField(LayerImage), required=True)
+    order = IntField(required=True)  # User-defined order (can be changed by drag & drop)
+
+class GridCategory(EmbeddedDocument):
+    """Embedded document for categories in a grid study."""
+    category_id = StringField(required=True, max_length=100)  # UUID for category
+    name = StringField(required=True, max_length=100)  # User-defined name
+    description = StringField(max_length=500)
+    elements = ListField(EmbeddedDocumentField(StudyElement), required=True)  # Elements within this category
     order = IntField(required=True)  # User-defined order (can be changed by drag & drop)
 
 
@@ -109,11 +117,14 @@ class Study(Document):
     study_type = StringField(required=True, choices=['grid', 'layer'])
     rating_scale = EmbeddedDocumentField(RatingScale, required=True)
     
-    # Grid Study Elements (for grid study type)
-    elements = ListField(EmbeddedDocumentField(StudyElement))  # Required for grid studies
+    # Grid Study Categories (for grid study type)
+    grid_categories = ListField(EmbeddedDocumentField(GridCategory))  # Required for grid studies
     
     # Layer Study Configuration (for layer study type)
     study_layers = ListField(EmbeddedDocumentField(StudyLayer))  # Required for layer studies
+    
+    # Legacy field for backward compatibility (deprecated)
+    elements = ListField(EmbeddedDocumentField(StudyElement))  # Deprecated: use grid_categories instead
     
     # Common fields
     classification_questions = ListField(EmbeddedDocumentField(ClassificationQuestion))
@@ -312,6 +323,8 @@ class Study(Document):
         
         # Add study type specific data
         if self.study_type == 'grid':
+            base_dict['grid_categories'] = [cat.to_mongo().to_dict() for cat in self.grid_categories] if self.grid_categories else []
+            # Legacy support for old elements field
             base_dict['elements'] = [elem.to_mongo().to_dict() for elem in self.elements] if self.elements else []
             base_dict['iped_parameters'] = {
                 'num_elements': self.iped_parameters.num_elements,
@@ -335,13 +348,26 @@ class Study(Document):
         errors = super().validate(clean)
         
         if self.study_type == 'grid':
-            if not self.elements or len(self.elements) < 4:
-                errors['elements'] = 'Grid studies must have at least 4 elements'
-            if self.study_layers:
-                errors['study_layers'] = 'Grid studies should not have study layers'
+            # Check for new grid_categories structure
+            if self.grid_categories:
+                total_elements = sum(len(cat.elements) for cat in self.grid_categories)
+                if total_elements < 4:
+                    errors['grid_categories'] = 'Grid studies must have at least 4 elements across all categories'
+                if self.study_layers:
+                    errors['study_layers'] = 'Grid studies should not have study layers'
+            # Legacy support for old elements structure
+            elif self.elements:
+                if len(self.elements) < 4:
+                    errors['elements'] = 'Grid studies must have at least 4 elements'
+                if self.study_layers:
+                    errors['study_layers'] = 'Grid studies should not have study layers'
+            else:
+                errors['grid_categories'] = 'Grid studies must have categories with elements'
         elif self.study_type == 'layer':
             if not self.study_layers or len(self.study_layers) < 1:
                 errors['study_layers'] = 'Layer studies must have at least 1 layer'
+            if self.grid_categories:
+                errors['grid_categories'] = 'Layer studies should not have grid categories'
             if self.elements:
                 errors['elements'] = 'Layer studies should not have individual elements'
         

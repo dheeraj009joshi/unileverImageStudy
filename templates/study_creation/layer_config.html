@@ -222,7 +222,7 @@ window.openLayerModal = function(layerId = null) {
     
     if (layerId) {
         // Editing existing layer
-        currentEditingLayer = layers.find(l => l.id === layerId);
+        currentEditingLayer = layers.find(l => l.layer_id === layerId);
         if (currentEditingLayer) {
             modalTitle.textContent = 'Edit Layer';
             nameInput.value = currentEditingLayer.name;
@@ -305,10 +305,10 @@ window.saveLayer = function() {
     // For now, just validate that images exist
     
     if (currentEditingLayer) {
-        if (currentEditingLayer.id === null) {
+        if (currentEditingLayer.layer_id === null) {
             // Creating new layer
             const layerId = `layer_${layers.length + 1}`;
-            currentEditingLayer.id = layerId;
+            currentEditingLayer.layer_id = layerId;
             currentEditingLayer.name = name;
             currentEditingLayer.description = description;
             currentEditingLayer.order = layers.length;
@@ -323,12 +323,12 @@ window.saveLayer = function() {
             currentEditingLayer.description = description;
             
             // Find and update the layer in the layers array
-            const existingLayerIndex = layers.findIndex(l => l.id === currentEditingLayer.id);
+            const existingLayerIndex = layers.findIndex(l => l.layer_id === currentEditingLayer.layer_id);
             if (existingLayerIndex !== -1) {
                 layers[existingLayerIndex] = { ...currentEditingLayer };
                 console.log('Existing layer updated in array:', layers[existingLayerIndex]);
             } else {
-                console.error('Could not find existing layer in array:', currentEditingLayer.id);
+                console.error('Could not find existing layer in array:', currentEditingLayer.layer_id);
             }
         }
     }
@@ -363,7 +363,7 @@ window.triggerFileInput = function() {
 // Remove image from modal - MUST be defined for onclick to work
 window.removeImage = function(imageId) {
     if (currentEditingLayer) {
-        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.id !== imageId);
+        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.image_id !== imageId);
         renderModalImages(currentEditingLayer.images);
     }
 };
@@ -371,7 +371,7 @@ window.removeImage = function(imageId) {
 // Update image name - MUST be defined for onclick to work
 window.updateImageName = function(imageId, name) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
         if (image) {
             image.name = name.trim() || `Image_${Date.now()}`;
             console.log(`Updated image name to: ${image.name}`);
@@ -382,7 +382,7 @@ window.updateImageName = function(imageId, name) {
 // Update image alt - MUST be defined for onclick to work
 window.updateImageAlt = function(imageId, alt) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
         if (image) {
             image.alt = alt.trim() || image.name;
             console.log(`Updated image alt to: ${image.alt}`);
@@ -393,7 +393,7 @@ window.updateImageAlt = function(imageId, alt) {
 // Remove layer - MUST be defined for onclick to work
 window.removeLayer = function(layerId) {
     if (confirm('Are you sure you want to remove this layer? This action cannot be undone.')) {
-        layers = layers.filter(l => l.id !== layerId);
+        layers = layers.filter(l => l.layer_id !== layerId);
         renderLayersList();
         updateLayerOrdering();
         updateCalculatedParameters();
@@ -403,7 +403,7 @@ window.removeLayer = function(layerId) {
 
 // Change z-index - MUST be defined for onclick to work
 window.changeZIndex = function(layerId, change) {
-    const layer = layers.find(l => l.id === layerId);
+    const layer = layers.find(l => l.layer_id === layerId);
     if (layer) {
         const oldZIndex = layer.z_index;
         layer.z_index += change;
@@ -477,7 +477,7 @@ function initializeLayers() {
 // Add layer from existing data
 function addLayerFromData(layerData) {
     const layer = {
-        id: layerData.id || `layer_${layerCounter++}`,
+        id: layerData.layer_id || `layer_${layerCounter++}`,
         name: layerData.name || `Layer_${layers.length + 1}`,
         description: layerData.description || '',
         order: layerData.order || layers.length,
@@ -551,7 +551,7 @@ function updateLayerOrderFromDOM() {
     const layerItems = document.querySelectorAll('.layer-list-item');
     layerItems.forEach((item, index) => {
         const layerId = item.dataset.layerId;
-        const layer = layers.find(l => l.id === layerId);
+        const layer = layers.find(l => l.layer_id === layerId);
         if (layer) {
             layer.order = index;
             // Z-index: 0 is bottom (background), higher numbers are on top
@@ -718,7 +718,7 @@ function renderModalImages(images) {
 // Remove image from modal - make sure it's in global scope
 window.removeImage = function(imageId) {
     if (currentEditingLayer) {
-        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.id !== imageId);
+        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.image_id !== imageId);
         renderModalImages(currentEditingLayer.images);
     }
 }
@@ -726,7 +726,7 @@ window.removeImage = function(imageId) {
 // Update image name - make sure it's in global scope
 window.updateImageName = function(imageId, name) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
         if (image) {
             image.name = name.trim() || `Image_${Date.now()}`;
             console.log(`Updated image name to: ${image.name}`);
@@ -737,7 +737,7 @@ window.updateImageName = function(imageId, name) {
 // Update image alt - make sure it's in global scope
 window.updateImageAlt = function(imageId, alt) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.id === imageId);
+        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
         if (image) {
             image.alt = alt.trim() || image.name;
             console.log(`Updated image alt to: ${image.alt}`);
@@ -815,7 +815,7 @@ function renderLayersList() {
         const layerItem = document.createElement('div');
         layerItem.className = 'layer-list-item';
         layerItem.draggable = true;
-        layerItem.dataset.layerId = layer.id;
+        layerItem.dataset.layerId = layer.layer_id;
         
         layerItem.innerHTML = `
             <div class="layer-item-content">
@@ -825,8 +825,8 @@ function renderLayersList() {
                     <span class="layer-item-images">${layer.images.length} images</span>
                 </div>
                 <div class="layer-item-controls">
-                    <button type="button" class="btn btn--sm btn--secondary" onclick="openLayerModal('${layer.id}')" title="Edit Layer">✏️</button>
-                    <button type="button" class="btn btn--sm btn--danger" onclick="removeLayer('${layer.id}')" title="Remove Layer">🗑️</button>
+                    <button type="button" class="btn btn--sm btn--secondary" onclick="openLayerModal('${layer.layer_id}')" title="Edit Layer">✏️</button>
+                    <button type="button" class="btn btn--sm btn--danger" onclick="removeLayer('${layer.layer_id}')" title="Remove Layer">🗑️</button>
                 </div>
             </div>
         `;
@@ -849,7 +849,7 @@ function renderLayersList() {
 // Remove layer
 window.removeLayer = function(layerId) {
     if (confirm('Are you sure you want to remove this layer? This action cannot be undone.')) {
-        layers = layers.filter(l => l.id !== layerId);
+        layers = layers.filter(l => l.layer_id !== layerId);
         renderLayersList();
         updateLayerOrdering();
         updateCalculatedParameters();
@@ -882,7 +882,7 @@ function updateLayerOrdering() {
         console.log(`Creating Z-index item for layer: ${layer.name}, z_index: ${layer.z_index}`);
         const zIndexItem = document.createElement('div');
         zIndexItem.className = 'z-index-item';
-        zIndexItem.dataset.layerId = layer.id;
+        zIndexItem.dataset.layerId = layer.layer_id;
         
         zIndexItem.innerHTML = `
             <div class="z-index-label">
@@ -891,8 +891,8 @@ function updateLayerOrdering() {
             <div class="layer-name">${layer.name}</div>
             <div class="image-count">${layer.images.length} images</div>
             <div class="z-index-controls">
-                <button type="button" class="btn btn--sm btn--outline z-index-up" title="Increase z-index" onclick="changeZIndex('${layer.id}', -1)">▲</button>
-                <button type="button" class="btn btn--sm btn--outline z-index-down" title="Decrease z-index" onclick="changeZIndex('${layer.id}', 1)">▼</button>
+                <button type="button" class="btn btn--sm btn--outline z-index-up" title="Increase z-index" onclick="changeZIndex('${layer.layer_id}', -1)">▲</button>
+                <button type="button" class="btn btn--sm btn--outline z-index-down" title="Decrease z-index" onclick="changeZIndex('${layer.layer_id}', 1)">▼</button>
             </div>
         `;
         
@@ -917,7 +917,7 @@ window.debugZIndexState = function() {
     console.log('Layers with Z-index values:');
     layers.forEach((layer, index) => {
         console.log(`  Layer ${index}: ${layer.name}`);
-        console.log(`    - ID: ${layer.id}`);
+        console.log(`    - ID: ${layer.layer_id}`);
         console.log(`    - Z-index: ${layer.z_index}`);
         console.log(`    - Order: ${layer.order}`);
         console.log(`    - Images: ${layer.images.length}`);
@@ -928,7 +928,7 @@ window.debugZIndexState = function() {
 // Change z-index
 window.changeZIndex = function(layerId, change) {
     console.log(`changeZIndex called for layer ${layerId} with change ${change}`);
-    const layer = layers.find(l => l.id === layerId);
+    const layer = layers.find(l => l.layer_id === layerId);
     if (layer) {
         const oldZIndex = layer.z_index;
         layer.z_index += change;
@@ -1164,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check each layer for images
             layers.forEach((layer, index) => {
                 console.log(`Layer ${index}:`, layer);
-                console.log(`  - ID: ${layer.id}`);
+                console.log(`  - ID: ${layer.layer_id}`);
                 console.log(`  - Name: ${layer.name}`);
                 console.log(`  - Images count: ${layer.images ? layer.images.length : 'undefined'}`);
                 console.log(`  - Images:`, layer.images);
@@ -1186,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', function() {
             layers.forEach((layer, index) => {
                 console.log(`Adding layer ${index} to form:`, layer);
                 
-                formData.append(`layer_${index}_id`, layer.id);
+                formData.append(`layer_${index}_id`, layer.layer_id);
                 formData.append(`layer_${index}_name`, layer.name);
                 formData.append(`layer_${index}_description`, layer.description || '');
                 formData.append(`layer_${index}_order`, layer.order || index);
@@ -1261,7 +1261,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (result.success) {
                                 // Find and update the image in layers
                                 layers.forEach(layer => {
-                                    const imageIndex = layer.images.findIndex(img => img.id === imageId);
+                                    const imageIndex = layer.images.findIndex(img => img.image_id === imageId);
                                     if (imageIndex !== -1) {
                                         layer.images[imageIndex].url = result.url;
                                         console.log(`Updated image ${imageId} with Azure URL: ${result.url}`);
@@ -1297,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 layers.forEach((layer, index) => {
                     console.log(`Adding layer ${index} to form: ${layer.name}, z_index: ${layer.z_index}`);
-                    finalFormData.append(`layer_${index}_id`, layer.id);
+                    finalFormData.append(`layer_${index}_id`, layer.layer_id);
                     finalFormData.append(`layer_${index}_name`, layer.name);
                     finalFormData.append(`layer_${index}_description`, layer.description || '');
                     finalFormData.append(`layer_${index}_order`, layer.order || index);
@@ -1308,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Use Azure URLs instead of data URLs
                     const imagesWithUrls = layer.images.map(img => ({
-                        id: img.id,
+                        id: img.image_id,
                         name: img.name,
                         alt: img.alt,
                         url: img.url || img.dataUrl // Use Azure URL if available, fallback to data URL

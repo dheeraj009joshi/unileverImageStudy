@@ -19,6 +19,8 @@ class StudyDraft(Document):
     step2a_layer_data = DictField(default={})  # For layer study categories and elements
     layer_config_data = DictField(default={})  # New unified layer configuration
     layer_iped_data = DictField(default={})  # For layer study IPED parameters
+    grid_config_data = DictField(default={})  # For grid study categories and elements
+    grid_iped_data = DictField(default={})  # For grid study IPED parameters
     step2b_data = DictField(default={})
     step2c_data = DictField(default={})
     step3a_data = DictField(default={})
@@ -42,11 +44,15 @@ class StudyDraft(Document):
     
     def update_step_data(self, step, data):
         """Update data for a specific step."""
-        # Handle special cases for layer-specific steps
+        # Handle special cases for layer-specific and grid-specific steps
         if step == 'layer_config':
             step_field = 'layer_config_data'
         elif step == 'layer_iped':
             step_field = 'layer_iped_data'
+        elif step == 'grid_config':
+            step_field = 'grid_config_data'
+        elif step == 'grid_iped':
+            step_field = 'grid_iped_data'
         elif step == '3a_grid':
             step_field = 'step3a_grid_data'
         elif step == '3a_layer':
@@ -72,6 +78,11 @@ class StudyDraft(Document):
         elif step == 'layer_iped':
             # For layer_iped, return the IPED parameters from layer_iped_data
             result = self.layer_iped_data or {}
+        elif step == 'grid_config':
+            result = self.grid_config_data
+        elif step == 'grid_iped':
+            # For grid_iped, return the IPED parameters from grid_iped_data
+            result = self.grid_iped_data or {}
         elif step == '3a_grid':
             result = self.step3a_grid_data or {}
         elif step == '3a_layer':
@@ -99,6 +110,20 @@ class StudyDraft(Document):
             # Check if layers data exists and has at least one layer
             layers = step_data.get('layers', [])
             result = len(layers) > 0 and all(len(layer.get('images', [])) > 0 for layer in layers)
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
+            return result
+        elif step == 'grid_config':
+            # Check if grid categories data exists and has at least one category with elements
+            categories = step_data.get('categories', [])
+            result = len(categories) > 0 and all(len(category.get('elements', [])) > 0 for category in categories)
+            total_duration = time.time() - start_time
+            print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
+            return result
+        elif step == 'grid_iped':
+            # Check if IPED parameters are set
+            result = (step_data.get('number_of_respondents') and
+                   step_data.get('exposure_tolerance_cv') is not None)
             total_duration = time.time() - start_time
             print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
             return result
@@ -156,7 +181,7 @@ class StudyDraft(Document):
         if study_type == 'layer':
             step_order = ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b']
         else:
-            step_order = ['1a', '1b', '1c', '2b', '2a', '2c', '3a', '3b']
+            step_order = ['1a', '1b', '1c', '2b', 'grid_config', 'grid_iped', '3a', '3b']
             
         if target_step not in step_order:
             return False
@@ -200,7 +225,7 @@ class StudyDraft(Document):
         if study_type == 'layer':
             step_order = ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b']
         else:
-            step_order = ['1a', '1b', '1c', '2b', '2a', '2c', '3a', '3b']
+            step_order = ['1a', '1b', '1c', '2b', 'grid_config', 'grid_iped', '3a', '3b']
             
         if target_step not in step_order:
             return False
@@ -236,8 +261,16 @@ class StudyDraft(Document):
             total_duration = time.time() - start_time
             print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
             return result
-        elif target_step in ['2a', 'layer_config']:  # Content setup step (varies by study type)
-            if target_step == '2a':  # Grid study elements
+        elif target_step in ['2a', 'grid_config', 'layer_config']:  # Content setup step (varies by study type)
+            if target_step == '2a':  # Grid study elements setup (legacy)
+                step_check_start = time.time()
+                result = self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
+                step_check_duration = time.time() - step_check_start
+                print(f"⏱️  [PERF] Steps 1a,1b,1c,2b completion check took {step_check_duration:.3f}s")
+                total_duration = time.time() - start_time
+                print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
+                return result
+            elif target_step == 'grid_config':  # Grid study configuration
                 step_check_start = time.time()
                 result = self.is_step_complete('1a') and self.is_step_complete('1b') and self.is_step_complete('1c') and self.is_step_complete('2b')
                 step_check_duration = time.time() - step_check_start
@@ -253,15 +286,15 @@ class StudyDraft(Document):
                 total_duration = time.time() - start_time
                 print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
                 return result
-        else:  # steps 2c, layer_iped, 3a, 3b
-            if target_step in ['2c', 'layer_iped']:  # IPED parameters
-                if target_step == '2c':  # Grid study IPED
+        else:  # steps grid_iped, layer_iped, 3a, 3b
+            if target_step in ['grid_iped', 'layer_iped']:  # IPED parameters
+                if target_step == 'grid_iped':  # Grid study IPED
                     step_check_start = time.time()
                     result = (self.is_step_complete('1a') and self.is_step_complete('1b') and 
                            self.is_step_complete('1c') and self.is_step_complete('2b') and 
-                           self.is_step_complete('2a'))
+                           self.is_step_complete('grid_config'))
                     step_check_duration = time.time() - step_check_start
-                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,2a completion check took {step_check_duration:.3f}s")
+                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,grid_config completion check took {step_check_duration:.3f}s")
                     total_duration = time.time() - start_time
                     print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
                     return result
@@ -288,13 +321,13 @@ class StudyDraft(Document):
                     print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
                     return result
                 else:
-                    # For grid studies, check step2a and step2c
+                    # For grid studies, check grid_config and grid_iped
                     step_check_start = time.time()
                     result = (self.is_step_complete('1a') and self.is_step_complete('1b') and 
                            self.is_step_complete('1c') and self.is_step_complete('2b') and
-                           self.is_step_complete('2a') and self.is_step_complete('2c'))
+                           self.is_step_complete('grid_config') and self.is_step_complete('grid_iped'))
                     step_check_duration = time.time() - step_check_start
-                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,2a,2c completion check took {step_check_duration:.3f}s")
+                    print(f"⏱️  [PERF] Steps 1a,1b,1c,2b,grid_config,grid_iped completion check took {step_check_duration:.3f}s")
                     total_duration = time.time() - start_time
                     print(f"⏱️  [PERF] can_access_step({target_step}) total: {total_duration:.3f}s - {result}")
                     return result

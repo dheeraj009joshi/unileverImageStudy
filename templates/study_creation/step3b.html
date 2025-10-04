@@ -133,8 +133,50 @@
                                     {% endfor %}
                                 </div>
                             </div>
+                        {% elif study_data.grid_config and study_data.grid_config.categories %}
+                            <!-- New Grid Categories Structure -->
+                            <div class="categories-preview">
+                                <h5>Study Categories ({{ study_data.grid_config.categories|length }} categories)</h5>
+                                <div class="categories-grid">
+                                    {% for category in study_data.grid_config.categories %}
+                                    <div class="category-preview-card">
+                                        <div class="category-header">
+                                            <h6>{{ category.category_name }}</h6>
+                                            <span class="category-count">{{ category.elements|length }} elements</span>
+                                        </div>
+                                        {% if category.category_description %}
+                                        <p class="category-description">{{ category.category_description }}</p>
+                                        {% endif %}
+                                        <div class="category-elements">
+                                            <div class="elements-preview-grid">
+                                                {% for element in category.elements %}
+                                                <div class="element-preview-item">
+                                                    {% if element.content %}
+                                                        <img src="{{ element.content }}" 
+                                                             alt="{{ element.alt_text or element.name }}" 
+                                                             class="element-preview-thumbnail"
+                                                             onerror="this.style.display='none';">
+                                                    {% else %}
+                                                        <div class="element-preview-placeholder">
+                                                            <i class="fas fa-image"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div class="element-info">
+                                                        <span class="element-name">{{ element.name or 'Unnamed Element' }}</span>
+                                                        {% if element.description %}
+                                                        <small class="element-description">{{ element.description }}</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         {% elif study_data.step2a and study_data.step2a.elements %}
-                            <!-- Grid Study Elements -->
+                            <!-- Legacy Grid Study Elements -->
                             <div class="elements-preview">
                                 <h5>Study Elements ({{ study_data.step2a.elements|length }})</h5>
                                 <div class="elements-scrollable-container">
@@ -766,6 +808,125 @@ document.addEventListener('DOMContentLoaded', function() {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
+}
+
+/* Categories Preview Styles */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.category-preview-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.category-preview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.category-header h6 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.category-count {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.category-description {
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.elements-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.element-preview-item {
+    text-align: center;
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.element-preview-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-color: #28a745;
+}
+
+.element-preview-thumbnail {
+    max-width: 100%;
+    max-height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    margin-bottom: 0.5rem;
+}
+
+.element-preview-placeholder {
+    width: 60px;
+    height: 60px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    color: #6c757d;
+    font-size: 1.5rem;
+}
+
+.element-info {
+    text-align: center;
+}
+
+.element-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.element-description {
+    color: #6c757d;
+    font-size: 0.75rem;
+    display: block;
 }
 
 .layer-preview-card {

@@ -953,12 +953,55 @@ def get_response_details(response_id):
                     }
                     
                     # Add element information and vignettes for grid studies
-                    if hasattr(task, 'elements_shown_in_task') and task.elements_shown_in_task:
+                    # Check for new grid structure (elements_shown_content)
+                    if hasattr(task, 'elements_shown_content') and task.elements_shown_content:
                         try:
-                            print(f"🔍 Found elements_shown_in_task for grid study task {i}")
+                            print(f"🔍 Found elements_shown_content for grid study task {i}")
+                            print(f"🔍 Content: {task.elements_shown_content}")
+                            
+                            # Process new grid study elements structure
+                            for element_name, element_data in task.elements_shown_content.items():
+                                if element_data and isinstance(element_data, dict) and element_data.get('content'):
+                                    # Check if this element is active in elements_shown
+                                    element_active = getattr(task, 'elements_shown', {}).get(element_name, 0) if hasattr(task, 'elements_shown') else 0
+                                    
+                                    if element_active == 1:
+                                        print(f"✅ Active grid element: {element_name}")
+                                        print(f"✅ Element content: {element_data['content']}")
+                                        
+                                        # Add to elements_shown for backward compatibility
+                                        element_info = {
+                                            'element_id': element_data.get('element_id', element_name),
+                                            'name': element_data.get('name', element_name),
+                                            'content': element_data['content'],
+                                            'alt_text': element_data.get('alt_text', ''),
+                                            'category_name': element_data.get('category_name', ''),
+                                            'position': 'active'
+                                        }
+                                        task_data['elements_shown'].append(element_info)
+                                        
+                                        # Add vignette content for grid studies
+                                        vignette_data = {
+                                            'type': 'grid',
+                                            'content': element_data['content'],
+                                            'element_id': element_data.get('element_id', element_name),
+                                            'element_name': element_data.get('name', element_name),
+                                            'alt_text': element_data.get('alt_text', ''),
+                                            'category_name': element_data.get('category_name', ''),
+                                            'is_active': True
+                                        }
+                                        task_data['vignettes'].append(vignette_data)
+                        except Exception as e:
+                            print(f"Error processing elements_shown_content: {e}")
+                            pass  # Silently handle errors for performance
+                    
+                    # Legacy support for old grid structure (elements_shown_in_task)
+                    elif hasattr(task, 'elements_shown_in_task') and task.elements_shown_in_task:
+                        try:
+                            print(f"🔍 Found elements_shown_in_task for legacy grid study task {i}")
                             print(f"🔍 Content: {task.elements_shown_in_task}")
                             
-                            # Process grid study elements
+                            # Process legacy grid study elements
                             for element_name, element_data in task.elements_shown_in_task.items():
                                 if element_name.endswith('_content') and element_data and element_data != '':
                                     # This is the image content

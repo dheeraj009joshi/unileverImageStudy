@@ -407,10 +407,10 @@ function showMatrixStats() {
     
     const tasksPerRespondent = totalRespondents > 0 ? Math.round(totalTasks / totalRespondents) : 0;
     
-    // Get step2c data for additional context
-    const step2cData = {{ step2c_data|tojson|safe }};
-    const minElements = step2cData.min_active_elements || 0;
-    const maxElements = step2cData.max_active_elements || 0;
+    // Get layer IPED data for additional context
+    const layerIpedData = {{ layer_iped_data|tojson|safe }};
+    const minElements = layerIpedData.min_active_elements || 0;
+    const maxElements = layerIpedData.max_active_elements || 0;
     
     // Generate statistics HTML
     let statsHTML = `

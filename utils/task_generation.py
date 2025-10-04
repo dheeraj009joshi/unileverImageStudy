@@ -11,6 +11,7 @@ import random
 from collections import Counter
 import os
 import time
+import signal
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing as mp
 
@@ -1305,22 +1306,209 @@ def generate_layer_mode(num_consumers, tasks_per_consumer, category_info, tol_pc
 
 # ---------------------------- MAIN GENERATOR FUNCTIONS ---------------------------- #
 
+def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: int, 
+                          exposure_tolerance_cv: float = 1.0, seed: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Generate tasks for grid studies using the advanced algorithm with category-based structure.
+    
+    Args:
+        categories_data: List of category dictionaries with elements
+        number_of_respondents: Number of respondents (N)
+        exposure_tolerance_cv: Exposure tolerance as coefficient of variation percentage
+        seed: Random seed for reproducibility
+    
+    Returns:
+        Dictionary containing task matrix and metadata
+    """
+    # Set seed if provided
+    if seed is not None:
+        set_seed(seed)
+    
+    # Convert categories_data to category_info format for the advanced algorithm
+    category_info = {}
+    all_elements = []
+    
+    for i, category in enumerate(categories_data):
+        category_name = category.get('category_name', f'Category_{i+1}')
+        elements = category.get('elements', [])
+        
+        # Create element names for this category
+        element_names = []
+        for j, element in enumerate(elements):
+            element_name = f"{category_name}_{j+1}"
+            element_names.append(element_name)
+            all_elements.append({
+                'name': element_name,
+                'category': category_name,
+                'element_data': element
+            })
+        
+        category_info[category_name] = element_names
+    
+    # Calculate total elements
+    total_elements = len(all_elements)
+    
+    # Use main function logic from final_builder_parallel.py
+    # Extract variables for main function
+    C = len(category_info)  # Number of categories
+    N = number_of_respondents  # Number of respondents
+    
+    # Use grid mode for grid studies
+    mode = "grid"
+    max_active_per_row = 4  # Grid studies have max 4 active categories per row
+    
+    # Set global seed if provided
+    if seed is not None:
+        global BASE_SEED
+        BASE_SEED = seed
+    
+    # Plan automatically (ratio-aware absence + T_RATIO)
+    T, E, A_map, avg_k, A_min_used = plan_T_E_auto(category_info, mode, max_active_per_row)
+    
+    # Set logging cadence: one progress line per respondent
+    global LOG_EVERY_ROWS
+    LOG_EVERY_ROWS = max(T, 25)
+    
+    # Preflight lock T, but do not abort if it can't lock.
+    try:
+        T, A_map = preflight_lock_T(T, category_info, E, A_min_used, mode, max_active_per_row)
+    except RuntimeError as e:
+        print(f"⚠️ Preflight could not lock T ({e}). Proceeding with T={T} in rebuild-until-pass mode.")
+        A_map = {c: max(A_min_used, T - len(category_info[c]) * E) for c in category_info}
+    
+    # Recompute avg_k in case T was bumped
+    M = sum(len(category_info[c]) for c in category_info)
+    avg_k = (M * E) / T
+    
+    # Build each respondent with **per-respondent unique columns** + **Professor Gate**
+    all_rows_per_resp = []
+    per_resp_reports: Dict[int, dict] = {}
+    
+    # Build respondents concurrently using ProcessPoolExecutor (same as final_builder_parallel.py)
+    
+    # Set up multiprocessing
+    max_workers = min(os.cpu_count() or 1, N)
+    
+    try:
+        mp.set_start_method("spawn")
+    except RuntimeError:
+        pass  # already set
+    
+    print(f"🚀 Building {N} respondents concurrently with {max_workers} workers...")
+    
+    # Prepare tasks for parallel execution
+    tasks = []
+    for r in range(1, N+1):
+        tasks.append((r, T, category_info, E, A_min_used, BASE_SEED, LOG_EVERY_ROWS,
+                      mode, max_active_per_row))
+    
+    with ProcessPoolExecutor(max_workers=max_workers) as ex:
+        futures = {ex.submit(_build_one_worker, t): t[0] for t in tasks}
+        done = 0
+        for fut in as_completed(futures):
+            resp_id = futures[fut]
+            try:
+                rid, rows, X, report = fut.result()
+            except Exception as e:
+                raise RuntimeError(f"Worker for respondent {resp_id} failed") from e
+            
+            per_resp_reports[rid] = report
+            all_rows_per_resp.append((rid, rows))
+            done += 1
+            if done % 5 == 0 or done == N:
+                print(f"  • Completed {done}/{N} respondents")
+    
+    # Sort by respondent ID to maintain order
+    all_rows_per_resp.sort(key=lambda t: t[0])
+    
+    # Convert to design matrix format
+    design_df = one_hot_df_from_rows(all_rows_per_resp[0][1], category_info)
+    for resp_id, rows in all_rows_per_resp[1:]:
+        resp_df = one_hot_df_from_rows(rows, category_info)
+        design_df = pd.concat([design_df, resp_df], ignore_index=True)
+    
+    # Add Consumer_ID column
+    consumer_ids = []
+    for resp_id, rows in all_rows_per_resp:
+        consumer_ids.extend([resp_id] * len(rows))
+    design_df['Consumer_ID'] = consumer_ids
+    
+    # Extract tasks_per_consumer from the generated design
+    tasks_per_consumer = len(design_df) // number_of_respondents
+    capacity = len(design_df)
+    
+    # Convert to task structure with element content
+    tasks_structure = {}
+    
+    for respondent_id in range(number_of_respondents):
+        respondent_tasks = []
+        start_idx = respondent_id * tasks_per_consumer
+        end_idx = start_idx + tasks_per_consumer
+        
+        # Get tasks for this specific respondent
+        respondent_data = design_df.iloc[start_idx:end_idx]
+        
+        for task_index, (_, task_row) in enumerate(respondent_data.iterrows()):
+            # Create elements_shown dictionary
+            elements_shown = {}
+            elements_shown_content = {}
+            
+            for element_info in all_elements:
+                element_name = element_info['name']
+                element_data = element_info['element_data']
+                
+                # Element is only shown if it's active in this task
+                element_active = int(task_row[element_name])
+                elements_shown[element_name] = element_active
+                
+                # Find the corresponding content for this element
+                if element_active:
+                    elements_shown_content[element_name] = {
+                        'url': element_data.get('content', ''),
+                        'name': element_data.get('name', ''),
+                        'alt_text': element_data.get('alt_text', ''),
+                        'category_name': element_info['category'],
+                        'element_type': element_data.get('element_type', 'image')
+                    }
+                else:
+                    elements_shown_content[element_name] = None
+            
+            # Clean up any _ref entries
+            elements_shown = {k: v for k, v in elements_shown.items() if not k.endswith('_ref')}
+            elements_shown_content = {k: v for k, v in elements_shown_content.items() if not k.endswith('_ref')}
+            
+            task_obj = {
+                "task_id": f"{respondent_id}_{task_index}",
+                "elements_shown": elements_shown,
+                "elements_shown_content": elements_shown_content,
+                "task_index": task_index
+            }
+            respondent_tasks.append(task_obj)
+        
+        tasks_structure[str(respondent_id)] = respondent_tasks
+    
+    return {
+        'tasks': tasks_structure,
+        'metadata': {
+            'study_type': 'grid_v2',
+            'categories_data': categories_data,
+            'category_info': category_info,
+            'tasks_per_consumer': tasks_per_consumer,
+            'number_of_respondents': number_of_respondents,
+            'exposure_tolerance_cv': exposure_tolerance_cv,
+            'capacity': capacity,
+            'algorithm': 'advanced_parallel',
+            'study_mode': mode,
+            'max_active_per_row': max_active_per_row
+        }
+    }
+
 def generate_grid_tasks(num_elements: int, tasks_per_consumer: int, number_of_respondents: int, 
                        exposure_tolerance_cv: float = 1.0, seed: Optional[int] = None, 
                        elements: Optional[List] = None) -> Dict[str, Any]:
     """
-    Generate tasks for grid studies using the new algorithm.
-    
-    Args:
-        num_elements: Number of elements (E)
-        tasks_per_consumer: Tasks per consumer (T)
-        number_of_respondents: Number of respondents (N)
-        exposure_tolerance_cv: Exposure tolerance as coefficient of variation percentage
-        seed: Random seed for reproducibility
-        elements: Optional list of StudyElement objects for content
-    
-    Returns:
-        Dictionary containing task matrix and metadata
+    Legacy function for grid studies - kept for backward compatibility.
+    Use generate_grid_tasks_v2 for new category-based structure.
     """
     # Set seed if provided
     if seed is not None:
@@ -1507,6 +1695,10 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
     Returns:
         Dictionary containing task matrix and metadata
     """
+    print(f"🚀 Starting layer task generation for {number_of_respondents} respondents...")
+    start_time = time.time()
+    print(f"⏰ Start time: {time.strftime('%H:%M:%S', time.localtime(start_time))}")
+    
     # Set seed if provided
     if seed is not None:
         set_seed(seed)
@@ -1674,6 +1866,13 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
         
         tasks_structure[str(respondent_id)] = respondent_tasks
     
+    end_time = time.time()
+    total_duration = end_time - start_time
+    end_time_str = time.strftime('%H:%M:%S', time.localtime(end_time))
+    print(f"✅ Layer task generation completed at {end_time_str}")
+    print(f"⏱️ Total duration: {total_duration:.2f} seconds")
+    print(f"📊 Performance: {number_of_respondents} respondents in {total_duration:.2f}s = {number_of_respondents/total_duration:.2f} respondents/second")
+    
     return {
         'tasks': tasks_structure,
         'metadata': {
@@ -1686,3 +1885,257 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
             'capacity': capacity
         }
     }
+
+def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: int, 
+                          exposure_tolerance_cv: float = 1.0, seed: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Generate tasks for grid studies using EXACT logic from final_builder_parallel.py main function.
+    
+    Args:
+        categories_data: List of category objects with elements
+        number_of_respondents: Number of respondents (N)
+        exposure_tolerance_cv: Exposure tolerance coefficient of variation
+        seed: Random seed for reproducibility
+    
+    Returns:
+        Dictionary containing task matrix and metadata
+    """
+    print(f"🚀 Starting grid task generation for {number_of_respondents} respondents...")
+    start_time = time.time()
+    print(f"⏰ Start time: {time.strftime('%H:%M:%S', time.localtime(start_time))}")
+    
+    # Set seed if provided
+    if seed is not None:
+        global BASE_SEED
+        BASE_SEED = seed
+    
+    # Convert categories_data to category_info format (EXACT same as main function)
+    category_info: Dict[str, List[str]] = {}
+    for category in categories_data:
+        category_name = category['category_name']
+        category_info[category_name] = [f"{category_name}_{j+1}" for j in range(len(category['elements']))]
+    
+    # EXACT same logic as main function in final_builder_parallel.py
+    C = len(category_info)
+    N = number_of_respondents
+    
+    # --- Study mode & per-row active cap --- (EXACT same as main function)
+    mode = "grid"  # Grid mode
+    max_active_per_row = min(GRID_MAX_ACTIVE, C)  # EXACT same logic
+    
+    # Sanity: cap must not be below the minimum actives rule (EXACT same as main function)
+    if max_active_per_row < MIN_ACTIVE_PER_ROW:
+        raise ValueError(
+            f"MAX_ACTIVE_PER_ROW ({max_active_per_row}) < MIN_ACTIVE_PER_ROW ({MIN_ACTIVE_PER_ROW}). "
+            "Increase categories or relax settings."
+        )
+    
+    # Plan automatically (ratio-aware absence + T_RATIO) (EXACT same as main function)
+    planning_start = time.time()
+    print(f"📊 Starting planning phase at {time.strftime('%H:%M:%S', time.localtime(planning_start))}")
+    T, E, A_map, avg_k, A_min_used = plan_T_E_auto(category_info, mode, max_active_per_row)
+    planning_duration = time.time() - planning_start
+    print(f"⏱️ Planning completed in {planning_duration:.2f} seconds")
+    
+    # Set logging cadence: one progress line per respondent (EXACT same as main function)
+    global LOG_EVERY_ROWS
+    LOG_EVERY_ROWS = max(T, 25)
+    
+    # Preflight lock T, but do not abort if it can't lock. (EXACT same as main function)
+    preflight_start = time.time()
+    print(f"🔒 Starting preflight lock at {time.strftime('%H:%M:%S', time.localtime(preflight_start))}")
+    try:
+        T, A_map = preflight_lock_T(T, category_info, E, A_min_used, mode, max_active_per_row)
+        preflight_duration = time.time() - preflight_start
+        print(f"✅ Preflight lock successful in {preflight_duration:.2f} seconds")
+    except RuntimeError as e:
+        preflight_duration = time.time() - preflight_start
+        print(f"⚠️ Preflight could not lock T ({e}) after {preflight_duration:.2f} seconds. Proceeding with T={T} in rebuild-until-pass mode.")
+        A_map = {c: max(A_min_used, T - len(category_info[c]) * E) for c in category_info}
+    
+    # Recompute avg_k in case T was bumped (EXACT same as main function)
+    M = sum(len(category_info[c]) for c in category_info)
+    avg_k = (M * E) / T
+    
+    print(f"\n[Plan] FINAL T={T}, E={E}, avg actives ≈ {avg_k:.2f} (ABSENCE_RATIO={ABSENCE_RATIO}, A_min used = {A_min_used}, T_RATIO={T_RATIO})")
+    print(f"[Plan] Row-mix mode: {ROW_MIX_MODE}, widen={ROW_MIX_WIDEN}")
+    print("[Plan] Absences per category:", ", ".join([f"{c}:{A_map[c]}" for c in category_info]))
+    
+    # Build each respondent with **per-respondent unique columns** + **Professor Gate** (EXACT same as main function)
+    all_rows_per_resp = []
+    per_resp_reports: Dict[int, dict] = {}
+    
+    # --------- PARALLEL BY RESPONDENT ---------- (EXACT same as main function)
+    max_workers = min(os.cpu_count() or 1, N)
+    print(f"👥 Using {max_workers} workers for parallel processing")
+    
+    parallel_start = time.time()
+    print(f"🔄 Starting parallel processing at {time.strftime('%H:%M:%S', time.localtime(parallel_start))}")
+    
+    try:
+        mp.set_start_method("spawn")
+    except RuntimeError:
+        pass  # already set
+    
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all tasks (EXACT same as main function)
+        futures = []
+        for resp_id in range(N):
+            future = executor.submit(_build_one_worker, (
+                resp_id, T, category_info, E, A_min_used, BASE_SEED, LOG_EVERY_ROWS,
+                mode, max_active_per_row
+            ))
+            futures.append((resp_id, future))
+        
+        # Collect results as they complete (EXACT same as main function)
+        completed_count = 0
+        # Create a mapping from Future to resp_id
+        future_to_resp_id = {future: resp_id for resp_id, future in futures}
+        
+        for future in as_completed([f[1] for f in futures]):
+            try:
+                resp_id, rows, X_df, report = future.result()
+                all_rows_per_resp.append((resp_id, rows))
+                per_resp_reports[resp_id] = report
+                completed_count += 1
+                current_time = time.strftime('%H:%M:%S', time.localtime())
+                print(f"✅ Built respondent {resp_id+1}/{N} at {current_time} ({completed_count}/{N} completed)")
+            except Exception as e:
+                completed_count += 1
+                current_time = time.strftime('%H:%M:%S', time.localtime())
+                print(f"❌ Failed to build respondent {resp_id+1} at {current_time}: {e}")
+                per_resp_reports[resp_id] = {'status': 'failed', 'error': str(e)}
+    
+    parallel_duration = time.time() - parallel_start
+    print(f"⏱️ Parallel processing completed in {parallel_duration:.2f} seconds")
+    
+    # Sort results by respondent ID (EXACT same as main function)
+    all_rows_per_resp.sort(key=lambda t: t[0])
+    
+    # Convert to design matrix format (EXACT same as main function)
+    if all_rows_per_resp:
+        design_df = one_hot_df_from_rows(all_rows_per_resp[0][1], category_info)
+        for resp_id, rows in all_rows_per_resp[1:]:
+            resp_df = one_hot_df_from_rows(rows, category_info)
+            design_df = pd.concat([design_df, resp_df], ignore_index=True)
+        
+        # Add Consumer_ID column (EXACT same as main function)
+        consumer_ids = []
+        for resp_id, rows in all_rows_per_resp:
+            consumer_ids.extend([resp_id] * len(rows))
+        design_df['Consumer_ID'] = consumer_ids
+        
+        # Extract tasks_per_consumer from the generated design
+        tasks_per_consumer = len(design_df) // number_of_respondents
+        capacity = len(design_df)
+        
+        # Convert to task structure with image content (GRID SPECIFIC OUTPUT FORMAT)
+        tasks_structure = {}
+        all_elements = [e for es in category_info.values() for e in es]
+        
+        for respondent_id in range(number_of_respondents):
+            respondent_tasks = []
+            start_idx = respondent_id * tasks_per_consumer
+            end_idx = start_idx + tasks_per_consumer
+            
+            # Get tasks for this specific respondent
+            respondent_data = design_df.iloc[start_idx:end_idx]
+            
+            for task_index, (_, task_row) in enumerate(respondent_data.iterrows()):
+                # Create elements_shown dictionary
+                elements_shown = {}
+                elements_shown_content = {}
+                
+                for element_name in all_elements:
+                    # Element is only shown if it's active in this task
+                    element_active = int(task_row[element_name])
+                    elements_shown[element_name] = element_active
+                    
+                    # Find the corresponding image for this element
+                    if element_active:
+                        # Parse element name to find category and element index
+                        # Format: "CategoryName_ElementIndex" (e.g., "Category1_1")
+                        if '_' in element_name:
+                            category_name, elem_index_str = element_name.rsplit('_', 1)
+                            try:
+                                elem_index = int(elem_index_str) - 1  # Convert to 0-based index
+                                
+                                # Find the category and element
+                                for category in categories_data:
+                                    if category['category_name'] == category_name and elem_index < len(category['elements']):
+                                        element = category['elements'][elem_index]
+                                        elements_shown_content[element_name] = {
+                                            'element_id': element['element_id'],
+                                            'name': element['name'],
+                                            'content': element['content'],
+                                            'alt_text': element.get('alt_text', element['name']),
+                                            'element_type': element['element_type'],
+                                            'category_name': category_name
+                                        }
+                                        break
+                                else:
+                                    elements_shown_content[element_name] = None
+                            except ValueError:
+                                elements_shown_content[element_name] = None
+                        else:
+                            elements_shown_content[element_name] = None
+                    else:
+                        elements_shown_content[element_name] = None
+                
+                # Clean up any _ref entries
+                elements_shown = {k: v for k, v in elements_shown.items() if not k.endswith('_ref')}
+                elements_shown_content = {k: v for k, v in elements_shown_content.items() if not k.endswith('_ref')}
+                
+                task_obj = {
+                    "task_id": f"{respondent_id}_{task_index}",
+                    "elements_shown": elements_shown,
+                    "elements_shown_content": elements_shown_content,
+                    "task_index": task_index
+                }
+                respondent_tasks.append(task_obj)
+            
+            tasks_structure[str(respondent_id)] = respondent_tasks
+        
+        end_time = time.time()
+        total_duration = end_time - start_time
+        end_time_str = time.strftime('%H:%M:%S', time.localtime(end_time))
+        print(f"✅ Grid task generation completed at {end_time_str}")
+        print(f"⏱️ Total duration: {total_duration:.2f} seconds")
+        print(f"📊 Performance: {number_of_respondents} respondents in {total_duration:.2f}s = {number_of_respondents/total_duration:.2f} respondents/second")
+        
+        return {
+            'tasks': tasks_structure,
+            'metadata': {
+                'study_type': 'grid_v2',
+                'categories_data': categories_data,
+                'category_info': category_info,
+                'tasks_per_consumer': tasks_per_consumer,
+                'number_of_respondents': number_of_respondents,
+                'exposure_tolerance_cv': exposure_tolerance_cv,
+                'capacity': capacity,
+                'algorithm': 'final_builder_parallel_exact'
+            }
+        }
+    else:
+        raise RuntimeError("Failed to generate any valid designs")
+
+def generate_grid_tasks_simple(categories_data: List[Dict], number_of_respondents: int, 
+                              exposure_tolerance_cv: float = 1.0, seed: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Simple fallback task generation for grid studies.
+    """
+    print("🔄 Using simple task generation approach...")
+    
+    # Set seed if provided
+    if seed is not None:
+        set_seed(seed)
+    
+    # Convert categories_data to category_info format
+    category_info = {}
+    for category in categories_data:
+        category_name = category['category_name']
+        elements = [f"{category_name}_{i+1}" for i in range(len(category['elements']))]
+        category_info[category_name] = elements
+    
+    # Simple approach: use the legacy generate_grid_tasks function
+    return generate_grid_tasks_legacy(category_info, number_of_respondents, exposure_tolerance_cv, seed)

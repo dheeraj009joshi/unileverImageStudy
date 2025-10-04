@@ -17,7 +17,8 @@ def serialize_study_for_preloading(study):
         study_data = {
             'study_type': str(getattr(study, 'study_type', 'unknown')),
             'elements': [],
-            'study_layers': []
+            'study_layers': [],
+            'grid_categories': []
         }
         
         # Serialize elements for grid studies
@@ -82,6 +83,50 @@ def serialize_study_for_preloading(study):
                     print(f"Error serializing layer: {layer_error}")
                     continue
         
+        # Serialize grid_categories for new grid studies
+        if hasattr(study, 'grid_categories') and study.grid_categories:
+            print(f"🔍 Found {len(study.grid_categories)} grid categories to serialize")
+            for category in study.grid_categories:
+                try:
+                    category_data = {
+                        'name': str(getattr(category, 'name', '')),
+                        'description': str(getattr(category, 'description', '')),
+                        'elements': []
+                    }
+                    
+                    if hasattr(category, 'elements') and category.elements:
+                        for element in category.elements:
+                            try:
+                                element_data = {
+                                    'name': str(getattr(element, 'name', '')),
+                                    'description': str(getattr(element, 'description', '')),
+                                    'alt_text': str(getattr(element, 'alt_text', '')),
+                                    'element_type': str(getattr(element, 'element_type', '')),
+                                    'content': str(getattr(element, 'content', '')),
+                                    'image': None
+                                }
+                                
+                                # For grid studies, the image URL is in the 'content' field
+                                if hasattr(element, 'content') and element.content:
+                                    try:
+                                        element_data['image'] = {
+                                            'url': str(element.content),
+                                            'filename': str(getattr(element, 'name', ''))
+                                        }
+                                    except Exception as img_error:
+                                        print(f"Error serializing grid element content: {img_error}")
+                                        element_data['image'] = None
+                                
+                                category_data['elements'].append(element_data)
+                            except Exception as elem_error:
+                                print(f"Error serializing grid element: {elem_error}")
+                                continue
+                    
+                    study_data['grid_categories'].append(category_data)
+                except Exception as cat_error:
+                    print(f"Error serializing grid category: {cat_error}")
+                    continue
+        
         # Ensure all values are JSON serializable
         def make_json_safe(obj):
             if obj is None:
@@ -96,7 +141,7 @@ def serialize_study_for_preloading(study):
                 return str(obj)
         
         study_data = make_json_safe(study_data)
-        print(f"🔍 Serialization complete - Elements: {len(study_data['elements'])}, Layers: {len(study_data['study_layers'])}")
+        print(f"🔍 Serialization complete - Elements: {len(study_data['elements'])}, Layers: {len(study_data['study_layers'])}, Grid Categories: {len(study_data['grid_categories'])}")
         return study_data
         
     except Exception as e:
@@ -549,19 +594,53 @@ def load_all_tasks(study_id):
         
         # Generate tasks if they don't exist
         if not hasattr(study, 'tasks') or not study.tasks:
+            print(f"DEBUG: No tasks found, generating...")
             try:
                 from utils.task_generation import generate_grid_tasks, generate_layer_tasks_v2
                 
                 if study.study_type == 'grid':
-                    result = generate_grid_tasks(
-                        num_elements=study.iped_parameters.num_elements,
-                        tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
-                        number_of_respondents=study.iped_parameters.number_of_respondents,
-                        exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
-                        seed=getattr(study.iped_parameters, 'seed', None),
-                        elements=study.elements
-                    )
-                    study.tasks = result['tasks']
+                    # Check if study has new category structure
+                    if hasattr(study, 'grid_categories') and study.grid_categories:
+                        # Use new category-based generation
+                        from utils.task_generation import generate_grid_tasks_v2
+                        
+                        # Convert grid categories to categories_data format
+                        categories_data = []
+                        for category in study.grid_categories:
+                            category_data = {
+                                'category_name': category.name,
+                                'category_description': category.description,
+                                'elements': []
+                            }
+                            for element in category.elements:
+                                element_data = {
+                                    'name': element.name,
+                                    'description': element.description,
+                                    'element_type': element.element_type,
+                                    'content': element.content,
+                                    'alt_text': element.alt_text
+                                }
+                                category_data['elements'].append(element_data)
+                            categories_data.append(category_data)
+                        
+                        result = generate_grid_tasks_v2(
+                            categories_data=categories_data,
+                            number_of_respondents=study.iped_parameters.number_of_respondents,
+                            exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+                            seed=getattr(study.iped_parameters, 'seed', None)
+                        )
+                        study.tasks = result['tasks']
+                    else:
+                        # Use legacy grid generation
+                        result = generate_grid_tasks(
+                            num_elements=study.iped_parameters.num_elements,
+                            tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
+                            number_of_respondents=study.iped_parameters.number_of_respondents,
+                            exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+                            seed=getattr(study.iped_parameters, 'seed', None),
+                            elements=study.elements
+                        )
+                        study.tasks = result['tasks']
                 elif study.study_type == 'layer':
                     if not hasattr(study, 'study_layers') or not study.study_layers:
                         flash('Layer study configuration not found.', 'error')
@@ -584,7 +663,14 @@ def load_all_tasks(study_id):
                 return redirect(url_for('study_participation.welcome', study_id=study_id))
         
         # Get all tasks for respondent 0 (anonymous participation)
+        print(f"DEBUG: Study tasks type: {type(study.tasks)}")
+        print(f"DEBUG: Study tasks keys: {list(study.tasks.keys()) if isinstance(study.tasks, dict) else 'Not a dict'}")
+        print(f"DEBUG: Study tasks content: {study.tasks}")
+        
         respondent_tasks = study.tasks.get("0", [])
+        print(f"DEBUG: Respondent 0 tasks: {len(respondent_tasks) if respondent_tasks else 0} tasks")
+        print(f"DEBUG: Expected total tasks: {total_tasks}")
+        
         if not respondent_tasks or len(respondent_tasks) != total_tasks:
             flash('Task data not found or incomplete.', 'error')
             return redirect(url_for('study_participation.welcome', study_id=study_id))
@@ -1022,6 +1108,10 @@ def completed(study_id):
                 print(f"\n--- SAVING RESPONSE ---")
                 response.update_completion_percentage()
                 print(f"Completion percentage: {response.completion_percentage}")
+                
+                # Mark response as completed (not abandoned)
+                response.mark_completed()
+                print(f"Response marked as completed (not abandoned)")
                 
                 response.save()
                 print(f"Response saved successfully!")

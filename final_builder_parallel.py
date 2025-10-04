@@ -978,5 +978,5 @@ def main():
                            T, E, A_map, avg_k, A_min_used, per_resp_reports, mode)
     print("\nDone.")
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

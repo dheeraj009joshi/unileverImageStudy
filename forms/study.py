@@ -132,3 +132,37 @@ class LayerStudyCategoryForm(FlaskForm):
         NumberRange(min=2, max=10, message='Number of categories must be between 2 and 10')
     ])
     submit = SubmitField('Continue to Category Setup')
+
+class GridCategoryForm(FlaskForm):
+    """Form for configuring grid study categories."""
+    num_categories = IntegerField('Number of Categories', validators=[
+        DataRequired(message='Number of categories is required'),
+        NumberRange(min=2, max=10, message='Number of categories must be between 2 and 10')
+    ])
+    submit = SubmitField('Continue to Category Setup')
+
+class GridConfigForm(FlaskForm):
+    """Form for configuring grid study categories and elements (without IPED parameters)."""
+    submit = SubmitField('Save Categories & Continue')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These will be auto-calculated
+        self.tasks_per_consumer = None
+        self.total_categories = None
+
+class GridIPEDForm(FlaskForm):
+    """Form for IPED parameters after grid categories are configured."""
+    number_of_respondents = IntegerField('Number of Respondents', validators=[
+        DataRequired(message='Number of respondents is required'),
+        NumberRange(min=1, max=10000, message='Number of respondents must be between 1 and 10,000')
+    ])
+    # Exposure tolerance is fixed at 1.0% as per original grid logic
+    # Random seed is optional
+    submit = SubmitField('Generate Tasks')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These will be auto-calculated
+        self.tasks_per_consumer = None
+        self.total_categories = None

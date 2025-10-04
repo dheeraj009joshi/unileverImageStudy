@@ -20,6 +20,8 @@
              data-step1c-complete="{{ 'true' if draft and draft.is_step_complete('1c') else 'false' }}"
              data-layer-config-complete="{{ 'true' if draft and draft.is_step_complete('layer_config') else 'false' }}"
              data-layer-iped-complete="{{ 'true' if draft and draft.is_step_complete('layer_iped') else 'false' }}"
+             data-grid-config-complete="{{ 'true' if draft and draft.is_step_complete('grid_config') else 'false' }}"
+             data-grid-iped-complete="{{ 'true' if draft and draft.is_step_complete('grid_iped') else 'false' }}"
              data-step2a-complete="{{ 'true' if draft and draft.is_step_complete('2a') else 'false' }}"
              data-step2b-complete="{{ 'true' if draft and draft.is_step_complete('2b') else 'false' }}"
              data-step2c-complete="{{ 'true' if draft and draft.is_step_complete('2c') else 'false' }}"
@@ -47,23 +49,23 @@
                 </div>
                 
                 <!-- Step 3: Content Setup (Different for each study type) -->
-                <div class="progress-step" data-step-id="2a" data-step-name="Elements Setup" data-grid-only="true">
-                    <div class="step-number">3a</div>
-                    <span class="step-label">Elements Setup</span>
+                <div class="progress-step" data-step-id="grid_config" data-step-name="Grid Configuration" data-grid-only="true">
+                    <div class="step-number">3</div>
+                    <span class="step-label">Grid Configuration</span>
                 </div>
                 <div class="progress-step" data-step-id="layer_config" data-step-name="Layer Configuration" data-layer-only="true">
-                    <div class="step-number">3b</div>
+                    <div class="step-number">3</div>
                     <span class="step-label">Layer Configuration</span>
                 </div>
                 
                 <!-- Step 4: IPED Parameters (Different for each study type) -->
-                <div class="progress-step" data-step-id="2c" data-step-name="IPED Parameters" data-grid-only="true">
-                    <div class="step-number">4a</div>
-                    <span class="step-label">RDE Parameters</span>
+                <div class="progress-step" data-step-id="grid_iped" data-step-name="Grid IPED Parameters" data-grid-only="true">
+                    <div class="step-number">4</div>
+                    <span class="step-label">Grid IPED Parameters</span>
                 </div>
-                <div class="progress-step" data-step-id="layer_iped" data-step-name="IPED Parameters" data-layer-only="true">
-                    <div class="step-number">4b</div>
-                    <span class="step-label">RDE Parameters</span>
+                <div class="progress-step" data-step-id="layer_iped" data-step-name="Layer IPED Parameters" data-layer-only="true">
+                    <div class="step-number">4</div>
+                    <span class="step-label">Layer IPED Parameters</span>
                 </div>
                 
                 <!-- Step 5: Task Generation (Common for both study types) -->
@@ -284,7 +286,7 @@
                         }
                     } else if (studyType === 'layer') {
                         // Layer studies: hide grid-specific steps
-                        if (stepId === '2a' || stepId === '2c') {
+                        if (stepId === 'grid_config' || stepId === 'grid_iped') {
                             console.log(`Hiding ${stepId} for layer study`);
                             step.style.display = 'none';
                             step.style.visibility = 'hidden';
@@ -321,7 +323,7 @@
                     console.log(`Available dataset keys:`, Object.keys(progressSection.dataset));
                     console.log(`Completion value:`, progressSection.dataset[stepDataKey]);
                     
-                    // Special handling for layer-specific steps
+                    // Special handling for layer-specific and grid-specific steps
                     let finalIsStepComplete = isStepComplete;
                     if (studyType === 'layer') {
                         if (stepId === 'layer_config') {
@@ -332,6 +334,16 @@
                             // Check if layer_iped is complete
                             finalIsStepComplete = progressSection.dataset['layerIpedComplete'] === 'true';
                             console.log(`Layer study: layer_iped completion check:`, finalIsStepComplete);
+                        }
+                    } else if (studyType === 'grid') {
+                        if (stepId === 'grid_config') {
+                            // Check if grid_config is complete
+                            finalIsStepComplete = progressSection.dataset['gridConfigComplete'] === 'true';
+                            console.log(`Grid study: grid_config completion check:`, finalIsStepComplete);
+                        } else if (stepId === 'grid_iped') {
+                            // Check if grid_iped is complete
+                            finalIsStepComplete = progressSection.dataset['gridIpedComplete'] === 'true';
+                            console.log(`Grid study: grid_iped completion check:`, finalIsStepComplete);
                         }
                     }
                     
@@ -344,6 +356,8 @@
                         'step1c-complete': progressSection.dataset['step1cComplete'],
                         'layer-config-complete': progressSection.dataset['layerConfigComplete'],
                         'layer-iped-complete': progressSection.dataset['layerIpedComplete'],
+                        'grid-config-complete': progressSection.dataset['gridConfigComplete'],
+                        'grid-iped-complete': progressSection.dataset['gridIpedComplete'],
                         'step2a-complete': progressSection.dataset['step2aComplete'],
                         'step2b-complete': progressSection.dataset['step2bComplete'],
                         'step2c-complete': progressSection.dataset['step2cComplete'],
@@ -387,7 +401,7 @@
             if (studyType === 'layer') {
                 return ['1a', '1b', '1c', '2b', 'layer_config', 'layer_iped', '3a', '3b'];
             } else {
-                return ['1a', '1b', '1c', '2b', '2a', '2c', '3a', '3b'];
+                return ['1a', '1b', '1c', '2b', 'grid_config', 'grid_iped', '3a', '3b'];
             }
         }
         

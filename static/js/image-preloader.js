@@ -110,23 +110,56 @@ class ImagePreloader {
         console.log('🔍 Study type:', studyData?.study_type);
 
         try {
-            if (studyData.study_type === 'grid') {
+            if (studyData.study_type === 'grid' || studyData.study_type === 'grid_v2') {
                 console.log('🔍 Processing grid study');
                 console.log('🔍 Elements:', studyData.elements);
+                console.log('🔍 Grid Categories:', studyData.grid_categories);
                 
-                // For grid studies, collect from elements
-                if (studyData.elements && Array.isArray(studyData.elements)) {
-                    studyData.elements.forEach((element, index) => {
+                // For new grid studies, collect from grid_categories
+                if (studyData.grid_categories && Array.isArray(studyData.grid_categories)) {
+                    console.log(`🔍 Found ${studyData.grid_categories.length} grid categories`);
+                    studyData.grid_categories.forEach((category, categoryIndex) => {
                         try {
-                            console.log(`🔍 Element ${index}:`, element);
-                            if (element && element.image && element.image.url && typeof element.image.url === 'string') {
-                                console.log(`✅ Adding grid image URL: ${element.image.url}`);
-                                imageUrls.add(element.image.url);
+                            console.log(`🔍 Category ${categoryIndex}:`, category);
+                            if (category && category.elements && Array.isArray(category.elements)) {
+                                category.elements.forEach((element, elementIndex) => {
+                                    try {
+                                        console.log(`🔍 Category ${categoryIndex} Element ${elementIndex}:`, element);
+                                        // Check for URL in element.content (new structure) or element.image.url (legacy)
+                                        const imageUrl = element.content || (element.image && element.image.url);
+                                        if (imageUrl && typeof imageUrl === 'string') {
+                                            console.log(`✅ Adding grid category image URL: ${imageUrl}`);
+                                            imageUrls.add(imageUrl);
+                                        } else {
+                                            console.log(`❌ Invalid grid category element ${categoryIndex}-${elementIndex}:`, element);
+                                        }
+                                    } catch (error) {
+                                        console.warn('Error processing grid category element:', error);
+                                    }
+                                });
                             } else {
-                                console.log(`❌ Invalid grid element ${index}:`, element);
+                                console.log(`❌ No elements array in category ${categoryIndex}:`, category);
                             }
                         } catch (error) {
-                            console.warn('Error processing grid element:', error);
+                            console.warn('Error processing grid category:', error);
+                        }
+                    });
+                }
+                
+                // For legacy grid studies, collect from elements
+                if (studyData.elements && Array.isArray(studyData.elements)) {
+                    console.log(`🔍 Found ${studyData.elements.length} legacy elements`);
+                    studyData.elements.forEach((element, index) => {
+                        try {
+                            console.log(`🔍 Legacy Element ${index}:`, element);
+                            if (element && element.image && element.image.url && typeof element.image.url === 'string') {
+                                console.log(`✅ Adding legacy grid image URL: ${element.image.url}`);
+                                imageUrls.add(element.image.url);
+                            } else {
+                                console.log(`❌ Invalid legacy grid element ${index}:`, element);
+                            }
+                        } catch (error) {
+                            console.warn('Error processing legacy grid element:', error);
                         }
                     });
                 } else {

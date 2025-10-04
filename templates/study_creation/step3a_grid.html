@@ -66,39 +66,71 @@
                                 <div class="vignette-grid-scrollable">
                                     {% if first_respondent_tasks and first_respondent_tasks|length > 0 %}
                                         {% for task in first_respondent_tasks %}
-                                            {% if task and task.elements_shown %}
+                                            {% if task and (task.elements_shown or task.elements_shown_content) %}
                                             <div class="vignette-card">
                                                 <div class="vignette-header">
                                                     <span class="vignette-task-number">Task {{ loop.index }}</span>
                                                     <div class="layer-indicators">
-                                                        {% for element_name, is_active in task.elements_shown.items() %}
-                                                            {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
-                                                                <span class="layer-badge active">
-                                                                    {{ element_name }}
-                                                                </span>
-                                                            {% endif %}
-                                                        {% endfor %}
+                                                        {% if task.elements_shown_content %}
+                                                            <!-- New grid structure -->
+                                                            {% for element_name, element_data in task.elements_shown_content.items() %}
+                                                                {% if element_data and task.elements_shown.get(element_name, 0) == 1 %}
+                                                                    <span class="layer-badge active">
+                                                                        {{ element_data.name or element_name }}
+                                                                    </span>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <!-- Legacy structure -->
+                                                            {% for element_name, is_active in task.elements_shown.items() %}
+                                                                {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
+                                                                    <span class="layer-badge active">
+                                                                        {{ element_name }}
+                                                                    </span>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                                 
                                                 <div class="vignette-preview">
                                                     {% set has_content = false %}
-                                                    {% for element_name, is_active in task.elements_shown.items() %}
-                                                        {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
-                                                            {% set content_key = element_name + '_content' %}
-                                                            {% set image_url = task.elements_shown.get(content_key, '') %}
-                                                            {% if image_url and (image_url.startswith('http') or image_url.startswith('data:image')) %}
-                                                                {% set has_content = true %}
-                                                                <div class="image-container" style="display: flex;">
-                                                                    <img src="{{ image_url }}" 
-                                                                         alt="{{ element_name }}" 
-                                                                         title="{{ element_name }}"
-                                                                         class="vignette-layer-img"
-                                                                         onclick="showImagePreview('{{ image_url }}', '{{ element_name }}')">
-                                                                </div>
+                                                    {% if task.elements_shown_content %}
+                                                        <!-- New grid structure -->
+                                                        {% for element_name, element_data in task.elements_shown_content.items() %}
+                                                            {% if element_data and task.elements_shown.get(element_name, 0) == 1 %}
+                                                                {% set image_url = element_data.content or element_data.url %}
+                                                                {% if image_url and (image_url.startswith('http') or image_url.startswith('data:image')) %}
+                                                                    {% set has_content = true %}
+                                                                    <div class="image-container" style="display: flex;">
+                                                                        <img src="{{ image_url }}" 
+                                                                             alt="{{ element_data.alt_text or element_data.name or element_name }}" 
+                                                                             title="{{ element_data.name or element_name }}"
+                                                                             class="vignette-layer-img"
+                                                                             onclick="showImagePreview('{{ image_url }}', '{{ element_data.name or element_name }}')">
+                                                                    </div>
+                                                                {% endif %}
                                                             {% endif %}
-                                                        {% endif %}
-                                                    {% endfor %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <!-- Legacy structure -->
+                                                        {% for element_name, is_active in task.elements_shown.items() %}
+                                                            {% if is_active and not element_name.endswith('_content') and not element_name.endswith('_ref') %}
+                                                                {% set content_key = element_name + '_content' %}
+                                                                {% set image_url = task.elements_shown.get(content_key, '') %}
+                                                                {% if image_url and (image_url.startswith('http') or image_url.startswith('data:image')) %}
+                                                                    {% set has_content = true %}
+                                                                    <div class="image-container" style="display: flex;">
+                                                                        <img src="{{ image_url }}" 
+                                                                             alt="{{ element_name }}" 
+                                                                             title="{{ element_name }}"
+                                                                             class="vignette-layer-img"
+                                                                             onclick="showImagePreview('{{ image_url }}', '{{ element_name }}')">
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
                                                     
                                                     
                                                 </div>
@@ -309,10 +341,10 @@ function showMatrixStats() {
     
     const tasksPerRespondent = totalRespondents > 0 ? Math.round(totalTasks / totalRespondents) : 0;
     
-    // Get step2c data for additional context
-    const step2cData = {{ step2c_data|tojson|safe }};
-    const minElements = step2cData.min_active_elements || 0;
-    const maxElements = step2cData.max_active_elements || 0;
+    // Get grid IPED data for additional context
+    const gridIpedData = {{ grid_iped_data|tojson|safe }};
+    const minElements = gridIpedData.min_active_elements || 0;
+    const maxElements = gridIpedData.max_active_elements || 0;
     
     // Generate statistics HTML
     let statsHTML = `

@@ -4,7 +4,7 @@ import uuid
 
 class ElementInteraction(EmbeddedDocument):
     """Embedded document for tracking element interactions and timing."""
-    element_id = StringField(required=True, max_length=10)
+    element_id = StringField(required=True, max_length=100)
     view_time_seconds = FloatField(required=True, min_value=0.0)
     hover_count = IntField(default=0, min_value=0)
     click_count = IntField(default=0, min_value=0)
