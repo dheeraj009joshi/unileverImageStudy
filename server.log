@@ -2,9 +2,9 @@
 ✅ Compression enabled
 ✅ Database connected
 🌐 Starting Flask development server...
-   Access the application at: http://localhost:55000
-   Dashboard: http://localhost:55000/dashboard
-   Study Creation: http://localhost:55000/study/create
+   Access the application at: http://localhost:54000
+   Dashboard: http://localhost:54000/dashboard
+   Study Creation: http://localhost:54000/study/create
 
    Press Ctrl+C to stop the server
  * Serving Flask app 'app'

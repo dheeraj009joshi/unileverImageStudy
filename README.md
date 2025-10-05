@@ -104,13 +104,13 @@ docker run -d --name mongodb -p 27017:27017 mongo:6.0
 python app.py
 
 # Production mode
-gunicorn --bind 0.0.0.0:55000 app:create_app()
+gunicorn --bind 0.0.0.0:54000 app:create_app()
 ```
 
 ### 6. Access the Application
-- **Main App**: http://localhost:55000
-- **Dashboard**: http://localhost:55000/dashboard
-- **Study Creation**: http://localhost:55000/study/create
+- **Main App**: http://localhost:54000
+- **Dashboard**: http://localhost:54000/dashboard
+- **Study Creation**: http://localhost:54000/study/create
 
 ## 🐳 Docker Deployment
 
@@ -132,7 +132,7 @@ docker-compose down
 docker build -t iped-system .
 
 # Run Flask app
-docker run -p 55000:55000 iped-system
+docker run -p 54000:54000 iped-system
 
 # Run MongoDB
 docker run -d --name mongodb -p 27017:27017 mongo:6.0

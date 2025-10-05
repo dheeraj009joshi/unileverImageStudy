@@ -26,7 +26,7 @@ services:
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/iped_system?authSource=admin
       - SECRET_KEY=your-super-secret-key-change-in-production
     ports:
-      - "55000:55000"
+      - "54000:54000"
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
