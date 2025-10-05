@@ -417,6 +417,7 @@ def change_study_status(study_id):
         study.save()
         
         return jsonify({'success': True, 'status': new_status})
+        #vdvv
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
