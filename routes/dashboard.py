@@ -434,6 +434,264 @@ def export_debug(study_id):
     print(f"🔧 Study ID: {study_id}")
     return f"Export debug called for study: {study_id}"
 
+@dashboard_bp.route('/studies/<study_id>/export-task-matrix')
+@login_required
+def export_task_matrix(study_id):
+    """Export only the task matrix (0/1 data) for all tasks across all respondents."""
+    print("=" * 80)
+    print("🚀🚀🚀 TASK MATRIX EXPORT CALLED 🚀🚀🚀")
+    print(f"🚀 Study ID: {study_id}")
+    print(f"🚀 User: {getattr(current_user, 'username', 'Anonymous') if current_user and current_user.is_authenticated else 'Anonymous'}")
+    print("=" * 80)
+    
+    # Get the study
+    study = Study.objects(_id=study_id, creator=current_user).first()
+    
+    if not study:
+        flash('Study not found or you do not have permission to access it.', 'error')
+        return redirect(url_for('dashboard.studies'))
+    
+    print(f"🚀 Study found: {study.title}")
+    print(f"🚀 Study type: {study.study_type}")
+    
+    # Create CSV response
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Generate headers and mapping for both grid and layer studies
+    header_row = ['Panelist', 'Task']
+    key_to_descriptive = {}
+    
+    if study.study_type == 'grid' and study.grid_categories:
+        print(f"🚀 Processing GRID study with {len(study.grid_categories)} categories")
+        
+        # Get actual keys from task data first
+        actual_keys = set()
+        if hasattr(study, 'tasks') and study.tasks:
+            print(f"🚀 Study has tasks: {len(study.tasks)} panelists")
+            print(f"🚀 Task structure type: {type(study.tasks)}")
+            print(f"🚀 First few panelist IDs: {list(study.tasks.keys())[:3]}")
+            
+            for panelist_id, panelist_tasks in study.tasks.items():
+                print(f"🚀 Panelist {panelist_id} tasks type: {type(panelist_tasks)}")
+                print(f"🚀 Panelist {panelist_id} tasks length: {len(panelist_tasks) if panelist_tasks else 'None'}")
+                
+                if panelist_tasks:
+                    for task_index, task in enumerate(panelist_tasks[:2]):  # Only check first 2 tasks
+                        print(f"🚀 Task {task_index} type: {type(task)}")
+                        print(f"🚀 Task {task_index} content: {task}")
+                        
+                        # Try different ways to access elements_shown
+                        elements_shown = None
+                        if hasattr(task, 'elements_shown'):
+                            elements_shown = getattr(task, 'elements_shown', {})
+                            print(f"🚀 Task {task_index} elements_shown (attr): {elements_shown}")
+                        elif isinstance(task, dict) and 'elements_shown' in task:
+                            elements_shown = task['elements_shown']
+                            print(f"🚀 Task {task_index} elements_shown (dict): {elements_shown}")
+                        else:
+                            print(f"🚀 Task {task_index} no elements_shown found")
+                        
+                        if elements_shown:
+                            actual_keys.update(elements_shown.keys())
+                            print(f"🚀 Task {task_index} keys: {list(elements_shown.keys())}")
+                    break
+        else:
+            print("🚀 Study has no tasks or tasks is None")
+        
+        print(f"🚀 Found actual keys in tasks: {sorted(actual_keys)}")
+        
+        # Create mapping from actual keys to descriptive names
+        print(f"🚀 Available categories: {[cat.name for cat in study.grid_categories]}")
+        for actual_key in sorted(actual_keys):
+            # Parse actual_key format: "CategoryName_ElementIndex" (e.g., "Color_1", "Shape_2")
+            print(f"🚀 Processing key: {actual_key}")
+            if '_' in actual_key:
+                category_name, element_index_str = actual_key.rsplit('_', 1)
+                print(f"🚀 Parsed: category_name={category_name}, element_index_str={element_index_str}")
+                try:
+                    element_index = int(element_index_str) - 1
+                    print(f"🚀 Element index: {element_index}")
+                    
+                    # Find the corresponding category and element
+                    found_category = False
+                    for category in study.grid_categories:
+                        print(f"🚀 Checking category: {category.name} (has {len(category.elements)} elements)")
+                        if category.name == category_name and element_index < len(category.elements):
+                            element = category.elements[element_index]
+                            element_name = getattr(element, 'name', f'Element_{element_index + 1}')
+                            descriptive_name = f"{category_name}_{element_name}_{element_index + 1}"
+                            key_to_descriptive[actual_key] = descriptive_name
+                            header_row.append(descriptive_name)
+                            print(f"🚀 Mapped {actual_key} -> {descriptive_name}")
+                            found_category = True
+                            break
+                    
+                    if not found_category:
+                        # Fallback if category not found
+                        print(f"🚀 Category {category_name} not found or element index {element_index} out of range")
+                        key_to_descriptive[actual_key] = actual_key
+                        header_row.append(actual_key)
+                except ValueError as e:
+                    print(f"🚀 ValueError parsing {element_index_str}: {e}")
+                    key_to_descriptive[actual_key] = actual_key
+                    header_row.append(actual_key)
+            else:
+                print(f"🚀 Key {actual_key} doesn't contain underscore")
+                key_to_descriptive[actual_key] = actual_key
+                header_row.append(actual_key)
+            
+    elif study.study_type == 'layer' and study.study_layers:
+        print(f"🚀 Processing LAYER study with {len(study.study_layers)} layers")
+        
+        # Get actual keys from task data first
+        actual_keys = set()
+        if hasattr(study, 'tasks') and study.tasks:
+            print(f"🚀 Study has tasks: {len(study.tasks)} panelists")
+            print(f"🚀 Task structure type: {type(study.tasks)}")
+            print(f"🚀 First few panelist IDs: {list(study.tasks.keys())[:3]}")
+            
+            for panelist_id, panelist_tasks in study.tasks.items():
+                print(f"🚀 Panelist {panelist_id} tasks type: {type(panelist_tasks)}")
+                print(f"🚀 Panelist {panelist_id} tasks length: {len(panelist_tasks) if panelist_tasks else 'None'}")
+                
+                if panelist_tasks:
+                    for task_index, task in enumerate(panelist_tasks[:2]):  # Only check first 2 tasks
+                        print(f"🚀 Task {task_index} type: {type(task)}")
+                        print(f"🚀 Task {task_index} content: {task}")
+                        
+                        # Try different ways to access elements_shown
+                        elements_shown = None
+                        if hasattr(task, 'elements_shown'):
+                            elements_shown = getattr(task, 'elements_shown', {})
+                            print(f"🚀 Task {task_index} elements_shown (attr): {elements_shown}")
+                        elif isinstance(task, dict) and 'elements_shown' in task:
+                            elements_shown = task['elements_shown']
+                            print(f"🚀 Task {task_index} elements_shown (dict): {elements_shown}")
+                        else:
+                            print(f"🚀 Task {task_index} no elements_shown found")
+                        
+                        if elements_shown:
+                            # Filter out keys ending with '_content'
+                            for key in elements_shown.keys():
+                                if not key.endswith('_content'):
+                                    actual_keys.add(key)
+                            print(f"🚀 Task {task_index} keys: {list(elements_shown.keys())}")
+                    break
+        else:
+            print("🚀 Study has no tasks or tasks is None")
+        
+        print(f"🚀 Found actual layer keys in tasks: {sorted(actual_keys)}")
+        
+        # Create mapping from actual layer keys to descriptive names
+        for key in sorted(actual_keys):
+            # Parse key format: "LayerName_ElementIndex" (e.g., "Background_1", "Foreground_2")
+            print(f"🚀 Processing layer key: {key}")
+            if '_' in key:
+                layer_name, element_index_str = key.rsplit('_', 1)
+                print(f"🚀 Parsed: layer_name={layer_name}, element_index_str={element_index_str}")
+                try:
+                    element_index = int(element_index_str) - 1
+                    print(f"🚀 Element index: {element_index}")
+                    
+                    # Find the corresponding layer and element in study_layers
+                    found_layer = False
+                    for study_layer in study.study_layers:
+                        print(f"🚀 Checking layer: {study_layer.name} (has {len(study_layer.images)} images)")
+                        if study_layer.name == layer_name and element_index < len(study_layer.images):
+                            element = study_layer.images[element_index]
+                            element_name = element.name if hasattr(element, 'name') and element.name else f'Element_{element_index + 1}'
+                            descriptive_name = f'{layer_name}_{element_name}'
+                            key_to_descriptive[key] = descriptive_name
+                            header_row.append(descriptive_name)
+                            print(f"🚀 Mapped {key} -> {descriptive_name}")
+                            found_layer = True
+                            break
+                    
+                    if not found_layer:
+                        # Fallback if layer not found
+                        print(f"🚀 Layer {layer_name} not found or element index {element_index} out of range")
+                        key_to_descriptive[key] = key
+                        header_row.append(key)
+                except ValueError as e:
+                    print(f"🚀 ValueError parsing {element_index_str}: {e}")
+                    key_to_descriptive[key] = key
+                    header_row.append(key)
+            else:
+                print(f"🚀 Key {key} doesn't contain underscore")
+                key_to_descriptive[key] = key
+                header_row.append(key)
+    
+    # Write header
+    writer.writerow(header_row)
+    print(f"🚀 Header row: {header_row}")
+    
+    # Write task matrix data
+    if hasattr(study, 'tasks') and study.tasks:
+        print(f"🚀 Processing {len(study.tasks)} panelists")
+        
+        for panelist_id, panelist_tasks in study.tasks.items():
+            print(f"🚀 Processing panelist {panelist_id} with {len(panelist_tasks)} tasks")
+            
+            for task_index, task in enumerate(panelist_tasks):
+                row_data = [panelist_id, task_index + 1]  # Panelist ID and Task number
+                
+                # Try different ways to access elements_shown
+                elements_shown = None
+                if hasattr(task, 'elements_shown'):
+                    elements_shown = getattr(task, 'elements_shown', {})
+                    print(f"🚀 Task {task_index + 1} elements_shown (attr): {elements_shown}")
+                elif isinstance(task, dict) and 'elements_shown' in task:
+                    elements_shown = task['elements_shown']
+                    print(f"🚀 Task {task_index + 1} elements_shown (dict): {elements_shown}")
+                else:
+                    print(f"🚀 Task {task_index + 1} no elements_shown found, task type: {type(task)}")
+                    print(f"🚀 Task {task_index + 1} task content: {task}")
+                
+                if not elements_shown:
+                    elements_shown = {}
+                
+                print(f"🚀 Task {task_index + 1} elements_shown keys: {list(elements_shown.keys()) if elements_shown else 'EMPTY'}")
+                print(f"🚀 Available key mappings: {key_to_descriptive}")
+                
+                # Add 0/1 values for each element in the header order
+                for i in range(2, len(header_row)):  # Skip Panelist and Task columns
+                    column_name = header_row[i]
+                    
+                    # Find the corresponding key for this column
+                    element_key = None
+                    for key, desc_name in key_to_descriptive.items():
+                        if desc_name == column_name:
+                            element_key = key
+                            break
+                    print(key)
+                    # Get the value (1 if element was shown, 0 if not)
+                    value = elements_shown.get(element_key, 0) if element_key else 0
+                    print(f"🚀 Column: {column_name}, Key: {element_key}, Value: {value}")
+                    row_data.append(value)
+                
+                writer.writerow(row_data)
+                print(f"🚀 Row written: {row_data}")
+                
+                # Process all tasks
+                pass
+    
+    # Prepare response
+    output.seek(0)
+    
+    # Generate filename
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H%M')
+    filename = f"{study.title}_task_matrix_{timestamp}.csv"
+    
+    response = current_app.response_class(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
+    )
+    
+    print(f"🚀 Task matrix export completed: {filename}")
+    return response
+
 @dashboard_bp.route('/studies/<study_id>/export')
 # @login_required  # Temporarily disabled for debugging
 def export_study(study_id):
