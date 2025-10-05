@@ -263,10 +263,92 @@
 
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner"></div>
-    <p>Generating task matrix...</p>
+    <div class="loading-overlay-content">
+        <div class="loading-spinner"></div>
+        <p class="loading-overlay-text" id="loadingText">Generating task matrix...</p>
+        <div class="timer-container" id="timerContainer" style="display: none;">
+            <div class="timer-text">Estimated time remaining:</div>
+            <div class="timer-display" id="timerDisplay">3:00</div>
+        </div>
+    </div>
 </div>
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Timer Styling */
+.timer-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.timer-text {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.timer-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2196F3;
+    font-family: 'Courier New', monospace;
+    background: rgba(33, 150, 243, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 2px solid rgba(33, 150, 243, 0.2);
+    display: inline-block;
+    min-width: 80px;
+    animation: timerPulse 2s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(33, 150, 243, 0);
+    }
+}
+
+.timer-display.warning {
+    color: #FF9800;
+    background: rgba(255, 152, 0, 0.1);
+    border-color: rgba(255, 152, 0, 0.2);
+}
+
+.timer-display.critical {
+    color: #F44336;
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.2);
+    animation: timerCritical 1s ease-in-out infinite;
+}
+
+@keyframes timerCritical {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .timer-display {
+        font-size: 20px;
+        padding: 6px 12px;
+    }
+    
+    .timer-text {
+        font-size: 13px;
+    }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -455,15 +537,111 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Timer functionality
+    let timerInterval = null;
+    let timeRemaining = 180; // 3 minutes in seconds
+    
+    function startTimer() {
+        timeRemaining = 180; // Reset to 3 minutes
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerContainer = document.getElementById('timerContainer');
+        
+        if (timerContainer) {
+            timerContainer.style.display = 'block';
+        }
+        
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+        
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timerDisplay) {
+                timerDisplay.textContent = timeString;
+                
+                // Change color based on remaining time
+                timerDisplay.classList.remove('warning', 'critical');
+                if (timeRemaining <= 30) {
+                    timerDisplay.classList.add('critical');
+                } else if (timeRemaining <= 60) {
+                    timerDisplay.classList.add('warning');
+                }
+            }
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                if (timerDisplay) {
+                    timerDisplay.textContent = '0:00';
+                }
+            }
+        }, 1000);
+    }
+    
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        const timerContainer = document.getElementById('timerContainer');
+        if (timerContainer) {
+            timerContainer.style.display = 'none';
+        }
+    }
+
     // Form validation and loading states
     const forms = document.querySelectorAll('form[data-validate="true"]');
     forms.forEach(form => {
         form.addEventListener('submit', function() {
             const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) {
+                loadingOverlay.classList.add('is-visible');
                 loadingOverlay.style.display = 'flex';
+                
+                // Start the 3-minute timer
+                startTimer();
+                
+                // Disable form submission to prevent double submission
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="loading-spinner loading-spinner--sm"></span> Generating...';
+                }
             }
         });
+    });
+    
+    // Handle regenerate matrix button
+    const regenerateForms = document.querySelectorAll('form');
+    regenerateForms.forEach(form => {
+        const regenerateBtn = form.querySelector('button[type="submit"]');
+        if (regenerateBtn && regenerateBtn.textContent.includes('Regenerate Matrix')) {
+            form.addEventListener('submit', function() {
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('is-visible');
+                    loadingOverlay.style.display = 'flex';
+                    
+                    // Start the 3-minute timer
+                    startTimer();
+                    
+                    // Update loading text for regenerate
+                    const loadingText = loadingOverlay.querySelector('.loading-overlay-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Regenerating task matrix...';
+                    }
+                    
+                    // Disable regenerate button
+                    regenerateBtn.disabled = true;
+                    regenerateBtn.innerHTML = '<span class="loading-spinner loading-spinner--sm"></span> Regenerating...';
+                }
+            });
+        }
     });
     
     // Check for flash messages
