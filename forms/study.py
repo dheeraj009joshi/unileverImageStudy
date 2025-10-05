@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, SelectField, IntegerField, BooleanField, SubmitField, FloatField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError, Optional
 
@@ -91,6 +92,9 @@ class Step2cIPEDParametersForm(FlaskForm):
 
 class LayerConfigForm(FlaskForm):
     """Form for configuring layers in a layer study (without IPED parameters)."""
+    default_background = FileField('Default Background (Optional)', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Only image files are allowed!')
+    ])
     submit = SubmitField('Save Layers & Continue')
     
     def __init__(self, *args, **kwargs):

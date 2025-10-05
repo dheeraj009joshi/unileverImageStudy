@@ -612,12 +612,21 @@ def export_study(study_id):
             # Task-specific data - create one row per task
             completed_tasks = response.completed_tasks if hasattr(response, 'completed_tasks') else []
             
-            # Get the maximum number of tasks for this response
-            max_tasks = response.total_tasks_assigned if hasattr(response, 'total_tasks_assigned') else 0
+            # Use the ACTUAL number of completed tasks instead of total_tasks_assigned
+            # This prevents empty rows from old responses that were created with incorrect task counts
+            completed_tasks_count = len(completed_tasks) if completed_tasks else 0
+            max_tasks = completed_tasks_count
+            
+            print(f"DEBUG: Response {response.respondent_id}: total_tasks_assigned={response.total_tasks_assigned}, completed_tasks_count={completed_tasks_count}, using max_tasks={max_tasks}")
             
             for task_num in range(1, max_tasks + 1):
                 task_data = next((task for task in completed_tasks 
                                 if getattr(task, 'task_index', None) == task_num - 1), None)
+                
+                if not task_data:
+                    print(f"DEBUG: No task data found for task {task_num} (task_index {task_num - 1})")
+                    print(f"DEBUG: Available task indices: {[getattr(task, 'task_index', 'NO_INDEX') for task in completed_tasks]}")
+                    continue
                 
                 row_data = []
                 

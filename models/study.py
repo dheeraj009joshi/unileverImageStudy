@@ -123,6 +123,9 @@ class Study(Document):
     # Layer Study Configuration (for layer study type)
     study_layers = ListField(EmbeddedDocumentField(StudyLayer))  # Required for layer studies
     
+    # Default Background for Layer Studies (optional)
+    default_background = DictField()  # Contains url, name, and metadata for default background
+    
     # Legacy field for backward compatibility (deprecated)
     elements = ListField(EmbeddedDocumentField(StudyElement))  # Deprecated: use grid_categories instead
     

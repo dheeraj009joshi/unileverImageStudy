@@ -4,6 +4,34 @@
    ======================================== */
 
 /* ========================================
+   Background Layer Styling
+   ======================================== */
+
+.background-layer-img {
+    border: 2px solid #2196f3;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+}
+
+.background-layer {
+    position: relative;
+}
+
+.background-layer::after {
+    content: "Background";
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2196f3;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* ========================================
    Page Layout & Structure
    ======================================== */
 

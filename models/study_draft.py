@@ -107,11 +107,13 @@ class StudyDraft(Document):
         
         # For layer-specific steps, check if they have meaningful data
         if step == 'layer_config':
-            # Check if layers data exists and has at least one layer
+            # Check if layers data exists and has at least one layer with images
             layers = step_data.get('layers', [])
-            result = len(layers) > 0 and all(len(layer.get('images', [])) > 0 for layer in layers)
+            layers_with_images = [layer for layer in layers if len(layer.get('images', [])) > 0]
+            result = len(layers_with_images) > 0
             total_duration = time.time() - start_time
             print(f"⏱️  [PERF] is_step_complete({step}) total: {total_duration:.3f}s - {result}")
+            print(f"⏱️  [PERF] Total layers: {len(layers)}, Layers with images: {len(layers_with_images)}")
             return result
         elif step == 'grid_config':
             # Check if grid categories data exists and has at least one category with elements

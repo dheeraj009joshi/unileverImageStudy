@@ -68,6 +68,33 @@
                 </div>
             </div>
 
+            <!-- Default Background Section -->
+            <div class="form-section">
+                <h3>🖼️ Default Background (Optional)</h3>
+                <p class="form-help">Upload a default background image that will be shown behind all layers in your study vignettes.</p>
+                
+                <div class="background-upload-container">
+                    <div class="file-upload-area" id="backgroundUploadArea">
+                        <div class="upload-prompt" id="backgroundUploadPrompt">
+                            <span class="upload-icon">📁</span>
+                            <p>Drag & drop background image here or <button type="button" class="btn btn--sm btn--outline" onclick="triggerBackgroundFileInput()">Browse File</button></p>
+                            <small>Supports JPG, PNG, GIF, WebP formats</small>
+                        </div>
+                        <input type="file" id="backgroundFileInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="background-preview" id="backgroundPreview" style="display: none;">
+                        <div class="preview-image-container">
+                            <img id="backgroundPreviewImg" src="" alt="Background Preview">
+                            <button type="button" class="btn btn--danger btn--sm remove-background" onclick="removeBackground()">🗑️ Remove</button>
+                        </div>
+                        <div class="background-info">
+                            <span id="backgroundFileName"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Auto-calculated parameters display -->
             <div class="form-section">
                 <h3>📊 Layer Summary</h3>
@@ -160,12 +187,14 @@ window.layers = window.layers || [];
 window.layerCounter = window.layerCounter || 1;
 window.currentEditingLayer = window.currentEditingLayer || null;
 window.draggedLayer = window.draggedLayer || null;
+window.selectedBackgroundFile = window.selectedBackgroundFile || null;
 
 // Local references for easier access
 let layers = window.layers;
 let layerCounter = window.layerCounter;
 let currentEditingLayer = window.currentEditingLayer;
 let draggedLayer = window.draggedLayer;
+let selectedBackgroundFile = window.selectedBackgroundFile;
 
 // ========================================
 // GLOBAL FUNCTION DEFINITIONS
@@ -177,15 +206,18 @@ function syncLayersVariables() {
     window.layerCounter = layerCounter;
     window.currentEditingLayer = currentEditingLayer;
     window.draggedLayer = draggedLayer;
+    window.selectedBackgroundFile = selectedBackgroundFile;
     
     // Also sync back to local variables
     layers = window.layers;
     layerCounter = window.layerCounter;
     currentEditingLayer = window.currentEditingLayer;
     draggedLayer = window.draggedLayer;
+    selectedBackgroundFile = window.selectedBackgroundFile;
     
     console.log('Variables synced. Global layers:', window.layers);
     console.log('Local layers:', layers);
+    console.log('Background file:', selectedBackgroundFile);
 }
 
 // Test that functions are defined immediately
@@ -222,7 +254,7 @@ window.openLayerModal = function(layerId = null) {
     
     if (layerId) {
         // Editing existing layer
-        currentEditingLayer = layers.find(l => l.layer_id === layerId);
+        currentEditingLayer = layers.find(l => l.id === layerId);
         if (currentEditingLayer) {
             modalTitle.textContent = 'Edit Layer';
             nameInput.value = currentEditingLayer.name;
@@ -305,10 +337,10 @@ window.saveLayer = function() {
     // For now, just validate that images exist
     
     if (currentEditingLayer) {
-        if (currentEditingLayer.layer_id === null) {
+        if (currentEditingLayer.id === null) {
             // Creating new layer
             const layerId = `layer_${layers.length + 1}`;
-            currentEditingLayer.layer_id = layerId;
+            currentEditingLayer.id = layerId;
             currentEditingLayer.name = name;
             currentEditingLayer.description = description;
             currentEditingLayer.order = layers.length;
@@ -323,12 +355,12 @@ window.saveLayer = function() {
             currentEditingLayer.description = description;
             
             // Find and update the layer in the layers array
-            const existingLayerIndex = layers.findIndex(l => l.layer_id === currentEditingLayer.layer_id);
+            const existingLayerIndex = layers.findIndex(l => l.id === currentEditingLayer.id);
             if (existingLayerIndex !== -1) {
                 layers[existingLayerIndex] = { ...currentEditingLayer };
                 console.log('Existing layer updated in array:', layers[existingLayerIndex]);
             } else {
-                console.error('Could not find existing layer in array:', currentEditingLayer.layer_id);
+                console.error('Could not find existing layer in array:', currentEditingLayer.id);
             }
         }
     }
@@ -363,7 +395,7 @@ window.triggerFileInput = function() {
 // Remove image from modal - MUST be defined for onclick to work
 window.removeImage = function(imageId) {
     if (currentEditingLayer) {
-        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.image_id !== imageId);
+        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.id !== imageId);
         renderModalImages(currentEditingLayer.images);
     }
 };
@@ -371,7 +403,7 @@ window.removeImage = function(imageId) {
 // Update image name - MUST be defined for onclick to work
 window.updateImageName = function(imageId, name) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
         if (image) {
             image.name = name.trim() || `Image_${Date.now()}`;
             console.log(`Updated image name to: ${image.name}`);
@@ -382,7 +414,7 @@ window.updateImageName = function(imageId, name) {
 // Update image alt - MUST be defined for onclick to work
 window.updateImageAlt = function(imageId, alt) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
         if (image) {
             image.alt = alt.trim() || image.name;
             console.log(`Updated image alt to: ${image.alt}`);
@@ -393,7 +425,7 @@ window.updateImageAlt = function(imageId, alt) {
 // Remove layer - MUST be defined for onclick to work
 window.removeLayer = function(layerId) {
     if (confirm('Are you sure you want to remove this layer? This action cannot be undone.')) {
-        layers = layers.filter(l => l.layer_id !== layerId);
+        layers = layers.filter(l => l.id !== layerId);
         renderLayersList();
         updateLayerOrdering();
         updateCalculatedParameters();
@@ -403,7 +435,7 @@ window.removeLayer = function(layerId) {
 
 // Change z-index - MUST be defined for onclick to work
 window.changeZIndex = function(layerId, change) {
-    const layer = layers.find(l => l.layer_id === layerId);
+    const layer = layers.find(l => l.id === layerId);
     if (layer) {
         const oldZIndex = layer.z_index;
         layer.z_index += change;
@@ -422,6 +454,20 @@ window.changeZIndex = function(layerId, change) {
     }
 };
 
+// Background file functions - MUST be defined for onclick to work
+window.triggerBackgroundFileInput = function() {
+    document.getElementById('backgroundFileInput').click();
+};
+
+window.removeBackground = function() {
+    selectedBackgroundFile = null;
+    window.selectedBackgroundFile = null;
+    document.getElementById('backgroundPreview').style.display = 'none';
+    document.getElementById('backgroundUploadArea').style.display = 'block';
+    updatePreview();
+    console.log('Background removed');
+};
+
 // ========================================
 // HELPER FUNCTIONS
 // ========================================
@@ -430,9 +476,16 @@ window.changeZIndex = function(layerId, change) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing...');
     initializeLayers();
-    renderLayersList();
-    updateCalculatedParameters();
-    updatePreview();
+    
+    // Force refresh after a short delay to ensure data is loaded
+    setTimeout(() => {
+        console.log('Delayed refresh after initialization...');
+        console.log('Current layers array:', layers);
+        renderLayersList();
+        updateCalculatedParameters();
+        updatePreview();
+    }, 100);
+    
     setupDragAndDrop();
     
     // Force update Z-index list after a short delay to ensure layers are loaded
@@ -451,13 +504,31 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize with existing data if available
 function initializeLayers() {
     console.log('Initializing layers...');
+    
+    // Try to get layers from multiple possible sources
+    let existingLayers = null;
+    
     {% if draft and draft.layer_config_data and draft.layer_config_data.layers %}
-        const existingLayers = {{ draft.layer_config_data.layers | tojson }};
-        console.log('Found existing layers:', existingLayers);
+        existingLayers = {{ draft.layer_config_data.layers | tojson }};
+        console.log('Found layers in draft.layer_config_data:', existingLayers);
+    {% endif %}
+    
+    {% if layer_config_data and layer_config_data.layers %}
+        existingLayers = {{ layer_config_data.layers | tojson }};
+        console.log('Found layers in layer_config_data:', existingLayers);
+    {% endif %}
+    
+    if (existingLayers && existingLayers.length > 0) {
+        console.log('Processing existing layers:', existingLayers);
+        console.log('Layer counter before processing:', layerCounter);
+        
         existingLayers.forEach((layerData, index) => {
             console.log(`Processing layer ${index}:`, layerData);
             addLayerFromData(layerData);
         });
+        
+        console.log('Layer counter after processing:', layerCounter);
+        console.log('Final layers array after processing:', layers);
         
         // Ensure Z-index values are properly set
         layers.forEach((layer, index) => {
@@ -468,16 +539,89 @@ function initializeLayers() {
         });
         
         console.log('Final layers array:', layers);
-    {% else %}
-        console.log('No existing layers found');
+        
+        // Update preview after layers are loaded
+        console.log('Updating preview after loading layers...');
+        updatePreview();
+        
+        // Also render the layers list
+        console.log('Rendering layers list after loading...');
+        renderLayersList();
+        
+        // Update the Z-index ordering display
+        console.log('Updating layer ordering after loading...');
+        updateLayerOrdering();
+    } else {
+        console.log('No existing layers found in any data source');
         // No default layer - user must add manually
+    }
+    
+    // Initialize background if it exists
+    let existingBackground = null;
+    
+    {% if draft and draft.layer_config_data and draft.layer_config_data.default_background %}
+        existingBackground = {{ draft.layer_config_data.default_background | tojson }};
+        console.log('Found background in draft.layer_config_data:', existingBackground);
     {% endif %}
+    
+    {% if layer_config_data and layer_config_data.default_background %}
+        existingBackground = {{ layer_config_data.default_background | tojson }};
+        console.log('Found background in layer_config_data:', existingBackground);
+    {% endif %}
+    
+    if (existingBackground) {
+        if (existingBackground && existingBackground.url) {
+            // Create a mock file object for the existing background
+            const mockFile = {
+                name: existingBackground.name || 'background.jpg',
+                type: 'image/jpeg', // Default type
+                size: 0, // We don't have the actual size
+                url: existingBackground.url // Include the URL for preview
+            };
+            selectedBackgroundFile = mockFile;
+            window.selectedBackgroundFile = mockFile;
+            
+            // Show the preview with the existing URL
+            const previewImg = document.getElementById('backgroundPreviewImg');
+            const fileName = document.getElementById('backgroundFileName');
+            const preview = document.getElementById('backgroundPreview');
+            const uploadArea = document.getElementById('backgroundUploadArea');
+            
+            if (previewImg && fileName && preview && uploadArea) {
+                previewImg.src = existingBackground.url;
+                fileName.textContent = existingBackground.name || 'background.jpg';
+                preview.style.display = 'block';
+                uploadArea.style.display = 'none';
+                console.log('Background preview loaded from existing data');
+                
+                // Update preview after background is loaded
+                console.log('Updating preview after loading background...');
+                updatePreview();
+                
+                // Also update the Z-index ordering to show the background
+                console.log('Updating layer ordering after loading background...');
+                updateLayerOrdering();
+            }
+        }
+    }
+    
+    // Final preview update to ensure it's always updated
+    console.log('Final preview update in initializeLayers...');
+    console.log('Final layers state before preview update:', layers);
+    console.log('Final selectedBackgroundFile state:', selectedBackgroundFile);
+    updatePreview();
+    
+    // Force render layers list one more time
+    console.log('Final render layers list...');
+    renderLayersList();
 }
 
 // Add layer from existing data
 function addLayerFromData(layerData) {
+    console.log('addLayerFromData called with:', layerData);
+    
     const layer = {
-        id: layerData.layer_id || `layer_${layerCounter++}`,
+        id: layerData.layer_id || layerData.id || `layer_${layerCounter++}`,
         name: layerData.name || `Layer_${layers.length + 1}`,
         description: layerData.description || '',
         order: layerData.order || layers.length,
@@ -485,8 +629,10 @@ function addLayerFromData(layerData) {
         images: layerData.images || []
     };
     
+    console.log('Created layer object:', layer);
     layers.push(layer);
-    console.log(`Added layer from data: ${layer.name}, z_index: ${layer.z_index}`);
+    console.log(`Added layer from data: ${layer.name}, id: ${layer.id}, z_index: ${layer.z_index}`);
+    console.log('Total layers after adding:', layers.length);
 }
 
 // Close modal when clicking outside
@@ -551,7 +697,7 @@ function updateLayerOrderFromDOM() {
     const layerItems = document.querySelectorAll('.layer-list-item');
     layerItems.forEach((item, index) => {
         const layerId = item.dataset.layerId;
-        const layer = layers.find(l => l.layer_id === layerId);
+        const layer = layers.find(l => l.id === layerId);
         if (layer) {
             layer.order = index;
             // Z-index: 0 is bottom (background), higher numbers are on top
@@ -582,7 +728,56 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Handle background file selection
+    const backgroundFileInput = document.getElementById('backgroundFileInput');
+    if (backgroundFileInput) {
+        backgroundFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleBackgroundFileSelect(file);
+            } else {
+                showMobileAlert('Please select a valid image file.');
+            }
+        });
+    }
 });
+
+// Handle background file selection
+function handleBackgroundFileSelect(file) {
+    console.log('Background file selected:', file.name);
+    
+    selectedBackgroundFile = file;
+    window.selectedBackgroundFile = file;
+    
+    // Show preview
+    showBackgroundPreview(file);
+    
+    // Update preview
+    updatePreview();
+    
+    console.log('Background file processed:', selectedBackgroundFile);
+}
+
+// Show background preview
+function showBackgroundPreview(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewImg = document.getElementById('backgroundPreviewImg');
+        const fileName = document.getElementById('backgroundFileName');
+        const preview = document.getElementById('backgroundPreview');
+        const uploadArea = document.getElementById('backgroundUploadArea');
+        
+        previewImg.src = e.target.result;
+        fileName.textContent = file.name;
+        
+        preview.style.display = 'block';
+        uploadArea.style.display = 'none';
+        
+        console.log('Background preview shown');
+    };
+    reader.readAsDataURL(file);
+}
 
 // Add image to modal
 function addImageToModal(file) {
@@ -718,7 +913,7 @@ function renderModalImages(images) {
 // Remove image from modal - make sure it's in global scope
 window.removeImage = function(imageId) {
     if (currentEditingLayer) {
-        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.image_id !== imageId);
+        currentEditingLayer.images = currentEditingLayer.images.filter(img => img.id !== imageId);
         renderModalImages(currentEditingLayer.images);
     }
 }
@@ -726,7 +921,7 @@ window.removeImage = function(imageId) {
 // Update image name - make sure it's in global scope
 window.updateImageName = function(imageId, name) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
         if (image) {
             image.name = name.trim() || `Image_${Date.now()}`;
             console.log(`Updated image name to: ${image.name}`);
@@ -737,7 +932,7 @@ window.updateImageName = function(imageId, name) {
 // Update image alt - make sure it's in global scope
 window.updateImageAlt = function(imageId, alt) {
     if (currentEditingLayer) {
-        const image = currentEditingLayer.images.find(img => img.image_id === imageId);
+        const image = currentEditingLayer.images.find(img => img.id === imageId);
         if (image) {
             image.alt = alt.trim() || image.name;
             console.log(`Updated image alt to: ${image.alt}`);
@@ -794,16 +989,25 @@ function showMobileSuccess(message) {
 
 // Render layers list
 function renderLayersList() {
+    console.log('renderLayersList called with layers:', layers);
+    console.log('Layers length:', layers.length);
+    
     const layersList = document.getElementById('layersList');
     const noLayersMessage = document.getElementById('noLayersMessage');
     
-    if (!layersList || !noLayersMessage) return;
+    if (!layersList || !noLayersMessage) {
+        console.error('Required DOM elements not found:', { layersList: !!layersList, noLayersMessage: !!noLayersMessage });
+        return;
+    }
     
     if (layers.length === 0) {
+        console.log('No layers to render, showing placeholder message');
         layersList.innerHTML = '';
         noLayersMessage.style.display = 'block';
         return;
     }
+    
+    console.log('Rendering', layers.length, 'layers');
     
     noLayersMessage.style.display = 'none';
     layersList.innerHTML = '';
@@ -815,7 +1019,7 @@ function renderLayersList() {
         const layerItem = document.createElement('div');
         layerItem.className = 'layer-list-item';
         layerItem.draggable = true;
-        layerItem.dataset.layerId = layer.layer_id;
+        layerItem.dataset.layerId = layer.id;
         
         layerItem.innerHTML = `
             <div class="layer-item-content">
@@ -825,8 +1029,8 @@ function renderLayersList() {
                     <span class="layer-item-images">${layer.images.length} images</span>
                 </div>
                 <div class="layer-item-controls">
-                    <button type="button" class="btn btn--sm btn--secondary" onclick="openLayerModal('${layer.layer_id}')" title="Edit Layer">✏️</button>
-                    <button type="button" class="btn btn--sm btn--danger" onclick="removeLayer('${layer.layer_id}')" title="Remove Layer">🗑️</button>
+                    <button type="button" class="btn btn--sm btn--secondary" onclick="openLayerModal('${layer.id}')" title="Edit Layer">✏️</button>
+                    <button type="button" class="btn btn--sm btn--danger" onclick="removeLayer('${layer.id}')" title="Remove Layer">🗑️</button>
                 </div>
             </div>
         `;
@@ -849,7 +1053,7 @@ function renderLayersList() {
 // Remove layer
 window.removeLayer = function(layerId) {
     if (confirm('Are you sure you want to remove this layer? This action cannot be undone.')) {
-        layers = layers.filter(l => l.layer_id !== layerId);
+        layers = layers.filter(l => l.id !== layerId);
         renderLayersList();
         updateLayerOrdering();
         updateCalculatedParameters();
@@ -869,10 +1073,28 @@ function updateLayerOrdering() {
     console.log('Found zIndexList element, clearing content...');
     zIndexList.innerHTML = '';
     
-    if (layers.length === 0) {
-        console.log('No layers to display in Z-index list');
-        zIndexList.innerHTML = '<p class="no-layers-message">No layers added yet</p>';
+    if (layers.length === 0 && !selectedBackgroundFile) {
+        console.log('No layers or background to display in Z-index list');
+        zIndexList.innerHTML = '<p class="no-layers-message">No layers or background added yet</p>';
         return;
+    }
+    
+    // Add background as the first item (z-index 0)
+    if (selectedBackgroundFile) {
+        const backgroundItem = document.createElement('div');
+        backgroundItem.className = 'z-index-item background-layer';
+        backgroundItem.innerHTML = `
+            <div class="z-index-label">
+                <span class="z-index-badge">z-0</span>
+            </div>
+            <div class="layer-name">Background</div>
+            <div class="image-count">1 image</div>
+            <div class="z-index-controls">
+                <span class="btn btn--sm btn--outline" style="opacity: 0.5;" title="Background cannot be moved">🔒</span>
+            </div>
+        `;
+        zIndexList.appendChild(backgroundItem);
+        console.log('Background added to Z-index list');
     }
     
     const sortedLayers = [...layers].sort((a, b) => a.z_index - b.z_index);
@@ -882,7 +1104,7 @@ function updateLayerOrdering() {
         console.log(`Creating Z-index item for layer: ${layer.name}, z_index: ${layer.z_index}`);
         const zIndexItem = document.createElement('div');
         zIndexItem.className = 'z-index-item';
-        zIndexItem.dataset.layerId = layer.layer_id;
+        zIndexItem.dataset.layerId = layer.id;
         
         zIndexItem.innerHTML = `
             <div class="z-index-label">
@@ -891,8 +1113,8 @@ function updateLayerOrdering() {
             <div class="layer-name">${layer.name}</div>
             <div class="image-count">${layer.images.length} images</div>
             <div class="z-index-controls">
-                <button type="button" class="btn btn--sm btn--outline z-index-up" title="Increase z-index" onclick="changeZIndex('${layer.layer_id}', -1)">▲</button>
-                <button type="button" class="btn btn--sm btn--outline z-index-down" title="Decrease z-index" onclick="changeZIndex('${layer.layer_id}', 1)">▼</button>
+                <button type="button" class="btn btn--sm btn--outline z-index-up" title="Increase z-index" onclick="changeZIndex('${layer.id}', -1)">▲</button>
+                <button type="button" class="btn btn--sm btn--outline z-index-down" title="Decrease z-index" onclick="changeZIndex('${layer.id}', 1)">▼</button>
             </div>
         `;
         
@@ -917,7 +1139,7 @@ window.debugZIndexState = function() {
     console.log('Layers with Z-index values:');
     layers.forEach((layer, index) => {
         console.log(`  Layer ${index}: ${layer.name}`);
-        console.log(`    - ID: ${layer.layer_id}`);
+        console.log(`    - ID: ${layer.id}`);
         console.log(`    - Z-index: ${layer.z_index}`);
         console.log(`    - Order: ${layer.order}`);
         console.log(`    - Images: ${layer.images.length}`);
@@ -928,7 +1150,7 @@ window.debugZIndexState = function() {
 // Change z-index
 window.changeZIndex = function(layerId, change) {
     console.log(`changeZIndex called for layer ${layerId} with change ${change}`);
-    const layer = layers.find(l => l.layer_id === layerId);
+    const layer = layers.find(l => l.id === layerId);
     if (layer) {
         const oldZIndex = layer.z_index;
         layer.z_index += change;
@@ -978,14 +1200,20 @@ function updateCalculatedParameters() {
 
 // Update preview
 function updatePreview() {
+    console.log('=== UPDATE PREVIEW DEBUG ===');
     console.log('Updating preview with layers:', layers.length);
+    console.log('Selected background file:', selectedBackgroundFile);
+    console.log('Layers array:', layers);
+    
     const preview = document.getElementById('vignettePreview');
     if (!preview) {
         console.error('Preview element not found');
         return;
     }
+    console.log('Preview element found:', preview);
     
-    if (layers.length === 0) {
+    if (layers.length === 0 && !selectedBackgroundFile) {
+        console.log('No layers or background, showing placeholder');
         preview.innerHTML = '<div class="vignette-placeholder"><p>Add layers and images to see preview</p></div>';
         return;
     }
@@ -996,9 +1224,43 @@ function updatePreview() {
     preview.innerHTML = '<div class="vignette-stack"></div>';
     const stack = preview.querySelector('.vignette-stack');
     
+    // Add background as layer with z-index 0 if it exists
+    if (selectedBackgroundFile) {
+        console.log('Adding background to preview');
+        const backgroundPreview = document.createElement('div');
+        backgroundPreview.className = 'layer-preview background-layer';
+        backgroundPreview.style.zIndex = 0;
+        
+        const img = document.createElement('img');
+        
+        // Check if it's a real File object or has a URL property
+        if (selectedBackgroundFile instanceof File) {
+            // Real file object - use createObjectURL
+            img.src = URL.createObjectURL(selectedBackgroundFile);
+            console.log('Using createObjectURL for real file');
+        } else if (selectedBackgroundFile.url) {
+            // Mock file object with URL - use the URL directly
+            img.src = selectedBackgroundFile.url;
+            console.log('Using direct URL for mock file:', selectedBackgroundFile.url);
+        } else {
+            console.error('Background file has no valid source:', selectedBackgroundFile);
+            return; // Skip background if no valid source
+        }
+        
+        img.alt = 'Background';
+        img.title = 'Background Layer (z-index: 0)';
+        
+        backgroundPreview.appendChild(img);
+        stack.appendChild(backgroundPreview);
+        console.log('Background added to preview');
+    }
+    
     sortedLayers.forEach((layer, index) => {
+        console.log(`Processing layer ${index}: ${layer.name}`, layer);
+        
         if (layer.images && layer.images.length > 0) {
             console.log(`Creating preview for layer: ${layer.name} with ${layer.images.length} images`);
+            console.log('First image data:', layer.images[0]);
             
             const layerPreview = document.createElement('div');
             layerPreview.className = 'layer-preview';
@@ -1008,6 +1270,13 @@ function updatePreview() {
             const img = document.createElement('img');
             // Try to get image source from different possible properties
             const imageSource = layer.images[0].dataUrl || layer.images[0].url || layer.images[0].src;
+            console.log('Image source options:', {
+                dataUrl: layer.images[0].dataUrl,
+                url: layer.images[0].url,
+                src: layer.images[0].src,
+                finalSource: imageSource
+            });
+            
             if (imageSource) {
                 img.src = imageSource;
                 img.alt = layer.images[0].alt || layer.images[0].name || `Layer ${layer.name}`;
@@ -1024,6 +1293,8 @@ function updatePreview() {
             console.log(`Layer ${layer.name} has no images, skipping preview`);
         }
     });
+    
+    console.log('=== END UPDATE PREVIEW DEBUG ===');
     
     console.log('Preview update completed');
 }
@@ -1070,6 +1341,46 @@ document.addEventListener('DOMContentLoaded', function() {
                     showMobileAlert(`File "${file.name}" is not an image and will be skipped.`);
                 }
             });
+        });
+    }
+    
+    // Handle drag and drop for background upload
+    const backgroundUploadArea = document.getElementById('backgroundUploadArea');
+    if (backgroundUploadArea) {
+        backgroundUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('drag-over');
+        });
+        
+        backgroundUploadArea.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('drag-over');
+        });
+        
+        backgroundUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('drag-over');
+            }
+        });
+        
+        backgroundUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('drag-over');
+            
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                const file = files[0]; // Only take the first file for background
+                if (file.type.startsWith('image/')) {
+                    handleBackgroundFileSelect(file);
+                } else {
+                    showMobileAlert('Please drop a valid image file for the background.');
+                }
+            }
         });
     }
 });
@@ -1164,7 +1475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check each layer for images
             layers.forEach((layer, index) => {
                 console.log(`Layer ${index}:`, layer);
-                console.log(`  - ID: ${layer.layer_id}`);
+                console.log(`  - ID: ${layer.id}`);
                 console.log(`  - Name: ${layer.name}`);
                 console.log(`  - Images count: ${layer.images ? layer.images.length : 'undefined'}`);
                 console.log(`  - Images:`, layer.images);
@@ -1186,7 +1497,7 @@ document.addEventListener('DOMContentLoaded', function() {
             layers.forEach((layer, index) => {
                 console.log(`Adding layer ${index} to form:`, layer);
                 
-                formData.append(`layer_${index}_id`, layer.layer_id);
+                formData.append(`layer_${index}_id`, layer.id);
                 formData.append(`layer_${index}_name`, layer.name);
                 formData.append(`layer_${index}_description`, layer.description || '');
                 formData.append(`layer_${index}_order`, layer.order || index);
@@ -1261,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (result.success) {
                                 // Find and update the image in layers
                                 layers.forEach(layer => {
-                                    const imageIndex = layer.images.findIndex(img => img.image_id === imageId);
+                                    const imageIndex = layer.images.findIndex(img => img.id === imageId);
                                     if (imageIndex !== -1) {
                                         layer.images[imageIndex].url = result.url;
                                         console.log(`Updated image ${imageId} with Azure URL: ${result.url}`);
@@ -1297,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 layers.forEach((layer, index) => {
                     console.log(`Adding layer ${index} to form: ${layer.name}, z_index: ${layer.z_index}`);
-                    finalFormData.append(`layer_${index}_id`, layer.layer_id);
+                    finalFormData.append(`layer_${index}_id`, layer.id);
                     finalFormData.append(`layer_${index}_name`, layer.name);
                     finalFormData.append(`layer_${index}_description`, layer.description || '');
                     finalFormData.append(`layer_${index}_order`, layer.order || index);
@@ -1308,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Use Azure URLs instead of data URLs
                     const imagesWithUrls = layer.images.map(img => ({
-                        id: img.image_id,
+                        id: img.id,
                         name: img.name,
                         alt: img.alt,
                         url: img.url || img.dataUrl // Use Azure URL if available, fallback to data URL
@@ -1326,6 +1637,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Final FormData contents:');
                 for (let pair of finalFormData.entries()) {
                     console.log(pair[0] + ': ' + pair[1]);
+                }
+                
+                // Add background file if selected
+                if (selectedBackgroundFile) {
+                    finalFormData.append('default_background', selectedBackgroundFile);
+                    console.log('Background file added to form:', selectedBackgroundFile.name);
                 }
                 
                 // Add CSRF token
@@ -1370,4 +1687,101 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<style>
+/* Background Upload Styles */
+.background-upload-container {
+    margin-top: 1rem;
+}
+
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+}
+
+.file-upload-area.drag-over {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.upload-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.upload-prompt p {
+    margin: 0;
+    color: #495057;
+}
+
+.upload-prompt small {
+    color: #6c757d;
+}
+
+.background-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+}
+
+.preview-image-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.preview-image-container img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.remove-background {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.background-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.background-layer {
+    background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+    border: 2px solid #2196f3;
+}
+
+.background-layer .z-index-badge {
+    background: #2196f3;
+    color: white;
+}
+</style>
 {% endblock %}

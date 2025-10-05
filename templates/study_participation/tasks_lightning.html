@@ -1118,6 +1118,21 @@ class LightningTaskFlow {
             if (task.elements_shown_content) {
                 imageHTML = '<div class="vignette-preview" style="border: none !important; box-shadow: none !important; background: none !important;">';
                 
+                // Add default background as layer with z-index 0 if it exists
+                if (window.studyData && window.studyData.default_background && window.studyData.default_background.url) {
+                    imageHTML += `
+                        <div class="layer-image background-layer" style="z-index: 0; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.9;">
+                            <img src="${window.studyData.default_background.url}" 
+                                 alt="Default Background" 
+                                 class="vignette-layer-img background-layer-img"
+                                 data-layer="Background"
+                                 data-z-index="0"
+                                 title="Default Background (z-index: 0)"
+                                 onerror="this.style.display='none';">
+                        </div>
+                    `;
+                }
+                
                 // Debug the raw data structure first
                 console.log('🔍 RAW TASK DATA ANALYSIS:');
                 console.log('Task object keys:', Object.keys(task));
@@ -1933,10 +1948,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalTasks = {{ total_tasks }};
     const allTasks = {{ all_tasks|tojson|safe }};
     
+    // Initialize study data for template access
+    window.studyData = {
+        study_type: '{{ study.study_type }}',
+        default_background: {{ study.default_background | tojson if study.default_background else 'null' }}
+    };
+    
     console.log('🚀 Initializing Lightning Task Flow...');
     console.log('Study ID:', studyId);
     console.log('Total Tasks:', totalTasks);
     console.log('All Tasks:', allTasks);
+    console.log('Study Data:', window.studyData);
     
     // Start tasks immediately - countdown will handle the timing
     console.log('🚀 Starting task flow immediately...');

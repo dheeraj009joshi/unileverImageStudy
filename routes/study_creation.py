@@ -1033,6 +1033,7 @@ def step3a():
                     flash('Layer configuration not found. Please complete the layer configuration step first.', 'error')
                     return render_template('study_creation/step3a_layer.html', 
                                         form=form, tasks_matrix={}, 
+                                        layer_config_data=layer_config_data or {},
                                         matrix_summary={},
                                         current_step='3a', draft=draft)
                 
@@ -1044,6 +1045,7 @@ def step3a():
                     flash('IPED parameters not found. Please complete the IPED parameters step first.', 'error')
                     return render_template('study_creation/step3a_layer.html', 
                                         form=form, tasks_matrix={}, 
+                                        layer_config_data=layer_config_data or {},
                                         matrix_summary={},
                                         current_step='3a', draft=draft)
                 
@@ -1061,7 +1063,30 @@ def step3a():
                 print(f"⏱️ Layer task generation completed in {task_generation_duration:.2f} seconds")
                 
                 tasks_matrix = result['tasks']
+                metadata = result['metadata']
                 print(f"DEBUG: Layer task matrix generated successfully: {len(tasks_matrix)} respondents")
+                print(f"DEBUG: Metadata: {metadata}")
+                print(f"DEBUG: tasks_per_consumer from metadata: {metadata.get('tasks_per_consumer', 'NOT_FOUND')}")
+                
+                # Save layer study task matrix WITH METADATA
+                draft.update_step_data('3a_layer', {
+                    'tasks_matrix': {
+                        'tasks': tasks_matrix,
+                        'metadata': metadata
+                    },
+                    'generated_at': datetime.utcnow().isoformat(),
+                    'regenerate_matrix': bool(getattr(form, 'regenerate_matrix', False) and form.regenerate_matrix.data),
+                    'step_completed': True
+                })
+                
+                draft.current_step = '3b'
+                draft.save()
+                
+                print(f"DEBUG: Step 3a marked as complete for layer study")
+                print(f"DEBUG: Draft saved with current_step: {draft.current_step}")
+                
+                flash('Task matrix generated successfully!', 'success')
+                return redirect(url_for('study_creation.step3b'))
                 
             # Mark step 3a as complete by ensuring data is properly saved
                 # Layer study task matrix saving is handled above in the layer section
@@ -1078,7 +1103,18 @@ def step3a():
     if study_type == 'grid':
         # Get grid study data
         stored_step3a = draft.get_step_data('3a_grid') or {}
-        tasks_matrix = stored_step3a.get('tasks_matrix', {})
+        tasks_matrix_data = stored_step3a.get('tasks_matrix', {})
+        
+        # Handle new structure where tasks_matrix contains both 'tasks' and 'metadata'
+        if isinstance(tasks_matrix_data, dict) and 'tasks' in tasks_matrix_data:
+            tasks_matrix = tasks_matrix_data['tasks']
+            metadata = tasks_matrix_data.get('metadata', {})
+            print(f"DEBUG: Grid study - Using new structure with metadata: {metadata}")
+        else:
+            # Fallback for old structure
+            tasks_matrix = tasks_matrix_data
+            metadata = {}
+            print(f"DEBUG: Grid study - Using old structure (no metadata)")
         
         # Get grid IPED data for display
         grid_iped_data = draft.get_step_data('grid_iped') or {}
@@ -1168,7 +1204,18 @@ def step3a():
     else:
         # Get layer study data
         stored_step3a = draft.get_step_data('3a_layer') or {}
-        tasks_matrix = stored_step3a.get('tasks_matrix', {})
+        tasks_matrix_data = stored_step3a.get('tasks_matrix', {})
+        
+        # Handle new structure where tasks_matrix contains both 'tasks' and 'metadata'
+        if isinstance(tasks_matrix_data, dict) and 'tasks' in tasks_matrix_data:
+            tasks_matrix = tasks_matrix_data['tasks']
+            metadata = tasks_matrix_data.get('metadata', {})
+            print(f"DEBUG: Layer study - Using new structure with metadata: {metadata}")
+        else:
+            # Fallback for old structure
+            tasks_matrix = tasks_matrix_data
+            metadata = {}
+            print(f"DEBUG: Layer study - Using old structure (no metadata)")
         
         # Calculate matrix summary for display
         matrix_summary = {}
@@ -1239,9 +1286,20 @@ def step3a():
                 print(f"WARNING: Replaced undefined value for {key}: {value}")
         
         render_start = time.time()
+        # Get layer config data for default background
+        layer_config_data = draft.get_step_data('layer_config') or {}
+        print(f"DEBUG: layer_config_data retrieved: {layer_config_data}")
+        if layer_config_data:
+            print(f"DEBUG: layer_config_data keys: {list(layer_config_data.keys())}")
+            if 'default_background' in layer_config_data:
+                print(f"DEBUG: default_background: {layer_config_data['default_background']}")
+            else:
+                print("DEBUG: No default_background key found in layer_config_data")
+        
         result = render_template('study_creation/step3a_layer.html', 
                              form=form, tasks_matrix=tasks_matrix, 
                              layer_iped_data=layer_iped_data,
+                             layer_config_data=layer_config_data,
                              matrix_summary=matrix_summary,
                              current_step='3a', draft=draft)
         render_duration = time.time() - render_start
@@ -1433,12 +1491,12 @@ def step3b():
                             layer_images.append(layer_image)
                         
                         # Validate and format layer data
-                        if not layer_data.get('id') or not layer_data.get('name'):
+                        if not layer_data.get('layer_id') or not layer_data.get('name'):
                             print(f"DEBUG: Skipping invalid layer data: {layer_data}")
                             continue
                         
                         # Truncate fields if they're too long
-                        layer_id = str(layer_data['id'])[:100]  # Limit to 100 chars
+                        layer_id = str(layer_data['layer_id'])[:100]  # Limit to 100 chars
                         layer_name = str(layer_data['name'])[:100]  # Limit to 100 chars
                         layer_description = str(layer_data.get('description', ''))[:500]  # Limit to 500 chars
                         
@@ -1465,6 +1523,13 @@ def step3b():
                     study.study_layers = study_layers
                     # Ensure elements is empty for layer studies
                     study.elements = []
+                    
+                    # Save default background if provided
+                    if layer_config_data.get('default_background'):
+                        study.default_background = layer_config_data['default_background']
+                        print(f"✅ Default background saved to study: {layer_config_data['default_background']['name']}")
+                    else:
+                        print("📤 No default background provided for layer study")
             
             # Set classification questions
             step2b_data = draft.get_step_data('2b')
@@ -1543,15 +1608,25 @@ def step3b():
                 layer_iped_data = draft.get_step_data('layer_iped')
                 layer_config_data = draft.get_step_data('layer_config')
                 
-                # Calculate total tasks from layer configuration
-                total_tasks = 0
-                if layer_config_data and 'layers' in layer_config_data:
-                    # Calculate tasks per consumer based on original logic
-                    uniqueness_capacity = 1
-                    for layer in layer_config_data['layers']:
-                        uniqueness_capacity *= len(layer['images'])
-                    tasks_per_consumer = min(24, uniqueness_capacity)
-                    total_tasks = tasks_per_consumer * layer_iped_data['number_of_respondents']
+                # Use ACTUAL tasks_per_consumer from task generation result if available
+                if step3a_data and 'tasks_matrix' in step3a_data and 'metadata' in step3a_data['tasks_matrix']:
+                    actual_tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
+                    print(f"DEBUG: Found metadata in step3a_data for layer study: {step3a_data['tasks_matrix']['metadata']}")
+                    print(f"DEBUG: Using ACTUAL tasks_per_consumer from metadata: {actual_tasks_per_consumer}")
+                    tasks_per_consumer = actual_tasks_per_consumer
+                else:
+                    # Fallback to original logic if no metadata available
+                    if layer_config_data and 'layers' in layer_config_data:
+                        uniqueness_capacity = 1
+                        for layer in layer_config_data['layers']:
+                            uniqueness_capacity *= len(layer['images'])
+                        tasks_per_consumer = min(24, uniqueness_capacity)
+                        print(f"DEBUG: WARNING - No metadata found for layer study, using fallback: {tasks_per_consumer}")
+                    else:
+                        tasks_per_consumer = 24  # Default fallback
+                        print(f"DEBUG: WARNING - No layer config or metadata, using default: {tasks_per_consumer}")
+                
+                total_tasks = tasks_per_consumer * layer_iped_data['number_of_respondents']
                 
                 study.iped_parameters = IPEDParameters(
                     number_of_respondents=layer_iped_data['number_of_respondents'],
@@ -1559,6 +1634,9 @@ def step3b():
                     total_tasks=total_tasks,
                     tasks_per_consumer=tasks_per_consumer  # Save tasks per consumer
                 )
+                
+                print(f"✅ SAVED: Layer Study IPED Parameters set with ACTUAL tasks_per_consumer: {tasks_per_consumer}")
+                print(f"✅ SAVED: Total tasks: {total_tasks} = {tasks_per_consumer} × {layer_iped_data['number_of_respondents']}")
             
             # Set generated tasks based on study type (step3a_data already retrieved above)
             
@@ -1831,14 +1909,17 @@ def layer_config():
                 
                 # Only add layer if it has images
                 if layer_images:
+                    print(f"✅ Adding layer '{layer_name}' with {len(layer_images)} images")
                     layers_data.append({
-                        'id': layer_id,
+                        'layer_id': layer_id,
                         'name': layer_name,
                         'description': layer_description,
                         'order': layer_order,
                         'z_index': layer_z_index,
                         'images': layer_images
                     })
+                else:
+                    print(f"⚠️ Skipping layer '{layer_name}' - no images found")
                 
                 layer_index += 1
             
@@ -1851,16 +1932,40 @@ def layer_config():
             images_to_upload = []
             processed_layers = []
             
+            # Check if all images already have Azure URLs (from frontend batch upload)
+            all_images_have_azure_urls = True
+            for layer in layers_data:
+                for image in layer.get('images', []):
+                    if image.get('url', '').startswith('data:image'):
+                        all_images_have_azure_urls = False
+                        break
+                if not all_images_have_azure_urls:
+                    break
+            
+            print(f"🔍 All images have Azure URLs: {all_images_have_azure_urls}")
+            
             print(f"🚀 Starting ULTRA-FAST layer image processing for {len(layers_data)} layers")
             image_processing_start = time.time()
             
             for layer in layers_data:
+                # Validate layer data has required fields
+                if not layer.get('layer_id') or not layer.get('name'):
+                    print(f"⚠️ Skipping invalid layer data: {layer}")
+                    continue
+                
                 processed_layer = layer.copy()
                 processed_images = []
+                print(f"🔍 Processing layer '{layer['name']}' with {len(layer['images'])} original images")
                 
                 for image in layer['images']:
+                    # Validate image data has required fields
+                    if not image.get('id') or not image.get('name') or not image.get('url'):
+                        print(f"⚠️ Skipping invalid image data: {image}")
+                        continue
+                    
                     # Check if this image needs to be uploaded to Azure
-                    if image['url'].startswith('data:image'):
+                    print(f"🔍 Checking image URL: {image['url'][:50]}...")
+                    if not all_images_have_azure_urls and image['url'].startswith('data:image'):
                         # This is a base64 image that needs Azure upload
                         print(f"⚡ Queuing base64 image for Azure upload: {image['name']}")
                         
@@ -1882,14 +1987,14 @@ def layer_config():
                             'image_id': image['id'],
                             'file': image_file,
                             'filename': image_file.name,
-                            'layer_id': layer['id'],
+                            'layer_id': layer['layer_id'],
                             'image_index': len(processed_images)
                         })
                         
                         # Mark this image as needing upload
                         image['_needs_upload'] = True
                     else:
-                        # This is already an Azure URL, keep it
+                        # This is already an Azure URL (from batch upload), keep it
                         print(f"⚡ Using existing Azure URL for image: {image['name']}")
                         image['_needs_upload'] = False
                     
@@ -1897,12 +2002,14 @@ def layer_config():
                 
                 processed_layer['images'] = processed_images
                 processed_layers.append(processed_layer)
+                print(f"✅ Layer '{layer['name']}' processed with {len(processed_images)} final images")
             
             image_processing_duration = time.time() - image_processing_start
             print(f"⚡ Image processing completed in {image_processing_duration:.3f}s")
             
             # Upload images to Azure if needed
-            if images_to_upload:
+            print(f"🔍 Total images queued for Azure upload: {len(images_to_upload)}")
+            if images_to_upload and not all_images_have_azure_urls:
                 print(f"🚀 Starting ULTRA-FAST Azure upload for {len(images_to_upload)} layer images")
                 upload_start_time = time.time()
                 
@@ -1944,7 +2051,7 @@ def layer_config():
                     # Find the correct layer by ID
                     target_layer = None
                     for layer in processed_layers:
-                        if layer['id'] == item['layer_id']:
+                        if layer['layer_id'] == item['layer_id']:
                             target_layer = layer
                             break
                     
@@ -1955,6 +2062,8 @@ def layer_config():
                         print(f"✅ Successfully uploaded image {item['image_id']} to Azure: {azure_url[:50]}...")
                     else:
                         print(f"⚠️  Warning: Could not find layer {item['layer_id']} or image index {item['image_index']}")
+            elif all_images_have_azure_urls:
+                print("✅ All images already have Azure URLs from frontend batch upload - skipping upload")
             else:
                 print("✅ No new images to upload - all images already have Azure URLs")
             
@@ -1970,9 +2079,41 @@ def layer_config():
             
             print(f"✅ All {sum(len(layer['images']) for layer in processed_layers)} images validated - all have Azure URLs")
             
-            # Save layer configuration with Azure URLs
+            # Handle default background upload if provided
+            default_background_data = None
+            if 'default_background' in request.files:
+                background_file = request.files['default_background']
+                if background_file and background_file.filename != '':
+                    print(f"📤 Processing default background: {background_file.filename}")
+                    
+                    # Upload background to Azure
+                    from utils.azure_storage import upload_to_azure
+                    background_url = upload_to_azure(background_file)
+                    
+                    # Get file size without consuming the file content
+                    current_pos = background_file.tell()
+                    background_file.seek(0, 2)  # Seek to end
+                    file_size = background_file.tell()
+                    background_file.seek(current_pos)  # Reset to original position
+                    
+                    # Create background data structure
+                    default_background_data = {
+                        'url': background_url,
+                        'name': background_file.filename,
+                        'size': file_size,
+                        'content_type': background_file.content_type
+                    }
+                    
+                    print(f"✅ Default background uploaded successfully: {background_url}")
+                else:
+                    print("📤 No default background file provided")
+            else:
+                print("📤 No default_background field in request")
+            
+            # Save layer configuration with Azure URLs and default background
             layer_config_data = {
-                'layers': processed_layers
+                'layers': processed_layers,
+                'default_background': default_background_data
             }
             
             # Log the data being saved
@@ -1983,7 +2124,7 @@ def layer_config():
             
             for i, layer in enumerate(processed_layers):
                 current_app.logger.info(f"Layer {i+1}: {layer['name']}")
-                current_app.logger.info(f"  - ID: {layer['id']}")
+                current_app.logger.info(f"  - ID: {layer['layer_id']}")
                 current_app.logger.info(f"  - Description: {layer['description']}")
                 current_app.logger.info(f"  - Order: {layer['order']}")
                 current_app.logger.info(f"  - Z-Index: {layer['z_index']}")
@@ -2015,6 +2156,10 @@ def layer_config():
             return redirect(url_for('study_creation.layer_iped'))
             
         except Exception as e:
+            import traceback
+            print(f"❌ Error saving layer configuration: {str(e)}")
+            print(f"❌ Full traceback:")
+            traceback.print_exc()
             flash(f'Error saving layer configuration: {str(e)}', 'error')
             return render_template('study_creation/layer_config.html', form=form, draft=draft)
     
@@ -2405,7 +2550,7 @@ def cleanup_base64_images():
             for image in layer.get('images', []):
                 if image.get('url', '').startswith('data:image'):
                     base64_images.append({
-                        'layer_id': layer['id'],
+                        'layer_id': layer['layer_id'],
                         'layer_name': layer['name'],
                         'image_id': image['id'],
                         'image_name': image['name'],
@@ -2459,7 +2604,7 @@ def cleanup_base64_images():
                 if azure_url:
                     # Update the image URL in the database
                     for layer in layers:
-                        if layer['id'] == img['layer_id']:
+                        if layer['layer_id'] == img['layer_id']:
                             for image in layer['images']:
                                 if image['id'] == img['image_id']:
                                     image['url'] = azure_url

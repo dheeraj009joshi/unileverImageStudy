@@ -324,6 +324,11 @@
 <script>
 let currentResponseId = null;
 
+// Initialize study data for template access
+window.studyData = {
+    default_background: {{ study.default_background | tojson if study.default_background else 'null' }}
+};
+
 // View toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
     const viewBtns = document.querySelectorAll('.view-btn');
@@ -486,6 +491,19 @@ function viewResponseDetails(responseId) {
                                         ${task.vignettes[0].type === 'layer' ? `
                                             <!-- Layer Study: Stacked vignette with z-index -->
                                             <div class="vignette-preview layer-vignette">
+                                                ${window.studyData && window.studyData.default_background && window.studyData.default_background.url ? `
+                                                    <!-- Default background as layer with z-index 0 -->
+                                                    <div class="layer-image background-layer" 
+                                                         style="z-index: 0; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.9;">
+                                                        <img src="${window.studyData.default_background.url}" 
+                                                             alt="Default Background" 
+                                                             class="vignette-layer-img background-layer-img"
+                                                             data-layer="Background"
+                                                             data-z-index="0"
+                                                             title="Default Background (z-index: 0)"
+                                                             onerror="this.style.display='none';">
+                                                    </div>
+                                                ` : ''}
                                                 ${task.vignettes.sort((a, b) => (a.z_index || 0) - (b.z_index || 0)).map((vignette, index) => `
                                                     <div class="layer-image" 
                                                          style="z-index: ${vignette.z_index || index}; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">

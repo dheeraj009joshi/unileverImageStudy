@@ -85,6 +85,20 @@
                                          <div class="vignette-preview">
                                              {% if task.elements_shown_content %}
                                                  {% set has_content = false %}
+                                                 
+                                                 <!-- Add default background as layer with z-index 0 if it exists -->
+                                                 <!-- DEBUG: layer_config_data = {{ layer_config_data | tojson }} -->
+                                                 <!-- DEBUG: default_background = {{ layer_config_data.default_background if layer_config_data else 'None' }} -->
+                                                 {% if layer_config_data and layer_config_data.default_background and layer_config_data.default_background.url %}
+                                                     <div class="layer-image" style="z-index: 0;">
+                                                         <img src="{{ layer_config_data.default_background.url }}" 
+                                                              alt="Default Background" 
+                                                              title="Default Background (z-index: 0)"
+                                                              class="vignette-layer-img">
+                                                     </div>
+                                            
+                                                 {% endif %}
+                                                 
                                                  {% for element_name, content in task.elements_shown_content.items() %}
                                                      {% if content and content.url %}
                                                          {% set has_content = true %}
@@ -493,4 +507,31 @@ document.addEventListener('keydown', function(event) {
     }
 });
 </script>
+
+<style>
+/* Background Layer Styling for Step3a - REMOVED BORDERS AND LABELS */
+/* .background-layer-img {
+    border: 2px solid #2196f3;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+}
+
+.background-layer {
+    position: relative;
+}
+
+.background-layer::after {
+    content: "Background";
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2196f3;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+} */
+</style>
 {% endblock %}

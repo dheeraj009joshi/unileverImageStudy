@@ -18,7 +18,8 @@ def serialize_study_for_preloading(study):
             'study_type': str(getattr(study, 'study_type', 'unknown')),
             'elements': [],
             'study_layers': [],
-            'grid_categories': []
+            'grid_categories': [],
+            'default_background': getattr(study, 'default_background', None)
         }
         
         # Serialize elements for grid studies
@@ -357,25 +358,12 @@ def personal_info(study_id):
                 # Get total tasks from IPED parameters
                 total_tasks = 0
                 if hasattr(study, 'iped_parameters') and study.iped_parameters:
-                    # Handle both grid and layer study IPED parameters
-                    if study.study_type == 'grid':
-                        total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
-                    elif study.study_type == 'layer':
-                        # For layer studies, calculate from layer configuration
-                        if hasattr(study, 'study_layers') and study.study_layers:
-                            # Calculate tasks per consumer based on layer configuration
-                            uniqueness_capacity = 1
-                            for layer in study.study_layers:
-                                uniqueness_capacity *= len(layer.images)
-                            total_tasks = min(24, uniqueness_capacity)  # Cap at 24 tasks
-                        else:
-                            total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 16)
-                    else:
-                        total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
-                    
-                    print(f"IPED tasks per consumer for {study.study_type} study: {total_tasks}")
+                    # Use the ACTUAL tasks_per_consumer from IPED parameters (set during study creation)
+                    total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+                    print(f"Using ACTUAL tasks_per_consumer from IPED: {total_tasks}")
                 else:
                     print("Warning: No IPED parameters found, using default")
+                    # Fallback if no IPED parameters
                     if study.study_type == 'layer':
                         total_tasks = 16  # Default for layer studies
                     else:
@@ -577,14 +565,9 @@ def load_all_tasks(study_id):
         # Get total tasks from IPED parameters
         total_tasks = 0
         if hasattr(study, 'iped_parameters') and study.iped_parameters:
-            if study.study_type == 'grid':
-                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
-            elif study.study_type == 'layer':
-                total_final_tasks = getattr(study.iped_parameters, 'total_tasks', 16)
-                totalusers = getattr(study.iped_parameters, 'number_of_respondents', 16)
-                total_tasks = total_final_tasks / totalusers
-            else:
-                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            # Use the ACTUAL tasks_per_consumer from IPED parameters (set during study creation)
+            total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            print(f"Using ACTUAL tasks_per_consumer from IPED: {total_tasks}")
         else:
             # Default fallback
             if study.study_type == 'layer':
@@ -712,14 +695,9 @@ def task(study_id, task_number):
         # Get total tasks from IPED parameters first (before debugging)
         total_tasks = 0
         if hasattr(study, 'iped_parameters') and study.iped_parameters:
-            if study.study_type == 'grid':
-                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
-            elif study.study_type == 'layer':
-                total_final_tasks=getattr(study.iped_parameters, 'total_tasks', 16)
-                totalusers=getattr(study.iped_parameters, 'number_of_respondents', 16)
-                total_tasks = total_final_tasks/totalusers
-            else:
-                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            # Use the ACTUAL tasks_per_consumer from IPED parameters (set during study creation)
+            total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            print(f"Using ACTUAL tasks_per_consumer from IPED: {total_tasks}")
         else:
             # Default fallback if no IPED parameters
             if study.study_type == 'layer':
