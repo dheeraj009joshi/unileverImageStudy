@@ -706,6 +706,10 @@ class LightningTaskFlow {
             }
         }
         
+        // Initialize local storage FIRST to restore currentTaskIndex
+        this.loadFromLocalStorage();
+        console.log(`🎯 Initialized with currentTaskIndex: ${this.currentTaskIndex}`);
+        
         // Calculate and apply screen dimensions
         this.calculateAndApplyDimensions();
         
@@ -725,9 +729,6 @@ class LightningTaskFlow {
         
         // Update progress
         this.updateProgress();
-        
-        // Initialize local storage
-        this.loadFromLocalStorage();
     }
     
     calculateAndApplyDimensions() {
@@ -803,7 +804,7 @@ class LightningTaskFlow {
         if (!countdownNumber || !countdownText || !countdownSubtext) {
             console.error('❌ Countdown elements not found!');
             this.hideImageCountdown();
-            this.showTask(0);
+            this.showTask(this.currentTaskIndex);
             return;
         }
         
@@ -831,13 +832,17 @@ class LightningTaskFlow {
             } else {
                 countdownNumber.textContent = 'GO!';
                 countdownText.textContent = 'TASK READY!';
-                countdownSubtext.textContent = 'Your first task is ready!';
+                if (this.currentTaskIndex === 0) {
+                    countdownSubtext.textContent = 'Your first task is ready!';
+                } else {
+                    countdownSubtext.textContent = `Continuing with task ${this.currentTaskIndex + 1}!`;
+                }
                 console.log('📱 Countdown: GO!');
                 
                 const timeout = setTimeout(() => {
-                    console.log('🎯 Countdown finished, showing first task');
+                    console.log(`🎯 Countdown finished, showing task ${this.currentTaskIndex + 1}`);
                     this.hideImageCountdown();
-                    this.showTask(0);
+                    this.showTask(this.currentTaskIndex);
                 }, 1000);
                 this.countdownTimeouts.push(timeout);
             }
@@ -1544,8 +1549,13 @@ class LightningTaskFlow {
         if (this.currentTaskIndex < this.totalTasks - 1) {
             // Reset submission flag before showing next task
             this.isSubmitting = false;
-            console.log(`✅ Moving to task ${this.currentTaskIndex + 2}`);
-            this.showTask(this.currentTaskIndex + 1);
+            // Increment current task index
+            this.currentTaskIndex++;
+            console.log(`✅ Moving to task ${this.currentTaskIndex + 1} (index: ${this.currentTaskIndex})`);
+            // Save progress to localStorage
+            this.saveToLocalStorage();
+            // Show the next task
+            this.showTask(this.currentTaskIndex);
         } else {
             // All tasks completed
             console.log('🎉 All tasks completed!');
@@ -1619,15 +1629,14 @@ class LightningTaskFlow {
             try {
                 const data = JSON.parse(saved);
                 if (data.studyId === this.studyId) {
+                    // Restore the exact task index from localStorage
                     this.currentTaskIndex = data.currentTaskIndex || 0;
                     this.taskRatings = data.taskRatings || [];
                     console.log('💾 Progress loaded from local storage:', data);
+                    console.log(`🎯 Restored to task ${this.currentTaskIndex + 1} of ${this.totalTasks}`);
                     
-                    // Restore progress bar state if available
-                    if (data.progressPercentage !== undefined) {
-                        console.log(`🎯 Restoring progress bar to ${data.progressPercentage}%`);
-                        this.restoreProgressBarState(data.progressPercentage);
-                    }
+                    // Update progress bar to reflect the restored task index
+                    this.updateProgress();
                 }
             } catch (e) {
                 console.log('Could not load saved progress:', e);
@@ -1635,18 +1644,6 @@ class LightningTaskFlow {
         }
     }
     
-    restoreProgressBarState(percentage) {
-        console.log(`🎯 Restoring progress bar to ${percentage}%`);
-        
-        // Calculate which task this percentage represents
-        const taskIndex = Math.ceil((percentage / 100) * this.totalTasks) - 1;
-        this.currentTaskIndex = Math.max(0, Math.min(taskIndex, this.totalTasks - 1));
-        
-        console.log(`🎯 Restored to task ${this.currentTaskIndex + 1} (${percentage}%)`);
-        
-        // Update the progress display
-        this.updateProgress();
-    }
     
     async completeStudy() {
         console.log('🎉 All tasks completed! Starting completion process...');
