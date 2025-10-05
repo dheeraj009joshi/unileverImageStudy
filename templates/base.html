@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'Mindsurve - Professional RDE Study System') }}">
+    <meta name="description" content="{{ config.get('APP_DESCRIPTION', 'Unilever Image Study - Professional RDE Study System') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{% block title %}{{ config.get('APP_NAME', 'Mindsurve') }}{% endblock %}</title>
+    <title>{% block title %}{{ config.get('APP_NAME', 'Unilever Image Study') }}{% endblock %}</title>
     
     <!-- Macros -->
     {% macro study_progress_bar(current_step, study_type='grid', draft=none) %}
@@ -96,6 +96,22 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/internal-pages.css') }}">
     
+    <!-- Unilever Logo Styling -->
+    <style>
+        .brand-logo {
+            height: 32px;
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .brand-logo {
+                height: 28px;
+                margin-right: 6px;
+            }
+        }
+    </style>
+    
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
     
@@ -112,8 +128,7 @@
         <nav class="nav-container" role="navigation" aria-label="Main navigation">
             <div class="nav-brand">
                 <a href="{{ url_for('index.index') }}" class="brand-link" aria-label="Home">
-                    <span class="brand-icon">🧠</span>
-                    <span class="brand-text">{{ config.get('APP_NAME', 'Mindsurve') }}</span>
+                    <img src="{{ url_for('static', filename='img/unilever-logo.png') }}" alt="Unilever" class="brand-logo">
                 </a>
             </div>
             
@@ -598,8 +613,8 @@
         <div class="footer-container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3 class="footer-title">{{ config.get('APP_NAME', 'Mindsurve') }}</h3>
-                    <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional RDE Study System for Research and Data Collection') }}</p>
+                    <h3 class="footer-title">{{ config.get('APP_NAME', 'Unilever Image Study') }}</h3>
+                    <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional RDE Study System for Unilever Research and Data Collection') }}</p>
                 </div>
                 <div class="footer-section">
                     <h4 class="footer-subtitle">Quick Links</h4>
@@ -621,7 +636,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-copyright">&copy; {{ config.get('COMPANY_YEAR', '2024') }} {{ config.get('COMPANY_NAME', 'Mindsurve') }}. All rights reserved.</p>
+                <p class="footer-copyright">&copy; {{ config.get('COMPANY_YEAR', '2024') }} {{ config.get('COMPANY_NAME', 'Unilever') }}. All rights reserved.</p>
             </div>
         </div>
     </footer>

@@ -524,8 +524,8 @@ def classification(study_id):
             else:
                 print("No response_id in session")
             
-            # Redirect to lightning-fast tasks interface
-            return redirect(url_for('study_participation.load_all_tasks', study_id=study_id))
+            # Redirect to orientation popup first
+            return redirect(url_for('study_participation.orientation', study_id=study_id))
         
         # Serialize study data for image preloading
         serialized_study_data = serialize_study_for_preloading(study)
@@ -540,6 +540,42 @@ def classification(study_id):
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('study_participation.personal_info', study_id=study_id))
+
+@study_participation.route('/<study_id>/orientation')
+def orientation(study_id):
+    """Study orientation popup before starting tasks"""
+    try:
+        study = Study.objects.get(_id=study_id)
+        
+        if study.status != 'active':
+            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Check if user has a response in session
+        response_id = session.get('response_id')
+        if not response_id:
+            flash('Please complete the previous steps first.', 'warning')
+            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Get response to verify it exists
+        try:
+            response = StudyResponse.objects.get(_id=response_id)
+        except StudyResponse.DoesNotExist:
+            flash('Response not found. Please start over.', 'error')
+            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Get total tasks for display
+        total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 12) if hasattr(study, 'iped_parameters') and study.iped_parameters else 12
+        
+        return render_template('study_participation/orientation.html', 
+                               study=study, 
+                               total_tasks=total_tasks)
+    except Study.DoesNotExist:
+        flash('Study not found.', 'error')
+        return redirect(url_for('index'))
+    except Exception as e:
+        print(f"Error in orientation: {str(e)}")
+        flash('An error occurred. Please try again.', 'error')
+        return redirect(url_for('index'))
 
 @study_participation.route('/study/<study_id>/tasks', methods=['GET'])
 def load_all_tasks(study_id):

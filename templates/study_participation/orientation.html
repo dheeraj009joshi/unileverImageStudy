@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Orientation</title>
+</head>
+<body>
+<div class="orientation-container">
+    <div class="orientation-card">
+        <!-- Header -->
+        <div class="orientation-header">
+            <h1 class="orientation-title">Study Orientation</h1>
+            <p class="orientation-subtitle">{{ study.title or "Study" }}</p>
+        </div>
+
+        <!-- Study Instructions -->
+        <div class="orientation-section">
+            <div class="section-icon">📄</div>
+            <h3 class="section-title">Study Instructions</h3>
+            <div class="instruction-content">
+                <div class="instruction-text">
+                    {% if study.orientation_text %}
+                        {{ study.orientation_text | safe }}
+                    {% else %}
+                        <p>Thank you for participating in this research study. You will be shown various combinations of visual elements and asked to rate them based on your preferences and impressions. Your responses will help us understand how different design elements affect user perception and preference.</p>
+                        
+                        <p>Please take your time to look at each combination carefully and provide your honest opinion. There are no right or wrong answers - we value your authentic feedback.</p>
+                        
+                        <p>The study should take approximately 1 minute to complete. You can proceed at your own pace and take breaks if needed.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Button -->
+        <div class="orientation-actions">
+            <button class="start-survey-btn" onclick="startSurvey()">
+                Start Survey
+            </button>
+            <p class="estimated-time">Estimated time: 1 minutes</p>
+        </div>
+
+        <!-- How to Complete -->
+        <div class="orientation-section">
+            <div class="section-icon">🎯</div>
+            <h3 class="section-title">How to Complete the Study</h3>
+            <div class="instruction-list">
+                <div class="instruction-item">
+                    <span class="checkmark">✓</span>
+                    <span>You will see different combinations of visual elements</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="checkmark">✓</span>
+                    <span>Rate each combination using the scale below</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="checkmark">✓</span>
+                    <span>Click on your rating to move to the next task</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="checkmark">✓</span>
+                    <span>Complete all {{ total_tasks }} rating tasks</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating Scale -->
+        <div class="orientation-section">
+            <div class="section-icon">⭐</div>
+            <h3 class="section-title">Rating Scale</h3>
+            <div class="rating-scale-demo">
+                <div class="scale-buttons">
+                    <button class="scale-btn demo-btn" disabled>{{ study.rating_scale.min_value or 1 }}</button>
+                    <button class="scale-btn demo-btn" disabled>{{ study.rating_scale.max_value or 5 }}</button>
+                </div>
+                <div class="scale-labels">
+                    <span class="scale-label">{{ study.rating_scale.min_label or "Lowest" }}</span>
+                    <span class="scale-label">{{ study.rating_scale.max_label or "Highest" }}</span>
+                </div>
+                <p class="scale-instruction">Use the numbers {{ study.rating_scale.min_value or 1 }} to {{ study.rating_scale.max_value or 5 }} to rate each combination</p>
+            </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="orientation-section">
+            <div class="section-icon">⚠️</div>
+            <h3 class="section-title">Important Notes</h3>
+            <div class="notes-list">
+                <div class="note-item">
+                    <span class="note-icon">💎</span>
+                    <span>There are no right or wrong answers</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    font-family: Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+.orientation-container {
+    min-height: 100vh;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.orientation-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 30px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.orientation-header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.orientation-title {
+    color: #2196F3;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0 0 8px 0;
+    font-family: 'Arial', sans-serif;
+}
+
+.orientation-subtitle {
+    color: #999;
+    font-size: 16px;
+    margin: 0;
+    font-weight: normal;
+}
+
+.orientation-section {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.section-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 0 0 15px 0;
+    text-align: center;
+}
+
+.instruction-content {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 0 auto;
+    max-width: 400px;
+    overflow-x: hidden;
+    word-wrap: break-word;
+}
+
+.instruction-text {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.instruction-text p {
+    margin: 0 0 15px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.instruction-text p:last-child {
+    margin-bottom: 0;
+}
+
+.instruction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.checkmark {
+    background: #4CAF50;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.instruction-item span:last-child {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.rating-scale-demo {
+    text-align: center;
+}
+
+.scale-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.scale-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    background: #f8f8f8;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.demo-btn {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #f0f0f0;
+}
+
+.scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #666;
+    max-width: 120px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.scale-instruction {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+    text-align: center;
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.note-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.note-icon {
+    color: #2196F3;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.note-item span:last-child {
+    color: #333;
+    font-size: 14px;
+}
+
+.orientation-actions {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.start-survey-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 18px 50px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    margin-bottom: 15px;
+}
+
+.start-survey-btn:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+.estimated-time {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+@media (max-width: 600px) {
+    .orientation-container {
+        padding: 15px;
+    }
+    
+    .orientation-card {
+        padding: 30px 20px;
+    }
+    
+    .orientation-title {
+        font-size: 24px;
+    }
+    
+    .scale-buttons {
+        gap: 15px;
+    }
+    
+    .scale-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+    
+    .instruction-content,
+    .instruction-list,
+    .notes-list {
+        max-width: 100%;
+    }
+}
+</style>
+
+<script>
+function startSurvey() {
+    // Add a small delay for better UX
+    const btn = document.querySelector('.start-survey-btn');
+    btn.textContent = 'Starting...';
+    btn.disabled = true;
+    
+    // Redirect to tasks after a brief delay
+    setTimeout(() => {
+        window.location.href = "{{ url_for('study_participation.load_all_tasks', study_id=study.id) }}";
+    }, 500);
+}
+</script>
+</body>
+</html>

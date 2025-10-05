@@ -1,5 +1,5 @@
 /**
- * Main JavaScript file for Mindsurve
+ * Main JavaScript file for Unilever Image Study
  * Optimized for performance - only essential functionality
  */
 

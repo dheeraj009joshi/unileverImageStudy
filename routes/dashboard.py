@@ -462,6 +462,52 @@ def export_study(study_id):
         # Task number
         header_row.append('Task')
         
+        # Generate layer mapping data for layer studies (needed for both header and data)
+        generic_keys = []
+        key_to_descriptive = {}
+        if study.study_type == 'layer' and study.study_layers:
+            # Get the generic keys from task data
+            for response in responses:
+                if response.completed_tasks:
+                    for task in response.completed_tasks:
+                        elements_shown = getattr(task, 'elements_shown_in_task', {})
+                        if elements_shown:
+                            # Get all keys that start with 'Layer_' and don't end with '_content'
+                            for key in elements_shown.keys():
+                                if key.startswith('Layer_') and not key.endswith('_content'):
+                                    if key not in generic_keys:
+                                        generic_keys.append(key)
+                            break
+                    if generic_keys:
+                        break
+            
+            # Create mapping from generic keys to descriptive names
+            for key in generic_keys:
+                # Parse key format: "LayerName_ElementIndex" (e.g., "Background_1", "Foreground_2")
+                if '_' in key:
+                    layer_name, element_index_str = key.rsplit('_', 1)
+                    try:
+                        element_index = int(element_index_str) - 1  # Convert to 0-based index
+                        
+                        # Find the corresponding layer and element in study.study_layers
+                        for study_layer in study.study_layers:
+                            if study_layer.name == layer_name and element_index < len(study_layer.images):
+                                element = study_layer.images[element_index]
+                                # Create descriptive name: "LayerName_ElementName"
+                                element_name = element.name if hasattr(element, 'name') and element.name else f'Element_{element_index + 1}'
+                                descriptive_name = f'{layer_name}_{element_name}'
+                                key_to_descriptive[key] = descriptive_name
+                                break
+                        else:
+                            # Fallback if layer/element not found
+                            key_to_descriptive[key] = key
+                    except ValueError:
+                        # Fallback if parsing fails
+                        key_to_descriptive[key] = key
+                else:
+                    # Fallback if key doesn't match expected format
+                    key_to_descriptive[key] = key
+
         # Element/Layer columns (same for all tasks)
         if study.study_type == 'grid' and (study.grid_categories or study.elements):
             # For grid studies: get column names from grid structure
@@ -567,27 +613,15 @@ def export_study(study_id):
             
             header_row.extend(['Rating', 'ResponseTime'])
         elif study.study_type == 'layer' and study.study_layers:
-            # For layer studies: dynamically get column names from elements_shown_in_task
-            # We'll get the actual keys from the first response that has data
+            # For layer studies: use pre-generated descriptive column names
+            
+            # Create sorted list of descriptive column names using the pre-generated mapping
             layer_columns = []
-            for response in responses:
-                if response.completed_tasks:
-                    for task in response.completed_tasks:
-                        elements_shown = getattr(task, 'elements_shown_in_task', {})
-                        if elements_shown:
-                            # Get all keys that start with 'Layer_' and don't end with '_content'
-                            for key in elements_shown.keys():
-                                if key.startswith('Layer_') and not key.endswith('_content'):
-                                    if key not in layer_columns:
-                                        layer_columns.append(key)
-                            break
-                    if layer_columns:
-                        break
+            for key in sorted(generic_keys):
+                descriptive_name = key_to_descriptive[key]
+                layer_columns.append(descriptive_name)
             
-            # Sort the layer columns for consistent ordering
-            layer_columns.sort()
-            
-            # Add the dynamic layer columns to header
+            # Add the descriptive layer columns to header
             for column in layer_columns:
                 header_row.append(column)
             
@@ -720,10 +754,13 @@ def export_study(study_id):
                     elif study.study_type == 'layer' and study.study_layers:
                         elements_shown_in_task = getattr(task_data, 'elements_shown_in_task', {})
                         
-                        # For layer studies: use dynamic columns from header
-                        for column in layer_columns:
-                            # Get the value for this column (1 if visible, 0 if not)
-                            element_visible = elements_shown_in_task.get(column, 0)
+                        # For layer studies: use generic keys to look up values, but write descriptive column names
+                        for i, column in enumerate(layer_columns):
+                            # Get the generic key for this descriptive column
+                            generic_key = sorted(generic_keys)[i] if i < len(generic_keys) else column
+                            
+                            # Get the value using the generic key (1 if visible, 0 if not)
+                            element_visible = elements_shown_in_task.get(generic_key, 0)
                             row_data.append(element_visible)
                         
                         # Add rating and response time
