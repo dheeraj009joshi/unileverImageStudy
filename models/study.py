@@ -67,7 +67,7 @@ class IPEDParameters(EmbeddedDocument):
     
     # Grid study parameters
     num_elements = IntField(required=False, min_value=4, max_value=50)
-    tasks_per_consumer = IntField(required=False, min_value=1, max_value=24)
+    tasks_per_consumer = IntField(required=False, min_value=1, max_value=240)
     exposure_tolerance_cv = FloatField(required=False, min_value=0.1, max_value=5.0, default=1.0)
     
     # Layer study parameters
