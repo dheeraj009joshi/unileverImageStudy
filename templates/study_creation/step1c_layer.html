@@ -25,7 +25,7 @@
                 <p>Layer studies organize elements into categories (A, B, C, D, etc.). Each category will contain multiple elements that respondents will rate.</p>
                 
                 <div class="form-group">
-                    {{ form.num_categories.label(class="form-label") }}
+                    {{ form.num_categories.label(class="form-label required-label") }}
                     {{ form.num_categories(class="form-input", min="2", max="10") }}
                     {% if form.num_categories.errors %}
                         <div class="error-message">
@@ -58,4 +58,16 @@
         </ul>
     </div>
 </div>
+
+<style>
+/* Required Field Labels */
+.required-label {
+    color: #dc3545 !important;
+    font-weight: 600 !important;
+}
+
+.required-label::after {
+    content: ' *';
+}
+</style>
 {% endblock %}

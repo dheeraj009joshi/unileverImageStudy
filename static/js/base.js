@@ -1,5 +1,5 @@
 /**
- * Mindsurve - Optimized Base JavaScript
+ * Unilever Image Study - Optimized Base JavaScript
  * Lightweight core functionality for maximum performance
  */
 
@@ -108,24 +108,46 @@ class UnileverApp {
     }
 
     setupFlashMessages() {
-        const flashMessages = document.querySelectorAll('.flash-message');
+        // Handle both .flash-message and .alert classes
+        const flashMessages = document.querySelectorAll('.flash-message, .alert');
         
-        flashMessages.forEach(message => {
+        flashMessages.forEach((message, index) => {
             // Auto-hide after 5 seconds
             setTimeout(() => {
-                message.style.opacity = '0';
-                setTimeout(() => message.remove(), 300);
+                this.dismissAlert(message);
             }, 5000);
 
-            // Close button
-            const closeBtn = message.querySelector('.flash-close');
+            // Close button - handle both .flash-close and .btn-close
+            const closeBtn = message.querySelector('.flash-close, .btn-close');
             if (closeBtn) {
-                closeBtn.addEventListener('click', () => {
-                    message.style.opacity = '0';
-                    setTimeout(() => message.remove(), 300);
+                closeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.dismissAlert(message);
                 });
             }
         });
+
+        // Handle Bootstrap-style dismiss buttons with data-bs-dismiss
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.hasAttribute('data-bs-dismiss')) {
+                e.preventDefault();
+                const alert = e.target.closest('.alert, .flash-message');
+                if (alert) {
+                    this.dismissAlert(alert);
+                }
+            }
+        });
+    }
+
+    dismissAlert(alertElement) {
+        // Add fade-out animation
+        alertElement.style.opacity = '0';
+        alertElement.style.transition = 'opacity 0.3s ease-out';
+        
+        // Remove element after animation
+        setTimeout(() => {
+            alertElement.remove();
+        }, 300);
     }
 
     setupLoadingStates() {
@@ -262,8 +284,8 @@ window.Unilever = {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        Mindsurve.init();
+        Unilever.init();
     });
 } else {
-    Mindsurve.init();
+    Unilever.init();
 }

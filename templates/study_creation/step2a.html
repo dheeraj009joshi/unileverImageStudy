@@ -77,7 +77,7 @@
                                 </div>
                                 <div class="element-info">
                                     <div class="form-group">
-                                        <label class="form-label">Element Name</label>
+                                        <label class="form-label required-label">Element Name *</label>
                                         <input type="text" 
                                                name="element_{{ loop.index0 }}_name" 
                                                value="{{ element.name }}"
@@ -88,7 +88,7 @@
                                 </div>
                                 
                                     <div class="form-group">
-                                        <label class="form-label">Description</label>
+                                        <label class="form-label optional-label">Description</label>
                                         <textarea name="element_{{ loop.index0 }}_description" 
                                                   class="form-input" 
                                                   placeholder="Element description"
@@ -97,7 +97,7 @@
                                 </div>
                                 
                                     <div class="form-group">
-                                        <label class="form-label">Alt Text</label>
+                                        <label class="form-label optional-label">Alt Text</label>
                                         <input  type="text" 
                                                name="element_{{ loop.index0 }}_alt_text" 
                                                value="{{ element.name or '' }}"
@@ -174,7 +174,7 @@ function renderElement(element) {
             </div>
             <div class="element-info">
                 <div class="form-group">
-                    <label class="form-label">Element Name</label>
+                    <label class="form-label required-label">Element Name *</label>
                     <input type="text" 
                            name="element_${element.id}_name" 
                            value="${element.name}"
@@ -185,7 +185,7 @@ function renderElement(element) {
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Description</label>
+                    <label class="form-label optional-label">Description</label>
                     <textarea name="element_${element.id}_description" 
                               class="form-input" 
                               placeholder="Element description"
@@ -194,7 +194,7 @@ function renderElement(element) {
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Alt Text</label>
+                    <label class="form-label optional-label">Alt Text</label>
                     <input   type="text" 
                            name="element_${element.id}_alt_text" 
                            value="${element.altText || ''}"
@@ -925,7 +925,7 @@ function renderElementWithImage(element, file) {
                 </div>
                 <div class="element-info">
                     <div class="form-group">
-                        <label class="form-label">Element Name</label>
+                        <label class="form-label required-label">Element Name *</label>
                         <input type="text" 
                                name="element_${element.id}_name" 
                                value="${element.name}"
@@ -936,7 +936,7 @@ function renderElementWithImage(element, file) {
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Description</label>
+                        <label class="form-label optional-label">Description</label>
                         <textarea name="element_${element.id}_description" 
                                   class="form-input" 
                                   placeholder="Element description"
@@ -945,7 +945,7 @@ function renderElementWithImage(element, file) {
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Alt Text</label>
+                        <label class="form-label optional-label">Alt Text</label>
                         <input type="text" 
                                name="element_${element.id}_alt_text" 
                                value="${element.altText}"
@@ -977,4 +977,27 @@ function renderElementWithImage(element, file) {
     updateAddElementButtonVisibility();
 }
 </script>
+
+<style>
+/* Required and Optional Field Labels */
+.required-label {
+    color: #dc3545 !important;
+    font-weight: 600 !important;
+}
+
+.optional-label {
+    color: #6c757d !important;
+    font-weight: 500 !important;
+}
+
+.required-label::after {
+    content: '';
+    /* Asterisk is already in the label text */
+}
+
+.optional-label::after {
+    content: '';
+    /* No asterisk for optional fields */
+}
+</style>
 {% endblock %}

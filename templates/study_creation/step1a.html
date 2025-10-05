@@ -58,7 +58,7 @@
             <div class="study-form-group">
                 <div class="form-checkbox">
                     {{ form.terms_accepted(class="form-checkbox-input") }}
-                    {{ form.terms_accepted.label(class="form-checkbox-label") }}
+                    {{ form.terms_accepted.label(class="form-checkbox-label study-form-label--required") }}
                 </div>
                 {% if form.terms_accepted.errors %}
                     <div class="form-error">

@@ -310,19 +310,54 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form[data-loading="true"]');
     const submitBtn = document.getElementById('launchSubmitBtn');
+    const checkbox = document.querySelector('input[name="launch_study"]');
+    
+    // Function to update button state based on checkbox
+    function updateButtonState() {
+        if (checkbox && submitBtn) {
+            if (checkbox.checked) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-disabled');
+                submitBtn.classList.add('btn-success');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-disabled');
+            }
+        }
+    }
+    
+    // Initial state - disable button by default
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('btn-disabled');
+        submitBtn.classList.remove('btn-success');
+    }
+    
+    // Add event listener to checkbox
+    if (checkbox) {
+        checkbox.addEventListener('change', updateButtonState);
+    }
     
     if (form && submitBtn) {
         form.addEventListener('submit', function(e) {
+            // Prevent submission if checkbox is not checked
+            if (!checkbox || !checkbox.checked) {
+                e.preventDefault();
+                alert('Please check the confirmation checkbox to launch your study.');
+                return false;
+            }
+            
             // Show loading state using the base.js system
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="loading-spinner"></span> Launching...';
             
             // Show loading overlay with custom message
-            if (window.MindSurve && window.MindSurve.app) {
-                window.MindSurve.app.showLoading('Launching Study...');
-            } else if (window.MindSurve) {
+            if (window.Unilever && window.Unilever.app) {
+                window.Unilever.app.showLoading('Launching Study...');
+            } else if (window.Unilever) {
                 // Fallback to global method
-                window.MindSurve.showLoading('Launching Study...');
+                window.Unilever.showLoading('Launching Study...');
             } else {
                 // Direct fallback if nothing else works
                 const overlay = document.getElementById('loading-overlay');
@@ -746,6 +781,23 @@ document.addEventListener('DOMContentLoaded', function() {
     background: linear-gradient(135deg, #20c997, #28a745);
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+}
+
+.btn-disabled {
+    background: linear-gradient(135deg, #6c757d, #495057) !important;
+    color: #adb5bd !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-disabled:hover {
+    background: linear-gradient(135deg, #6c757d, #495057) !important;
+    color: #adb5bd !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Enhanced Layers Preview */

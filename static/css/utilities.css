@@ -2514,10 +2514,40 @@
 /* Alert Styles */
 .alert {
     padding: 1rem 1.5rem;
+    padding-right: 3rem; /* Make room for close button */
     border-radius: 8px;
     margin-bottom: 1.5rem;
     border: 1px solid transparent;
     position: relative;
+}
+
+.alert-dismissible {
+    padding-right: 3rem;
+}
+
+.btn-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1rem;
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.5;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+.btn-close::before {
+    content: '×';
+    font-size: 1.25rem;
+    font-weight: bold;
 }
 
 .alert-success {

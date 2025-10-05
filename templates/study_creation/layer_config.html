@@ -103,6 +103,14 @@
     </div>
 </div>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-overlay-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-overlay-text">Processing...</div>
+    </div>
+</div>
+
 <!-- Layer Configuration Modal -->
 <div class="layer-modal-overlay" id="layerModalOverlay">
     <div class="layer-modal-container" id="layerModal">
@@ -115,7 +123,7 @@
             <div class="layer-modal-form">
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Layer Name</label>
+                        <label class="form-label required-label">Layer Name *</label>
                         <input type="text" id="layerNameInput" class="form-input" placeholder="e.g., Background, Foreground, Overlay">
                     </div>
                     
@@ -126,7 +134,7 @@
                 </div>
                 
                 <div class="images-section">
-                    <label class="form-label">Images</label>
+                    <label class="form-label required-label">Images *</label>
                     <div class="image-upload-area">
                         <div class="drag-drop-area" id="modalDragDropArea">
                             <div class="upload-prompt">
@@ -648,8 +656,8 @@ function uploadLayerImagesWithMultiprocessing(imagesToUpload) {
 
 // 🎯 Layer loading functions for professional UX
 function showLayerLoading(message, show = true) {
-    const loadingOverlay = document.getElementById('layerLoadingOverlay');
-    const loadingText = document.getElementById('layerLoadingText');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = loadingOverlay ? loadingOverlay.querySelector('.loading-overlay-text') : null;
     
     if (loadingOverlay && loadingText) {
         if (show) {
@@ -1141,6 +1149,13 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Show loading overlay immediately
+            if (window.Unilever && window.Unilever.showLoading) {
+                window.Unilever.showLoading('🚀 Processing layer configuration...');
+            } else {
+                showLayerLoading('🚀 Processing layer configuration...', true);
+            }
+            
             // Validate that we have at least one layer with images
             console.log('=== FORM SUBMISSION START ===');
             console.log('Layers array:', layers);
@@ -1238,7 +1253,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`🚀 Starting ULTRA-FAST batch upload of ${imagesToUpload.length} layer images using multiprocessing`);
                 
                 // Show loading overlay with custom message
-                showLayerLoading('🚀 Uploading images to Azure using multiprocessing...', true);
+                if (window.Unilever && window.Unilever.showLoading) {
+                    window.Unilever.showLoading('🚀 Uploading images to Azure using multiprocessing...');
+                } else {
+                    showLayerLoading('🚀 Uploading images to Azure using multiprocessing...', true);
+                }
                 
                 // Batch upload all images using multiprocessing
                 fetch('/study/create/upload-layer-images', {
@@ -1273,7 +1292,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         
                         // Hide loading and show success
-                        showLayerLoading('✅ Images uploaded! Now saving layer configuration...', false);
+                        if (window.Unilever && window.Unilever.showLoading) {
+                            window.Unilever.showLoading('✅ Images uploaded! Now saving layer configuration...');
+                        } else {
+                            showLayerLoading('✅ Images uploaded! Now saving layer configuration...', false);
+                        }
                         
                         // Now submit the form with Azure URLs
                         submitFormWithAzureUrls();
@@ -1283,7 +1306,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('💥 Error during batch upload:', error);
-                    showLayerLoading('', false);
+                    if (window.Unilever && window.Unilever.hideLoading) {
+                        window.Unilever.hideLoading();
+                    } else {
+                        showLayerLoading('', false);
+                    }
                     showMobileAlert('Error uploading images. Please try again.');
                 });
             } else {
@@ -1363,6 +1390,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
+                    if (window.Unilever && window.Unilever.hideLoading) {
+                        window.Unilever.hideLoading();
+                    } else {
+                        showLayerLoading('', false);
+                    }
                     showMobileAlert('An error occurred while saving. Please try again.');
                 });
             }
@@ -1370,4 +1402,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<style>
+/* Required and Optional Field Labels */
+.required-label {
+    color: #dc3545 !important;
+    font-weight: 600 !important;
+}
+
+.form-label--optional {
+    color: #6c757d !important;
+    font-weight: 500 !important;
+}
+
+/* Loading Overlay Styles */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loading-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-overlay-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-overlay-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+</style>
 {% endblock %}

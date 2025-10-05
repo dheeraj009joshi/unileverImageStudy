@@ -916,10 +916,15 @@
 
 .alert {
     padding: var(--spacing-md);
+    padding-right: 3rem; /* Make room for close button */
     margin-bottom: var(--spacing-sm);
     border: 1px solid transparent;
     border-radius: var(--border-radius-md);
     position: relative;
+}
+
+.alert-dismissible {
+    padding-right: 3rem;
 }
 
 .alert-danger {
@@ -956,6 +961,19 @@
     font-size: 1.5rem;
     line-height: 1;
     cursor: pointer;
+    color: inherit;
+    opacity: 0.5;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+.btn-close::before {
+    content: '×';
+    font-size: 1.25rem;
+    font-weight: bold;
 }
 
 /* ========================================
