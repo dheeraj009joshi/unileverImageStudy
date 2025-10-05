@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ study.title }} - Study Orientation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: white;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .orientation-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .orientation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .orientation-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .orientation-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .orientation-subtitle {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+
+        .orientation-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instruction-content {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .instruction-text {
+            color: #2c3e50;
+            font-size: 16px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .instruction-text p {
+            margin-bottom: 12px;
+        }
+
+        .instruction-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .orientation-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .start-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .start-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+        }
+
+        .study-info {
+            background: #e8f5e8;
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .info-value {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .orientation-container {
+                padding: 16px;
+            }
+
+            .orientation-card {
+                padding: 24px;
+            }
+
+            .orientation-title {
+                font-size: 24px;
+            }
+
+            .instruction-text {
+                font-size: 15px;
+            }
+
+            .start-btn {
+                padding: 14px 28px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orientation-container">
+        <div class="orientation-card">
+            <div class="orientation-header">
+                <h1 class="orientation-title">Study Orientation</h1>
+                <p class="orientation-subtitle">Please read the instructions carefully before starting</p>
+            </div>
+
+            <div class="orientation-section">
+                <h2 class="section-title">
+                    📋 Study Instructions
+                </h2>
+                <div class="instruction-content">
+                    <div class="instruction-text">
+                        {% if study.orientation_text %}
+                            {{ study.orientation_text | safe }}
+                        {% else %}
+                            <p>Welcome to this research study. Your participation is valuable and will help us gather important insights.</p>
+                            <p>In this study, you will be shown various visual elements and asked to rate them based on your preferences and opinions. Please respond honestly and take your time with each question.</p>
+                            <p>The study should take approximately 1 minute to complete. You can take breaks if needed, but please try to complete it in one session for the best experience.</p>
+                            <p>All your responses are confidential and will be used only for research purposes. There are no right or wrong answers - we're interested in your honest opinions.</p>
+                            <p>If you have any questions or encounter any technical issues, please contact our support team.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="orientation-section">
+                <h2 class="section-title">
+                    ℹ️ Study Information
+                </h2>
+                <div class="study-info">
+                    <div class="info-item">
+                        <span class="info-label">Study Title:</span>
+                        <span class="info-value">{{ study.title }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Estimated Duration:</span>
+                        <span class="info-value">1 minutes</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Number of Tasks:</span>
+                        <span class="info-value">{{ total_tasks }} tasks</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="orientation-actions">
+                <button class="start-btn" onclick="startStudy()">
+                    Start Survey
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startStudy() {
+            // Show loading state
+            const btn = document.querySelector('.start-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Starting...';
+            btn.disabled = true;
+            
+            // Redirect to tasks after a brief delay
+            setTimeout(() => {
+                window.location.href = "{{ url_for('study_participation.load_all_tasks', study_id=study._id) }}";
+            }, 500);
+        }
+    </script>
+</body>
+</html>

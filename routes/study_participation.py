@@ -491,8 +491,8 @@ def classification(study_id):
             else:
                 print("No response_id in session")
             
-            # Redirect to lightning-fast tasks interface
-            return redirect(url_for('study_participation.load_all_tasks', study_id=study_id))
+            # Redirect to orientation page
+            return redirect(url_for('study_participation.orientation', study_id=study_id))
         
         # Serialize study data for image preloading
         serialized_study_data = serialize_study_for_preloading(study)
@@ -507,6 +507,50 @@ def classification(study_id):
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('study_participation.personal_info', study_id=study_id))
+
+@study_participation.route('/study/<study_id>/orientation')
+def orientation(study_id):
+    """Study orientation page"""
+    try:
+        study = Study.objects.get(_id=study_id)
+        
+        if study.status != 'active':
+            return redirect(url_for('study_participation.welcome', study_id=study_id))
+        
+        # Check if previous steps are completed
+        if not session.get('study_data', {}).get('personal_info'):
+            return redirect(url_for('study_participation.personal_info', study_id=study_id))
+        if not session.get('study_data', {}).get('classification_answers'):
+            return redirect(url_for('study_participation.classification', study_id=study_id))
+        
+        # Get total tasks from IPED parameters
+        total_tasks = 0
+        if hasattr(study, 'iped_parameters') and study.iped_parameters:
+            if study.study_type == 'grid':
+                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+            elif study.study_type == 'layer':
+                total_final_tasks = getattr(study.iped_parameters, 'total_tasks', 16)
+                totalusers = getattr(study.iped_parameters, 'number_of_respondents', 16)
+                total_tasks = total_final_tasks / totalusers
+            else:
+                total_tasks = getattr(study.iped_parameters, 'tasks_per_consumer', 25)
+        else:
+            # Default fallback
+            if study.study_type == 'layer':
+                total_tasks = 16
+            else:
+                total_tasks = 25
+        
+        return render_template('study_participation/orientation.html', 
+                             study=study, 
+                             total_tasks=int(total_tasks))
+        
+    except Study.DoesNotExist:
+        flash('Study not found.', 'error')
+        return redirect(url_for('index'))
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('study_participation.welcome', study_id=study_id))
 
 @study_participation.route('/study/<study_id>/tasks', methods=['GET'])
 def load_all_tasks(study_id):
@@ -1022,6 +1066,10 @@ def completed(study_id):
                 print(f"\n--- SAVING RESPONSE ---")
                 response.update_completion_percentage()
                 print(f"Completion percentage: {response.completion_percentage}")
+                
+                # Mark response as completed (not abandoned)
+                response.mark_completed()
+                print(f"Response marked as completed")
                 
                 response.save()
                 print(f"Response saved successfully!")
