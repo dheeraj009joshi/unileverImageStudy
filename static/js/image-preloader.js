@@ -211,6 +211,20 @@ class ImagePreloader {
                 } else {
                     console.log('❌ No study_layers array found in layer study');
                 }
+                
+                // Also collect default background image for layer studies
+                if (studyData.default_background && studyData.default_background.url) {
+                    console.log('🔍 Found default background:', studyData.default_background);
+                    console.log('🔍 Default background URL:', studyData.default_background.url);
+                    if (typeof studyData.default_background.url === 'string' && studyData.default_background.url.trim() !== '') {
+                        console.log('✅ Adding default background image URL:', studyData.default_background.url);
+                        imageUrls.add(studyData.default_background.url);
+                    } else {
+                        console.log('❌ Invalid default background URL:', studyData.default_background.url);
+                    }
+                } else {
+                    console.log('🔍 No default background found in layer study');
+                }
             } else {
                 console.log('❌ Unknown study type:', studyData.study_type);
             }

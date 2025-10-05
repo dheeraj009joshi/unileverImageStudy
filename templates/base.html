@@ -123,7 +123,7 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
     <!-- Header -->
-    {% if not request.endpoint.endswith('tasks') %}
+    {% if not request.endpoint or not request.endpoint.endswith('tasks') %}
     <header class="app-header" role="banner">
         <nav class="nav-container" role="navigation" aria-label="Main navigation">
             <div class="nav-brand">
@@ -180,7 +180,7 @@
     {% endif %}
 
     <!-- Flash Messages -->
-    {% if not request.endpoint.endswith('tasks') %}
+    {% if not request.endpoint or not request.endpoint.endswith('tasks') %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-container" role="alert" aria-live="polite">
@@ -608,7 +608,7 @@
     </script>
     
     <!-- Footer -->
-    {% if not request.endpoint.endswith('tasks') %}
+    {% if not request.endpoint or not request.endpoint.endswith('tasks') %}
     <footer class="app-footer" role="contentinfo">
         <div class="footer-container">
             <div class="footer-content">

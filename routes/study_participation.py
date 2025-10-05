@@ -12,6 +12,8 @@ def serialize_study_for_preloading(study):
         print(f"🔍 Study type: {getattr(study, 'study_type', 'unknown')}")
         print(f"🔍 Has elements: {hasattr(study, 'elements')}")
         print(f"🔍 Has study_layers: {hasattr(study, 'study_layers')}")
+        print(f"🔍 Has default_background: {hasattr(study, 'default_background')}")
+        print(f"🔍 Default background: {getattr(study, 'default_background', None)}")
         
         # Create a serializable version of the study data
         study_data = {
@@ -143,6 +145,7 @@ def serialize_study_for_preloading(study):
         
         study_data = make_json_safe(study_data)
         print(f"🔍 Serialization complete - Elements: {len(study_data['elements'])}, Layers: {len(study_data['study_layers'])}, Grid Categories: {len(study_data['grid_categories'])}")
+        print(f"🔍 Default background in serialized data: {study_data.get('default_background', 'NOT_FOUND')}")
         return study_data
         
     except Exception as e:

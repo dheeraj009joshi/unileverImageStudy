@@ -421,22 +421,53 @@ def change_study_status(study_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@dashboard_bp.route('/test-browser-connection')
+def test_browser_connection():
+    print("🧪 BROWSER CONNECTION TEST CALLED!")
+    return "Browser connection test successful!"
+
+@dashboard_bp.route('/studies/<study_id>/export-debug')
+def export_debug(study_id):
+    print("🔧 EXPORT DEBUG ROUTE CALLED!")
+    print(f"🔧 Study ID: {study_id}")
+    return f"Export debug called for study: {study_id}"
+
 @dashboard_bp.route('/studies/<study_id>/export')
-@login_required
+# @login_required  # Temporarily disabled for debugging
 def export_study(study_id):
     """Export study data in comprehensive CSV format."""
-    study = Study.objects(_id=study_id, creator=current_user).first()
-    if not study:
-        flash('Study not found.', 'error')
-        return redirect(url_for('dashboard.studies'))
+    print("=" * 80)
+    print("🚀🚀🚀 EXPORT FUNCTION CALLED FROM BROWSER 🚀🚀🚀")
+    print(f"🚀 Study ID: {study_id}")
+    print(f"🚀 User: {getattr(current_user, 'username', 'Anonymous') if current_user and current_user.is_authenticated else 'Anonymous'}")
+    print("=" * 80)
     
+    # Get the type parameter from query string
     export_type = request.args.get('type', 'csv')
+    print(f"🚀 Export type: {export_type}")
+    
+    # Check if user has permission to access this study
+    study = Study.objects(_id=study_id).first()  # Temporarily allow any user for debugging
+    print(f"🚀 Study found: {study.title if study else 'None'}")
+    print(f"🚀 Study type: {study.study_type if study else 'None'}")
+    
+    if not study:
+        print("❌ Study not found or no permission")
+        flash('Study not found or you do not have permission to access it.', 'error')
+        return redirect(url_for('dashboard.studies'))
     
     if export_type == 'csv':
         # Get all completed responses for this study
         responses = StudyResponse.objects(study=study, is_completed=True)
         # Convert to list for easier processing
         responses = list(responses)
+        
+        # Debug: Check all responses (completed and abandoned)
+        all_responses = StudyResponse.objects(study=study)
+        for resp in all_responses[:3]:  # Show first 3 responses
+            if resp.completed_tasks:
+                first_task = resp.completed_tasks[0]
         
         if not responses:
             flash('No completed responses found for export.', 'warning')
@@ -454,7 +485,7 @@ def export_study(study_id):
         # Classification questions columns (with option numbers)
         if study.classification_questions:
             for question in study.classification_questions:
-                header_row.append(f'Q{question.question_id}')
+                header_row.append(f'{question.question_text}')
         
         # Personal info columns
         header_row.extend(['Gender', 'Age'])
@@ -463,26 +494,26 @@ def export_study(study_id):
         header_row.append('Task')
         
         # Generate layer mapping data for layer studies (needed for both header and data)
-        generic_keys = []
+        layer_keys = []
         key_to_descriptive = {}
         if study.study_type == 'layer' and study.study_layers:
-            # Get the generic keys from task data
+            # Get the actual keys from task data
             for response in responses:
                 if response.completed_tasks:
                     for task in response.completed_tasks:
                         elements_shown = getattr(task, 'elements_shown_in_task', {})
                         if elements_shown:
-                            # Get all keys that start with 'Layer_' and don't end with '_content'
+                            # Get all keys that don't end with '_content' (these are the actual layer keys)
                             for key in elements_shown.keys():
-                                if key.startswith('Layer_') and not key.endswith('_content'):
-                                    if key not in generic_keys:
-                                        generic_keys.append(key)
+                                if not key.endswith('_content'):
+                                    if key not in layer_keys:
+                                        layer_keys.append(key)
                             break
-                    if generic_keys:
+                    if layer_keys:
                         break
             
-            # Create mapping from generic keys to descriptive names
-            for key in generic_keys:
+            # Create mapping from actual layer keys to descriptive names
+            for key in layer_keys:
                 # Parse key format: "LayerName_ElementIndex" (e.g., "Background_1", "Foreground_2")
                 if '_' in key:
                     layer_name, element_index_str = key.rsplit('_', 1)
@@ -514,10 +545,11 @@ def export_study(study_id):
             grid_columns = []
             
             if study.grid_categories:
+
                 # New grid structure: create descriptive column names from grid_categories
                 # Map simplified keys (a_1, b_2, etc.) to actual category and element names
                 
-                # First, create a mapping from simplified keys to descriptive names
+                # First, create a mapping from actual task data keys to descriptive names
                 key_to_descriptive = {}
                 category_index = 0
                 
@@ -525,7 +557,6 @@ def export_study(study_id):
                     # Try to get a meaningful category name
                     raw_name = getattr(category, 'name', f'Category_{category_index + 1}')
                     description = getattr(category, 'description', '')
-                    
                     # Use actual name if it's not generic, otherwise use description or fallback
                     if raw_name and not raw_name.startswith('Category '):
                         category_name = raw_name
@@ -541,12 +572,11 @@ def export_study(study_id):
                         # Create descriptive name using CategoryName_ElementName_ElementIndex format
                         descriptive_name = f"{category_name}_{element_name}_{element_index + 1}"
                         
-                        # Generate the simplified key that matches task data
-                        # Assuming the pattern is: category_letter + element_index
-                        category_letter = chr(ord('a') + category_index)  # a, b, c, d, etc.
-                        simplified_key = f"{category_letter}_{element_index + 1}"
+                        # Create the actual key that matches task data format
+                        # Task data uses format: CategoryName_ElementIndex (e.g., "Color_1", "Material_2")
+                        actual_key = f"{category_name}_{element_index + 1}"
                         
-                        key_to_descriptive[simplified_key] = descriptive_name
+                        key_to_descriptive[actual_key] = descriptive_name
                     
                     category_index += 1
                 
@@ -577,17 +607,10 @@ def export_study(study_id):
                                 element = study.elements[element_index]
                                 element_name = getattr(element, 'name', f'Element_{element_index + 1}')
                                 # Create shorter, more meaningful name
-                                # Truncate long names and clean them up
                                 clean_name = element_name.replace('_', ' ').replace('-', ' ')
                                 if len(clean_name) > 20:
                                     clean_name = clean_name[:20] + '...'
                                 grid_columns.append(f'Element_{element_index + 1}_{clean_name}')
-                            else:
-                                # Skip invalid legacy keys
-                                continue
-                        else:
-                            # Skip keys that don't have a valid mapping (like e_1, e_2 when only a,b,c,d categories exist)
-                            continue
             else:
                 # Legacy grid structure: dynamically get column names from elements_shown_in_task
                 for response in responses:
@@ -617,9 +640,10 @@ def export_study(study_id):
             
             # Create sorted list of descriptive column names using the pre-generated mapping
             layer_columns = []
-            for key in sorted(generic_keys):
+            for key in sorted(layer_keys):
                 descriptive_name = key_to_descriptive[key]
                 layer_columns.append(descriptive_name)
+            
             
             # Add the descriptive layer columns to header
             for column in layer_columns:
@@ -662,6 +686,25 @@ def export_study(study_id):
                     print(f"DEBUG: Available task indices: {[getattr(task, 'task_index', 'NO_INDEX') for task in completed_tasks]}")
                     continue
                 
+                # Debug: Check what fields are available in task_data
+                print(f"DEBUG: Task {task_num} data fields: {[attr for attr in dir(task_data) if not attr.startswith('_')]}")
+                print(f"DEBUG: Task {task_num} elements_shown: {getattr(task_data, 'elements_shown', 'NOT_FOUND')}")
+                print(f"DEBUG: Task {task_num} elements_shown_in_task: {getattr(task_data, 'elements_shown_in_task', 'NOT_FOUND')}")
+                print(f"DEBUG: Task {task_num} elements_shown_content: {getattr(task_data, 'elements_shown_content', 'NOT_FOUND')}")
+                
+                # Check if this is a grid study and has the right data
+                if study.study_type == 'grid':
+                    print(f"DEBUG: This is a GRID study, checking grid data...")
+                    if hasattr(study, 'grid_categories') and study.grid_categories:
+                        print(f"DEBUG: Study has {len(study.grid_categories)} grid categories")
+                        for i, cat in enumerate(study.grid_categories):
+                            print(f"DEBUG: Category {i}: name='{getattr(cat, 'name', 'NO_NAME')}', elements={len(getattr(cat, 'elements', []))}")
+                    else:
+                        print(f"DEBUG: Study has NO grid_categories, checking legacy elements...")
+                        print(f"DEBUG: Legacy elements count: {len(study.elements) if study.elements else 0}")
+                else:
+                    print(f"DEBUG: This is NOT a grid study, type: {study.study_type}")
+                
                 row_data = []
                 
                 # Panelist (Respondent ID)
@@ -684,6 +727,9 @@ def export_study(study_id):
                     # Element/Layer visibility for this task
                     if study.study_type == 'grid' and (study.grid_categories or study.elements):
                         elements_shown = getattr(task_data, 'elements_shown_in_task', {})
+                        print(f"DEBUG: Task {task_num} elements_shown_in_task: {elements_shown}")
+                        print(f"DEBUG: Task {task_num} elements_shown_in_task type: {type(elements_shown)}")
+                        print(f"DEBUG: Task {task_num} elements_shown_in_task keys: {list(elements_shown.keys()) if elements_shown else 'None'}")
                         
                         if study.grid_categories:
                             # New grid structure: use mapping from descriptive names to simplified keys
@@ -695,7 +741,6 @@ def export_study(study_id):
                                 # Try to get a meaningful category name
                                 raw_name = getattr(category, 'name', f'Category_{category_index + 1}')
                                 description = getattr(category, 'description', '')
-                                
                                 # Use actual name if it's not generic, otherwise use description or fallback
                                 if raw_name and not raw_name.startswith('Category '):
                                     category_name = raw_name
@@ -709,34 +754,25 @@ def export_study(study_id):
                                 for element_index, element in enumerate(elements):
                                     element_name = getattr(element, 'name', f'Element_{element_index + 1}')
                                     descriptive_name = f"{category_name}_{element_name}_{element_index + 1}"
-                                    category_letter = chr(ord('a') + category_index)
-                                    simplified_key = f"{category_letter}_{element_index + 1}"
-                                    key_to_descriptive[simplified_key] = descriptive_name
+                                    
+                                    # Create the actual key that matches task data format
+                                    actual_key = f"{category_name}_{element_index + 1}"
+                                    key_to_descriptive[actual_key] = descriptive_name
                                 
                                 category_index += 1
                             
-                            # Create reverse mapping: descriptive_name -> simplified_key
+                            # Create reverse mapping: descriptive_name -> actual_key
                             descriptive_to_key = {v: k for k, v in key_to_descriptive.items()}
                             
                             # For grid studies: use dynamic columns from header
-                            for column in grid_columns:
-                                # Get the simplified key for this descriptive column name
-                                simplified_key = descriptive_to_key.get(column, column)
+                            for column_index, column in enumerate(grid_columns):
+                                # Get the actual key for this descriptive column name
+                                actual_key = descriptive_to_key.get(column, None)
                                 
-                                # Handle both new format (a_1, b_1) and legacy format (E1, E2)
+                                # Get the value using the actual key
                                 is_visible = 0
-                                if simplified_key in elements_shown:
-                                    # New format: a_1, b_1, etc.
-                                    is_visible = elements_shown[simplified_key]
-                                else:
-                                    # Legacy format: E1, E2, etc.
-                                    # Try to find legacy key by column index
-                                    try:
-                                        column_index = grid_columns.index(column)
-                                        legacy_key = f"E{column_index + 1}"
-                                        is_visible = elements_shown.get(legacy_key, 0)
-                                    except (ValueError, IndexError):
-                                        is_visible = 0
+                                if actual_key and actual_key in elements_shown:
+                                    is_visible = elements_shown[actual_key]
                                 
                                 row_data.append(is_visible)
                         else:
@@ -745,6 +781,7 @@ def export_study(study_id):
                                 # Get the value for this column (1 if visible, 0 if not)
                                 is_visible = elements_shown.get(column, 0)
                                 row_data.append(is_visible)
+                                print(row_data)
                         
                         # Add rating and response time
                         rating = getattr(task_data, 'rating_given', '')
@@ -754,13 +791,13 @@ def export_study(study_id):
                     elif study.study_type == 'layer' and study.study_layers:
                         elements_shown_in_task = getattr(task_data, 'elements_shown_in_task', {})
                         
-                        # For layer studies: use generic keys to look up values, but write descriptive column names
+                        # For layer studies: use actual layer keys to look up values, but write descriptive column names
                         for i, column in enumerate(layer_columns):
-                            # Get the generic key for this descriptive column
-                            generic_key = sorted(generic_keys)[i] if i < len(generic_keys) else column
+                            # Get the actual layer key for this descriptive column
+                            layer_key = sorted(layer_keys)[i] if i < len(layer_keys) else column
                             
-                            # Get the value using the generic key (1 if visible, 0 if not)
-                            element_visible = elements_shown_in_task.get(generic_key, 0)
+                            # Get the value using the actual layer key (1 if visible, 0 if not)
+                            element_visible = elements_shown_in_task.get(layer_key, 0)
                             row_data.append(element_visible)
                         
                         # Add rating and response time
@@ -1135,9 +1172,6 @@ def get_response_details(response_id):
                     # Check for new grid structure (elements_shown_content)
                     if hasattr(task, 'elements_shown_content') and task.elements_shown_content:
                         try:
-                            print(f"🔍 Found elements_shown_content for grid study task {i}")
-                            print(f"🔍 Content: {task.elements_shown_content}")
-                            print(f"🔍 Elements shown in task: {task.elements_shown_in_task}")
                             
                             # Process new grid study elements structure
                             for element_name, element_data in task.elements_shown_content.items():
@@ -1178,8 +1212,6 @@ def get_response_details(response_id):
                     # Legacy support for old grid structure (elements_shown_in_task)
                     elif hasattr(task, 'elements_shown_in_task') and task.elements_shown_in_task:
                         try:
-                            print(f"🔍 Found elements_shown_in_task for legacy grid study task {i}")
-                            print(f"🔍 Content: {task.elements_shown_in_task}")
                             
                             # Process legacy grid study elements
                             for element_name, element_data in task.elements_shown_in_task.items():
