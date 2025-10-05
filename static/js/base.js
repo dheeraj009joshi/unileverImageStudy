@@ -7,7 +7,7 @@
 // Performance-Optimized Core
 // ========================================
 
-class MindsurveApp {
+class UnileverApp {
     constructor() {
         this.isInitialized = false;
         this.init();
@@ -239,11 +239,11 @@ class MindsurveApp {
 // Global API
 // ========================================
 
-window.Mindsurve = {
+window.Unilever = {
     app: null,
     
     init() {
-        this.app = new MindsurveApp();
+        this.app = new UnileverApp();
         return this.app;
     },
     
