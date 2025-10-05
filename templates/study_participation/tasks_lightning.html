@@ -713,16 +713,8 @@ class LightningTaskFlow {
         // Calculate and apply screen dimensions
         this.calculateAndApplyDimensions();
         
-        // Show countdown immediately
-        this.showImageCountdown();
-        
-        // Start countdown immediately (don't wait for images)
-        console.log('🎯 Starting countdown...');
-        this.startCountdown();
-        console.log('✅ Countdown started successfully!');
-        
-        // Images are already preloaded by the welcome screen
-        console.log('✅ Images preloaded by welcome screen - ready for instant display!');
+        // Check if images are fully loaded before starting countdown
+        this.checkImagesAndStartCountdown();
         
         // Generate navigation
         this.generateNavigation();
@@ -853,6 +845,34 @@ class LightningTaskFlow {
         console.log('⏰ Countdown started');
     }
 
+    checkImagesAndStartCountdown() {
+        console.log('🔍 Checking image loading status before starting countdown...');
+        
+        // Show countdown screen first
+        this.showImageCountdown();
+        
+        // Check if images are already loaded
+        if (window.imagePreloader) {
+            const progress = window.imagePreloader.getLoadingProgress();
+            console.log(`🔍 Current image progress: ${progress.loaded}/${progress.total} loaded`);
+            
+            if (progress.isComplete && progress.total > 0) {
+                console.log('✅ All images already loaded, starting countdown immediately');
+                this.startCountdown();
+                return;
+            }
+            
+            if (progress.total === 0) {
+                console.log('⚠️ No images to load, starting countdown immediately');
+                this.startCountdown();
+                return;
+            }
+        }
+        
+        // Images not fully loaded, show finalizing screen
+        this.showFinalizingAndWaitForImages();
+    }
+
     showFinalizingAndWaitForImages() {
         console.log('🎯 Showing finalizing screen while images load');
         
@@ -879,7 +899,7 @@ class LightningTaskFlow {
             if (progress.isComplete) {
                 clearInterval(checkInterval);
                 console.log('✅ Images loaded, starting countdown');
-                this.normalCountdown();
+                this.startCountdown();
             }
         }, 500);
         
@@ -887,7 +907,7 @@ class LightningTaskFlow {
         setTimeout(() => {
             clearInterval(checkInterval);
             console.log('⏰ Timeout reached, starting countdown anyway');
-            this.normalCountdown();
+            this.startCountdown();
         }, 30000);
     }
     

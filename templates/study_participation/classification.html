@@ -175,7 +175,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function continueSilentImagePreloading() {
-        // Continue silent preloading - no UI indicators
+        // Continue preloading - no UI indicators needed here
+        console.log('🔄 Classification - Continuing image preloading...');
         window.imagePreloader.continueSilentLoading(studyData);
     }
     

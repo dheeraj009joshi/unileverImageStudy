@@ -193,9 +193,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function continueSilentImagePreloading() {
-        // Continue silent preloading - no UI indicators
-        console.log('🔄 Personal Info - Starting silent image preloading...');
-        window.imagePreloader.continueSilentLoading(studyData);
+        // Continue preloading with visible progress indicators
+        console.log('🔄 Personal Info - Starting image preloading with progress...');
+        window.imagePreloader.preloadStudyImages(studyData, 
+            // Progress callback
+            function(progress) {
+                if (preloadProgress && preloadProgressFill && preloadDetails) {
+                    const percentage = Math.round((progress.loaded / progress.total) * 100);
+                    preloadProgressFill.style.width = `${percentage}%`;
+                    preloadDetails.textContent = `Loading images... ${progress.loaded}/${progress.total} (${percentage}%)`;
+                    console.log(`📊 Personal Info - Progress: ${progress.loaded}/${progress.total} (${percentage}%)`);
+                }
+            },
+            // Completion callback
+            function() {
+                console.log('✅ Personal Info - Image preloading completed!');
+                if (preloadDetails) {
+                    preloadDetails.textContent = 'Images loaded successfully!';
+                }
+            }
+        );
     }
     
     console.log('Personal info page loaded with silent image preloading');

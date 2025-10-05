@@ -374,7 +374,47 @@ body {
 }
 </style>
 
+<script src="{{ url_for('static', filename='js/image-preloader.js') }}"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Study data for preloading (already serialized by backend)
+    let studyData;
+    try {
+        {% if serialized_study_data %}
+        studyData = {{ serialized_study_data|tojson|safe }};
+        console.log('Orientation - Study data loaded successfully:', studyData);
+        {% else %}
+        console.warn('Orientation - serialized_study_data is None/undefined, using fallback');
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
+        {% endif %}
+    } catch (error) {
+        console.error('Orientation - Error loading study data:', error);
+        studyData = {
+            study_type: '{{ study.study_type }}',
+            elements: [],
+            study_layers: []
+        };
+    }
+    
+    // Continue image preloading if we have valid data
+    if (studyData && studyData.study_type) {
+        continueImagePreloading();
+    } else {
+        console.log('Orientation - Skipping preloading - no valid study data');
+    }
+    
+    function continueImagePreloading() {
+        console.log('🔄 Orientation - Continuing image preloading...');
+        window.imagePreloader.continueSilentLoading(studyData);
+    }
+    
+    console.log('Orientation page loaded with image preloading');
+});
+
 function startSurvey() {
     // Add a small delay for better UX
     const btn = document.querySelector('.start-survey-btn');
