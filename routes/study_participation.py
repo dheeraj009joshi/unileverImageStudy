@@ -244,7 +244,7 @@ def welcome(study_id):
 def participate(study_id):
     """Direct participation link - redirects to welcome"""
     # Capture rid parameter for Cint integration and pass it along
-    rid = request.args.get('rid')
+    rid = request.args.get('rid') or request.args.get('RID') or request.args.get('fedResponseID')
     
     if rid:
         return redirect(url_for('study_participation.welcome', study_id=study_id, rid=rid))
@@ -280,8 +280,9 @@ def participate_by_token(share_token):
             return render_template('study_participation/study_inactive.html', study=study)
         
         # Capture rid parameter for Cint integration and pass it along
-        rid = request.args.get('rid')
-        
+        rid = request.args.get('rid') or request.args.get('RID') or request.args.get('fedResponseID')
+        print(f"Cint RID captured: {rid}")
+        session['rid'] = rid
         # Redirect to welcome page with study ID, preserving rid parameter
         if rid:
             return redirect(url_for('study_participation.welcome', study_id=str(study._id), rid=rid))

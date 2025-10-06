@@ -134,6 +134,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize welcome page
     console.log('Welcome page loaded for study:', '{{ study._id }}');
+    console.log('cint redirect RID:', '{{ session.get("rid") }}');
     
     // Study data for preloading (already serialized by backend)
     let studyData;
