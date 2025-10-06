@@ -195,7 +195,7 @@ def welcome(study_id):
             return render_template('study_participation/study_full.html', study=study, planned=planned, max_allowed=max_allowed)
         
         # Capture rid parameter for Cint integration
-        rid = request.args.get('rid') or request.args.get('RID')
+        rid = request.args.get('rid') or request.args.get('RID') or request.args.get('fedResponseID')
         
         # Initialize session for this study (but don't create response yet)
         session['study_id'] = str(study_id)
