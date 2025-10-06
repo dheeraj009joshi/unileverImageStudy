@@ -707,11 +707,15 @@ class ImagePreloader {
      */
     isLoadingComplete() {
         // If we have loaded images and either loading is complete OR we have images in memory
-        const isComplete = (this.loadingComplete && this.progress.loaded > 0) || 
-                          (this.loadedImages.size > 0 && this.progress.loaded > 0);
+        // OR if we have no images to load at all
+        const isComplete = this.loadingComplete || 
+                          this.preloadComplete ||
+                          (this.loadedImages.size > 0 && this.progress.loaded > 0) ||
+                          (this.progress.total === 0); // No images to load
         
         console.log('🔍 isLoadingComplete check:', {
             loadingComplete: this.loadingComplete,
+            preloadComplete: this.preloadComplete,
             loaded: this.progress.loaded,
             total: this.progress.total,
             loadedImagesSize: this.loadedImages.size,
@@ -743,6 +747,8 @@ class ImagePreloader {
                 const cacheData = JSON.parse(cached);
                 console.log('📦 Loaded image cache from storage:', Object.keys(cacheData).length, 'images');
                 
+                let loadedFromCache = 0;
+                
                 // Convert cached data back to Map
                 Object.entries(cacheData).forEach(([url, imageData]) => {
                     if (imageData && imageData.url) {
@@ -751,19 +757,54 @@ class ImagePreloader {
                         img.onload = () => {
                             this.loadedImages.set(url, img);
                             this.progress.loaded++;
+                            loadedFromCache++;
+                            
+                            // Update total count to match cached images
+                            if (this.progress.total === 0) {
+                                this.progress.total = Object.keys(cacheData).length;
+                            }
+                            
+                            console.log(`✅ Loaded cached image ${loadedFromCache}/${Object.keys(cacheData).length}: ${url}`);
+                            
+                            // If all cached images are loaded, mark as complete
+                            if (loadedFromCache === Object.keys(cacheData).length) {
+                                this.loadingComplete = true;
+                                this.preloadComplete = true;
+                                console.log('✅ All cached images loaded, marking as complete');
+                            }
+                        };
+                        img.onerror = () => {
+                            console.warn(`❌ Failed to load cached image: ${url}`);
+                            loadedFromCache++;
+                            
+                            // Still mark as complete if we've processed all cached images
+                            if (loadedFromCache === Object.keys(cacheData).length) {
+                                this.loadingComplete = true;
+                                this.preloadComplete = true;
+                                console.log('✅ Cached image processing complete (some failed)');
+                            }
                         };
                         img.src = imageData.url;
                     }
                 });
                 
-                // If we have cached images, mark as complete
-                if (this.loadedImages.size > 0) {
+                // If no cached images, still mark as complete to avoid hanging
+                if (Object.keys(cacheData).length === 0) {
                     this.loadingComplete = true;
-                    console.log('✅ Images loaded from cache, marking as complete');
+                    this.preloadComplete = true;
+                    console.log('✅ No cached images, marking as complete');
                 }
+            } else {
+                // No cache found, mark as complete to avoid hanging
+                this.loadingComplete = true;
+                this.preloadComplete = true;
+                console.log('✅ No image cache found, marking as complete');
             }
         } catch (error) {
             console.warn('Failed to load image cache from storage:', error);
+            // Mark as complete to avoid hanging
+            this.loadingComplete = true;
+            this.preloadComplete = true;
         }
     }
 

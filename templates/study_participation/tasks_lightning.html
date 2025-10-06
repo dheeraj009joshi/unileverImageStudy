@@ -928,6 +928,9 @@ class LightningTaskFlow {
         console.log(`🎯 Showing task ${taskIndex + 1} of ${this.totalTasks}:`, task);
         console.log(`🔍 Current task index: ${this.currentTaskIndex}`);
         
+        // Reset submission flag when showing a new task
+        this.isSubmitting = false;
+        
         // Debug task structure for layer studies
         if ('{{ study.study_type }}' === 'layer') {
             console.log('🔍 Task structure analysis:');
@@ -1346,6 +1349,12 @@ class LightningTaskFlow {
                     return;
                 }
                 
+                // Check if this task is already completed
+                if (this.taskRatings[this.currentTaskIndex]) {
+                    console.log('⚠️ Task already completed, ignoring click');
+                    return;
+                }
+                
                 console.log('🎯 Rating selected:', rating, 'for task', this.currentTaskIndex + 1);
                 selectedRating = parseInt(rating);
                 
@@ -1526,7 +1535,6 @@ class LightningTaskFlow {
         
         // Store in local storage
         this.taskRatings[this.currentTaskIndex] = taskData;
-        this.saveToLocalStorage();
         
         // Check if this is the last task
         if (this.currentTaskIndex === this.totalTasks - 1) {
@@ -1536,9 +1544,16 @@ class LightningTaskFlow {
             // Start the completion process
             this.completeStudy();
         } else {
-            // INSTANT progression to next task - no delay!
-            console.log('⚡ Instantly advancing to next task...');
-            this.advanceToNextTask();
+            // ADVANCE TO NEXT TASK FIRST, then save progress
+            console.log('⚡ Advancing to next task...');
+            this.currentTaskIndex++; // Move to next task
+            console.log(`✅ Moved to task ${this.currentTaskIndex + 1} (index: ${this.currentTaskIndex})`);
+            
+            // Save progress with the NEW task index
+            this.saveToLocalStorage();
+            
+            // Show the next task
+            this.showTask(this.currentTaskIndex);
         }
     }
     
@@ -1563,25 +1578,6 @@ class LightningTaskFlow {
         loader.classList.remove('show');
     }
     
-    advanceToNextTask() {
-        console.log(`🔄 Advancing from task ${this.currentTaskIndex + 1} to next task...`);
-        
-        if (this.currentTaskIndex < this.totalTasks - 1) {
-            // Reset submission flag before showing next task
-            this.isSubmitting = false;
-            // Increment current task index
-            this.currentTaskIndex++;
-            console.log(`✅ Moving to task ${this.currentTaskIndex + 1} (index: ${this.currentTaskIndex})`);
-            // Save progress to localStorage
-            this.saveToLocalStorage();
-            // Show the next task
-            this.showTask(this.currentTaskIndex);
-        } else {
-            // All tasks completed
-            console.log('🎉 All tasks completed!');
-            this.completeStudy();
-        }
-    }
     
     updateNavigation() {
         // Navigation is now handled by the progress bar
@@ -1643,6 +1639,34 @@ class LightningTaskFlow {
         console.log('💾 Progress saved to local storage:', data);
     }
     
+    clearAllLocalStorage() {
+        console.log('🗑️ Clearing all study-related localStorage data...');
+        
+        // Clear study progress
+        localStorage.removeItem(`study_${this.studyId}_progress`);
+        
+        // Clear image preloader cache
+        if (window.imagePreloader && window.imagePreloader.cacheKey) {
+            localStorage.removeItem(window.imagePreloader.cacheKey);
+        }
+        
+        // Clear any other study-related localStorage items
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes(this.studyId)) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`🗑️ Removed localStorage key: ${key}`);
+        });
+        
+        console.log('✅ All study-related localStorage data cleared');
+    }
+    
     loadFromLocalStorage() {
         const saved = localStorage.getItem(`study_${this.studyId}_progress`);
         if (saved) {
@@ -1655,12 +1679,31 @@ class LightningTaskFlow {
                     console.log('💾 Progress loaded from local storage:', data);
                     console.log(`🎯 Restored to task ${this.currentTaskIndex + 1} of ${this.totalTasks}`);
                     
+                    // Validate that the restored task index is valid
+                    if (this.currentTaskIndex >= this.totalTasks) {
+                        console.warn('⚠️ Restored task index is beyond total tasks, resetting to 0');
+                        this.currentTaskIndex = 0;
+                    }
+                    
+                    // Check if all tasks are completed
+                    if (this.taskRatings.length >= this.totalTasks) {
+                        console.log('🎉 All tasks appear to be completed, redirecting to completion page');
+                        window.location.href = `/study/${this.studyId}/completed`;
+                        return;
+                    }
+                    
                     // Update progress bar to reflect the restored task index
                     this.updateProgress();
                 }
             } catch (e) {
                 console.log('Could not load saved progress:', e);
+                this.currentTaskIndex = 0;
+                this.taskRatings = [];
             }
+        } else {
+            console.log('No saved progress found, starting from task 1');
+            this.currentTaskIndex = 0;
+            this.taskRatings = [];
         }
     }
     
@@ -1714,8 +1757,8 @@ class LightningTaskFlow {
                     loaderSubtext.textContent = 'Redirecting you to the completion page...';
                 }
                 
-                // Clear local storage
-                localStorage.removeItem(`study_${this.studyId}_progress`);
+                // Clear ALL study-related localStorage data
+                this.clearAllLocalStorage();
                 
                 // Redirect to completion page after showing success message
                 setTimeout(() => {
