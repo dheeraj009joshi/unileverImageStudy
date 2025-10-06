@@ -1714,7 +1714,7 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
     # Use main function logic from final_builder_parallel.py
     # Extract variables for main function
     C = len(category_info)  # Number of categories
-    N = number_of_respondents  # Number of respondents
+    N = number_of_respondents *1.5  # Number of respondents
     
     # Use layout mode for layer studies
     mode = "layout"
@@ -1917,7 +1917,7 @@ def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: i
     
     # EXACT same logic as main function in final_builder_parallel.py
     C = len(category_info)
-    N = number_of_respondents
+    N = number_of_respondents *1.5
     
     # --- Study mode & per-row active cap --- (EXACT same as main function)
     mode = "grid"  # Grid mode

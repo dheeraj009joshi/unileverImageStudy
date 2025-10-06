@@ -228,6 +228,19 @@ class Study(Document):
             'completed': self.completed_responses,
             'abandoned': self.abandoned_responses
         }
+
+    def auto_mark_completed_if_reached(self):
+        """Mark study completed when completed responses reach planned respondents."""
+        try:
+            target = int(getattr(self.iped_parameters, 'number_of_respondents', 0) or 0)
+        except Exception:
+            target = 0
+        if target > 0 and self.completed_responses >= target and self.status != 'completed':
+            self.status = 'completed'
+            self.completed_at = datetime.utcnow()
+            self.save()
+            return True
+        return False
     
     def get_real_time_counts(self):
         """Get real-time response counts from database for consistency."""

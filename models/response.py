@@ -140,6 +140,11 @@ class StudyResponse(Document):
         # Update study response counters
         try:
             self.study.increment_completed_responses()
+            # Auto-complete study if target reached
+            try:
+                self.study.auto_mark_completed_if_reached()
+            except Exception:
+                pass
             # Also decrement abandoned count since this response is no longer abandoned
             if self.study.abandoned_responses > 0:
                 self.study.abandoned_responses -= 1

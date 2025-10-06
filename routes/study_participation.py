@@ -179,6 +179,8 @@ def welcome(study_id):
     try:
         study = Study.objects.get(_id=study_id)
         
+        if study.status == 'completed':
+            return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return render_template('study_participation/study_inactive.html', study=study)
         
@@ -289,6 +291,8 @@ def personal_info(study_id):
     try:
         study = Study.objects.get(_id=study_id)
         
+        if study.status == 'completed':
+            return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
@@ -466,6 +470,8 @@ def classification(study_id):
     try:
         study = Study.objects.get(_id=study_id)
         
+        if study.status == 'completed':
+            return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
@@ -550,6 +556,8 @@ def orientation(study_id):
     try:
         study = Study.objects.get(_id=study_id)
         
+        if study.status == 'completed':
+            return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
@@ -586,6 +594,8 @@ def load_all_tasks(study_id):
     try:
         study = Study.objects.get(_id=study_id)
         
+        if study.status == 'completed':
+            return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
@@ -716,6 +726,8 @@ def task(study_id, task_number):
     try:
         study = Study.objects.get(_id=study_id)
         
+        if study.status == 'completed':
+            return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return redirect(url_for('study_participation.welcome', study_id=study_id))
         
@@ -843,6 +855,8 @@ def submit_all_ratings(study_id):
         study = Study.objects.get(_id=study_id)
         print(f"Study found: {study.title}")
         
+        if study.status == 'completed':
+            return {'error': 'Study completed'}, 400
         if study.status != 'active':
             print(f"Study not active: {study.status}")
             return {'error': 'Study not active'}, 400
@@ -943,6 +957,8 @@ def task_complete(study_id):
         study = Study.objects.get(_id=study_id)
         print(f"Study found: {study.title}")
         
+        if study.status == 'completed':
+            return {'error': 'Study completed'}, 400
         if study.status != 'active':
             print(f"Study not active: {study.status}")
             return {'error': 'Study not active'}, 400
