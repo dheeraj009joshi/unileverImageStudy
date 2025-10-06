@@ -95,6 +95,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/internal-pages.css') }}">
+    <style>
+        /* Remove top spacing when header is hidden */
+        .no-chrome .app-main { margin-top: 0 !important; padding-top: 0 !important; }
+        .no-chrome .app-header { display: none !important; }
+        .no-chrome .flash-container { display: none !important; }
+    </style>
     
     <!-- Unilever Logo Styling -->
     <style>
@@ -118,12 +124,17 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
-<body class="app-body">
+<body class="app-body{% if hide_chrome %} no-chrome{% endif %}">
+    {% set hide_chrome = (request and (
+        request.blueprint == 'study_participation' or
+        (request.endpoint and request.endpoint.startswith('study_participation.')) or
+        (request.path and request.path.startswith('/study/'))
+    )) %}
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
-    <!-- Header -->
-    {% if not request.endpoint or not request.endpoint.endswith('tasks') %}
+    <!-- Header: hidden on participation flow (blueprint/endpoint/path) -->
+    {% if not hide_chrome %}
     <header class="app-header" role="banner">
         <nav class="nav-container" role="navigation" aria-label="Main navigation">
             <div class="nav-brand">
@@ -179,8 +190,8 @@
     </header>
     {% endif %}
 
-    <!-- Flash Messages -->
-    {% if not request.endpoint or not request.endpoint.endswith('tasks') %}
+    <!-- Flash Messages: hidden on participation flow (blueprint/endpoint/path) -->
+    {% if not hide_chrome %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-container" role="alert" aria-live="polite">
@@ -607,37 +618,11 @@
         setTimeout(forceScrollToCurrentStep, 1500);
     </script>
     
-    <!-- Footer -->
-    {% if not request.endpoint or not request.endpoint.endswith('tasks') %}
+    <!-- Footer: hidden on participation flow (blueprint/endpoint/path) -->
+    {% if not hide_chrome %}
     <footer class="app-footer" role="contentinfo">
-        <div class="footer-container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3 class="footer-title">{{ config.get('APP_NAME', 'Unilever Image Study') }}</h3>
-                    <p class="footer-description">{{ config.get('APP_DESCRIPTION', 'Professional RDE Study System for Unilever Research and Data Collection') }}</p>
-                </div>
-                <div class="footer-section">
-                    <h4 class="footer-subtitle">Quick Links</h4>
-                    <ul class="footer-links">
-                        <li><a href="{{ url_for('index') }}">Home</a></li>
-                        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
-                        <li><a href="{{ url_for('about') }}">About</a></li>
-                        <li><a href="{{ url_for('contact') }}">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4 class="footer-subtitle">Support</h4>
-                    <ul class="footer-links">
-                        <li><a href="{{ url_for('index') }}">Help Center</a></li>
-                        <li><a href="{{ url_for('index') }}">Documentation</a></li>
-                        <li><a href="{{ url_for('index') }}">Privacy Policy</a></li>
-                        <li><a href="{{ url_for('index') }}">Terms of Service</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p class="footer-copyright">&copy; {{ config.get('COMPANY_YEAR', '2024') }} {{ config.get('COMPANY_NAME', 'Unilever') }}. All rights reserved.</p>
-            </div>
+        <div class="footer-bottom">
+            <p class="footer-copyright">&copy; 2025 Mind Genomics Associates. All rights reserved.</p>
         </div>
     </footer>
     {% endif %}
