@@ -667,6 +667,7 @@ class LightningTaskFlow {
         this.preloadedImages = new Map();
         
         // Initialize
+        this.userHasInteracted = false;
         this.init();
     }
     
@@ -706,21 +707,16 @@ class LightningTaskFlow {
             }
         }
         
-        // Initialize local storage FIRST to restore currentTaskIndex
-        this.loadFromLocalStorage();
-        console.log(`🎯 Initialized with currentTaskIndex: ${this.currentTaskIndex}`);
+        // Always start from task 1 (index 0) for simplicity
+        this.currentTaskIndex = 0;
+        this.taskRatings = [];
+        console.log(`🎯 Starting from task 1 (index: ${this.currentTaskIndex})`);
         
         // Calculate and apply screen dimensions
         this.calculateAndApplyDimensions();
         
         // Check if images are fully loaded before starting countdown
         this.checkImagesAndStartCountdown();
-        
-        // Generate navigation
-        this.generateNavigation();
-        
-        // Update progress
-        this.updateProgress();
     }
     
     calculateAndApplyDimensions() {
@@ -931,6 +927,9 @@ class LightningTaskFlow {
         // Reset submission flag when showing a new task
         this.isSubmitting = false;
         
+        // Add a flag to track if user has interacted with the page
+        this.userHasInteracted = false;
+        
         // Debug task structure for layer studies
         if ('{{ study.study_type }}' === 'layer') {
             console.log('🔍 Task structure analysis:');
@@ -951,19 +950,11 @@ class LightningTaskFlow {
             }
         }
         
-        // Update navigation
-        this.updateNavigation();
-        
         // Render task
         this.renderTask(task);
         
         // Update progress
         this.updateProgress();
-        
-        // Save current task to local storage
-        this.saveToLocalStorage();
-        
-        // Images are already preloaded by welcome screen
     }
     
     renderTask(task) {
@@ -1002,8 +993,8 @@ class LightningTaskFlow {
             this.debugGridStudyStructure();
         }
         
-        // Test rating system functionality
-        this.testRatingSystem();
+        // Test rating system functionality (disabled to prevent auto-submission)
+        // this.testRatingSystem();
             
             // Start task timer
             this.startTaskTimer();
@@ -1285,6 +1276,12 @@ class LightningTaskFlow {
     initializeRatingSystem() {
         console.log('🔍 Initializing rating system...');
         
+        // Ensure we're not submitting when initializing
+        if (this.isSubmitting) {
+            console.log('⚠️ Already submitting, skipping rating system initialization');
+            return;
+        }
+        
         // Simple, direct approach - no cloning, no complex logic
         const ratingOptions = document.querySelectorAll('.rating-option');
         console.log('🔍 Found rating options:', ratingOptions.length);
@@ -1343,6 +1340,20 @@ class LightningTaskFlow {
                 console.log('🎯 CLICK EVENT TRIGGERED on rating option:', rating);
                 console.log('🎯 Event target:', event.target);
                 console.log('🎯 Event currentTarget:', event.currentTarget);
+                console.log('🎯 Event type:', event.type);
+                console.log('🎯 Event isTrusted:', event.isTrusted);
+                console.log('🎯 Current task index:', this.currentTaskIndex);
+                console.log('🎯 Is submitting:', this.isSubmitting);
+                console.log('🎯 User has interacted:', this.userHasInteracted);
+                
+                // Mark that user has interacted with the page
+                this.userHasInteracted = true;
+                
+                // Only allow trusted user events
+                if (!event.isTrusted) {
+                    console.log('⚠️ Non-trusted event, ignoring');
+                    return;
+                }
                 
                 if (this.isSubmitting) {
                     console.log('⚠️ Submission in progress, ignoring click');
@@ -1493,7 +1504,15 @@ class LightningTaskFlow {
     }
     
     async submitRating(rating) {
-        if (this.isSubmitting) return;
+        if (this.isSubmitting) {
+            console.log('⚠️ Already submitting, ignoring submitRating call');
+            return;
+        }
+        
+        console.log('🚀 submitRating called with rating:', rating);
+        console.log('🚀 Current task index:', this.currentTaskIndex);
+        console.log('🚀 Total tasks:', this.totalTasks);
+        console.log('🚀 Is submitting flag:', this.isSubmitting);
         
         this.isSubmitting = true;
         const taskEndTime = new Date();
@@ -1533,7 +1552,7 @@ class LightningTaskFlow {
         
         console.log('📤 Submitting comprehensive task data:', taskData);
         
-        // Store in local storage
+        // Store task rating
         this.taskRatings[this.currentTaskIndex] = taskData;
         
         // Check if this is the last task
@@ -1544,15 +1563,12 @@ class LightningTaskFlow {
             // Start the completion process
             this.completeStudy();
         } else {
-            // ADVANCE TO NEXT TASK FIRST, then save progress
+            // ADVANCE TO NEXT TASK
             console.log('⚡ Advancing to next task...');
             this.currentTaskIndex++; // Move to next task
             console.log(`✅ Moved to task ${this.currentTaskIndex + 1} (index: ${this.currentTaskIndex})`);
             
-            // Save progress with the NEW task index
-            this.saveToLocalStorage();
-            
-            // Show the next task
+            // Show the next task immediately
             this.showTask(this.currentTaskIndex);
         }
     }
@@ -1757,8 +1773,8 @@ class LightningTaskFlow {
                     loaderSubtext.textContent = 'Redirecting you to the completion page...';
                 }
                 
-                // Clear ALL study-related localStorage data
-                this.clearAllLocalStorage();
+                // Clear study progress from localStorage
+                localStorage.removeItem(`study_${this.studyId}_progress`);
                 
                 // Redirect to completion page after showing success message
                 setTimeout(() => {
