@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Full{% endblock %}
+
+{% block content %}
+<section class="section section--center" style="padding: 40px 16px; text-align: center;">
+  <div class="card" style="max-width: 680px; margin: 0 auto;">
+    <div class="card-body">
+      <h1 class="h3" style="margin-bottom: 12px;">This study has reached its response limit</h1>
+      <p class="text-muted" style="margin-bottom: 16px;">
+        Thank you for your interest. This study planned {{ planned }} respondents and allows up to {{ max_allowed }} total responses (including buffer).
+      </p>
+      <p class="text-muted" style="margin-bottom: 24px;">
+        The maximum number of responses has been reached. Please check back later or try another available study.
+      </p>
+      <a class="btn btn--primary" href="{{ url_for('index.index') }}">Return to Home</a>
+    </div>
+  </div>
+  <p class="text-muted" style="margin-top: 16px;">Study: {{ study.title }}</p>
+</section>
+{% endblock %}
+
+

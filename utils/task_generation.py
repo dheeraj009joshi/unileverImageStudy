@@ -1434,13 +1434,14 @@ def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: i
     design_df['Consumer_ID'] = consumer_ids
     
     # Extract tasks_per_consumer from the generated design
-    tasks_per_consumer = len(design_df) // number_of_respondents
+    # Use N (over-generated respondents) to compute per-consumer task count
+    tasks_per_consumer = max(1, len(design_df) // N)
     capacity = len(design_df)
     
     # Convert to task structure with element content
     tasks_structure = {}
     
-    for respondent_id in range(number_of_respondents):
+    for respondent_id in range(N):
         respondent_tasks = []
         start_idx = respondent_id * tasks_per_consumer
         end_idx = start_idx + tasks_per_consumer
@@ -1714,7 +1715,7 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
     # Use main function logic from final_builder_parallel.py
     # Extract variables for main function
     C = len(category_info)  # Number of categories
-    N = number_of_respondents *1.5  # Number of respondents
+    N = number_of_respondents +int(number_of_respondents/2) # Number of respondents
     
     # Use layout mode for layer studies
     mode = "layout"
@@ -1796,15 +1797,15 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
         consumer_ids.extend([resp_id] * len(rows))
     design_df['Consumer_ID'] = consumer_ids
     
-    # Extract tasks_per_consumer from the generated design
-    tasks_per_consumer = len(design_df) // number_of_respondents
+    # Extract tasks_per_consumer from the generated design using over-generated N
+    tasks_per_consumer = max(1, len(design_df) // N)
     capacity = len(design_df)
     
     # Convert to task structure with image content
     tasks_structure = {}
     all_elements = [e for es in category_info.values() for e in es]
     
-    for respondent_id in range(number_of_respondents):
+    for respondent_id in range(N):
         respondent_tasks = []
         start_idx = respondent_id * tasks_per_consumer
         end_idx = start_idx + tasks_per_consumer
@@ -1917,7 +1918,7 @@ def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: i
     
     # EXACT same logic as main function in final_builder_parallel.py
     C = len(category_info)
-    N = number_of_respondents *1.5
+    N = number_of_respondents +int(number_of_respondents/2)
     
     # --- Study mode & per-row active cap --- (EXACT same as main function)
     mode = "grid"  # Grid mode
@@ -2026,14 +2027,15 @@ def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: i
         design_df['Consumer_ID'] = consumer_ids
         
         # Extract tasks_per_consumer from the generated design
-        tasks_per_consumer = len(design_df) // number_of_respondents
+        tasks_per_consumer = max(1, len(design_df) // N)
         capacity = len(design_df)
         
         # Convert to task structure with image content (GRID SPECIFIC OUTPUT FORMAT)
         tasks_structure = {}
         all_elements = [e for es in category_info.values() for e in es]
         
-        for respondent_id in range(number_of_respondents):
+        # Build tasks for all over-generated respondents (1.5x)
+        for respondent_id in range(N):
             respondent_tasks = []
             start_idx = respondent_id * tasks_per_consumer
             end_idx = start_idx + tasks_per_consumer

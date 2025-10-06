@@ -264,19 +264,19 @@
                                 <!-- Grid Study Parameters -->
                                 <div class="preview-item">
                                     <span class="preview-label">Number of Elements:</span>
-                                    <span class="preview-value">{{ study_data.step2c.num_elements }}</span>
+                                    <span class="preview-value">{{ (study_data.step2c.num_elements) or (study_data.grid_iped_calculated.num_elements) }}</span>
                                 </div>
                                 <div class="preview-item">
                                     <span class="preview-label">Tasks per Respondent:</span>
-                                    <span class="preview-value">{{ study_data.step2c.tasks_per_consumer }}</span>
+                                    <span class="preview-value">{{ (study_data.step2c.tasks_per_consumer) or (study_data.grid_iped_calculated.tasks_per_consumer) }}</span>
                                 </div>
                                 <div class="preview-item">
                                     <span class="preview-label">Number of Respondents:</span>
-                                    <span class="preview-value">{{ study_data.step2c.number_of_respondents }}</span>
+                                    <span class="preview-value">{{ (study_data.step2c.number_of_respondents) or (study_data.grid_iped_calculated.number_of_respondents) }}</span>
                                 </div>
                                 <div class="preview-item">
                                     <span class="preview-label">Total Tasks:</span>
-                                    <span class="preview-value">{{ study_data.step2c.total_tasks }}</span>
+                                    <span class="preview-value">{{ (study_data.step2c.total_tasks) or (study_data.grid_iped_calculated.total_tasks) }}</span>
                                 </div>
                             {% else %}
                                 <!-- Layer Study Parameters -->
@@ -332,8 +332,8 @@
                     
                     <div class="form-group">
                         <div class="checkbox-wrapper">
-                            {{ form.launch_study(class="form-check-input") }}
-                            {{ form.launch_study.label(class="form-label") }}
+                            {{ form.launch_study(class="form-check-input", id="launchCheckbox", required=True) }}
+                            {{ form.launch_study.label(class="form-label", for="launchCheckbox") }}
                         </div>
                         <small class="form-help-text">I confirm that I have reviewed all study details and am ready to launch</small>
                     </div>
@@ -352,9 +352,22 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form[data-loading="true"]');
     const submitBtn = document.getElementById('launchSubmitBtn');
+    const launchCheckbox = document.getElementById('launchCheckbox');
     
     if (form && submitBtn) {
+        // Disable submit until checkbox is checked
+        if (launchCheckbox) {
+            submitBtn.disabled = !launchCheckbox.checked;
+            launchCheckbox.addEventListener('change', function() {
+                submitBtn.disabled = !launchCheckbox.checked;
+            });
+        }
         form.addEventListener('submit', function(e) {
+            if (launchCheckbox && !launchCheckbox.checked) {
+                e.preventDefault();
+                launchCheckbox.reportValidity();
+                return;
+            }
             // Show loading state using the base.js system
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="loading-spinner"></span> Launching...';

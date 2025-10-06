@@ -1068,6 +1068,19 @@ document.getElementById('gridConfigForm').addEventListener('submit', function(e)
         return;
     }
     
+    // Show loading overlay and disable submit
+    const saveBtn = document.getElementById('saveButton');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        const textEl = overlay.querySelector('.loading-overlay-text');
+        if (textEl) textEl.textContent = 'Saving categories...';
+        overlay.classList.add('is-visible');
+    }
+
     // Create form data
     const formData = new FormData();
     formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
@@ -1115,10 +1128,14 @@ document.getElementById('gridConfigForm').addEventListener('submit', function(e)
             window.location.href = response.url;
         } else {
             alert('Error saving categories. Please try again.');
+            if (overlay) overlay.classList.remove('is-visible');
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Categories & Continue'; }
         }
     }).catch(error => {
         console.error('Error:', error);
         alert('Error saving categories. Please try again.');
+        if (overlay) overlay.classList.remove('is-visible');
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Categories & Continue'; }
     });
 });
 

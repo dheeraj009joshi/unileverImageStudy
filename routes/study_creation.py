@@ -994,20 +994,24 @@ def step3a():
                 
                 task_generation_start = time.time()
                 print(f"🔄 Starting task generation at {time.strftime('%H:%M:%S', time.localtime(task_generation_start))}")
-                tasks_matrix = generate_grid_tasks_v2(
+                grid_result = generate_grid_tasks_v2(
                     categories_data=grid_config_data['categories'],
                     number_of_respondents=grid_iped_data['number_of_respondents'],
                     exposure_tolerance_cv=grid_iped_data.get('exposure_tolerance_cv', 1.0),
                     seed=grid_iped_data.get('seed')
-                )['tasks']
+                )
+                tasks_matrix = grid_result['tasks']
                 task_generation_duration = time.time() - task_generation_start
                 print(f"⏱️ Task generation completed in {task_generation_duration:.2f} seconds")
                 
                 print(f"DEBUG: Task matrix generated successfully: {len(tasks_matrix)} respondents")
                 
-                # Save grid study task matrix
+                # Save grid study task matrix WITH METADATA (like layer)
                 draft.update_step_data('3a_grid', {
-                    'tasks_matrix': tasks_matrix,
+                    'tasks_matrix': {
+                        'tasks': tasks_matrix,
+                        'metadata': grid_result.get('metadata', {})
+                    },
                     'generated_at': datetime.utcnow().isoformat(),
                     'regenerate_matrix': bool(getattr(form, 'regenerate_matrix', False) and form.regenerate_matrix.data),
                     'step_completed': True

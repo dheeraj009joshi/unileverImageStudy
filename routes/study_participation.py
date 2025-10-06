@@ -183,6 +183,16 @@ def welcome(study_id):
             return render_template('study_participation/study_completed.html', study=study)
         if study.status != 'active':
             return render_template('study_participation/study_inactive.html', study=study)
+
+        # Soft-cap guard: if over-response buffer reached, inform user early
+        try:
+            planned = int(getattr(study.iped_parameters, 'number_of_respondents', 0) or 0)
+            max_allowed = planned + int(planned / 2)
+        except Exception:
+            planned = 0
+            max_allowed = 0
+        if planned > 0 and study.total_responses >= max_allowed:
+            return render_template('study_participation/study_full.html', study=study, planned=planned, max_allowed=max_allowed)
         
         # Capture rid parameter for Cint integration
         rid = request.args.get('rid') or request.args.get('RID')
@@ -349,6 +359,16 @@ def personal_info(study_id):
             print(f"Session ID: {session.get('_id', 'No session ID')}")
             print(f"Session modified flag: {session.modified}")
             
+            # Enforce over-subscription soft cap before creating response
+            try:
+                planned = int(getattr(study.iped_parameters, 'number_of_respondents', 0) or 0)
+                max_allowed = planned + (planned // 2)
+            except Exception:
+                planned = 0
+                max_allowed = 0
+            if planned > 0 and study.total_responses >= max_allowed:
+                return render_template('study_participation/study_full.html', study=study, planned=planned, max_allowed=max_allowed)
+
             # Create StudyResponse object now that user has actually started
             try:
                 # Validate study object before proceeding
