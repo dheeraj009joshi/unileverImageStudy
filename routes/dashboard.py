@@ -475,13 +475,18 @@ def export_task_matrix(study_id):
         panelist_iter = []
         try:
             from models.study_task import StudyPanelistTasks
-            panel_docs = StudyPanelistTasks.objects(study=study)
+            panel_docs = StudyPanelistTasks.objects(draft=study)
             if panel_docs:
                 panelist_iter = [(doc.panelist_id, doc.tasks) for doc in panel_docs]
+                print(f"🚀 Loaded {len(panel_docs)} panelist task documents from StudyPanelistTasks")
+            else:
+                print("🚀 No StudyPanelistTasks found, trying legacy study.tasks")
+                if hasattr(study, 'tasks') and study.tasks:
+                    panelist_iter = list(study.tasks.items())
         except Exception as e:
             print(f"WARN: Could not load StudyPanelistTasks: {e}")
-        if not panelist_iter and hasattr(study, 'tasks') and study.tasks:
-            panelist_iter = list(study.tasks.items())
+            if hasattr(study, 'tasks') and study.tasks:
+                panelist_iter = list(study.tasks.items())
         for panelist_id, panelist_tasks in panelist_iter:
                 print(f"🚀 Panelist {panelist_id} tasks type: {type(panelist_tasks)}")
                 print(f"🚀 Panelist {panelist_id} tasks length: {len(panelist_tasks) if panelist_tasks else 'None'}")
@@ -559,7 +564,7 @@ def export_task_matrix(study_id):
         panelist_iter = []
         try:
             from models.study_task import StudyPanelistTasks
-            panel_docs = StudyPanelistTasks.objects(study=study)
+            panel_docs = StudyPanelistTasks.objects(draft=study)
             if panel_docs:
                 panelist_iter = [(doc.panelist_id, doc.tasks) for doc in panel_docs]
         except Exception as e:
@@ -641,39 +646,45 @@ def export_task_matrix(study_id):
     writer.writerow(header_row)
     print(f"🚀 Header row: {header_row}")
     
-    # Write task matrix data (prefer StudyPanelistTasks)
-    panelist_iter = []
+    # Load task data once and cache it
+    print("🔄 Loading task data from StudyPanelistTasks...")
+    panelist_tasks_cache = {}
     try:
         from models.study_task import StudyPanelistTasks
-        panel_docs = StudyPanelistTasks.objects(study=study)
+        panel_docs = StudyPanelistTasks.objects(draft=study)
         if panel_docs:
-            panelist_iter = [(doc.panelist_id, doc.tasks) for doc in panel_docs]
+            for doc in panel_docs:
+                panelist_tasks_cache[doc.panelist_id] = doc.tasks
+            print(f"✅ Loaded {len(panel_docs)} panelist task documents")
     except Exception as e:
-        print(f"WARN: Could not load StudyPanelistTasks for rows: {e}")
-    if not panelist_iter and hasattr(study, 'tasks') and study.tasks:
-        panelist_iter = list(study.tasks.items())
-    if panelist_iter:
-        print(f"🚀 Processing {len(panelist_iter)} panelists")
-        for panelist_id, panelist_tasks in panelist_iter:
-            print(f"🚀 Processing panelist {panelist_id} with {len(panelist_tasks)} tasks")
-            
+        print(f"WARN: Could not load StudyPanelistTasks: {e}")
+    
+    # Fallback to legacy data if needed
+    if not panelist_tasks_cache and hasattr(study, 'tasks') and study.tasks:
+        print("🔄 Falling back to legacy study.tasks...")
+        panelist_tasks_cache = dict(study.tasks)
+        print(f"✅ Loaded {len(panelist_tasks_cache)} panelists from legacy data")
+    
+    if panelist_tasks_cache:
+        print(f"🔄 Processing {len(panelist_tasks_cache)} panelists...")
+        for panelist_id, panelist_tasks in panelist_tasks_cache.items():
+            if not panelist_tasks:
+                continue
+                
             for task_index, task in enumerate(panelist_tasks):
                 row_data = [panelist_id, task_index + 1]  # Panelist ID and Task number
                 
-                # Try different ways to access elements_shown
-                elements_shown = None
-                if hasattr(task, 'elements_shown'):
-                    elements_shown = getattr(task, 'elements_shown', {})
-                    print(f"🚀 Task {task_index + 1} elements_shown (attr): {elements_shown}")
-                elif isinstance(task, dict) and 'elements_shown' in task:
+                # Try new structure first (elements_shown), then fallback to old structure
+                elements_shown = {}
+                if isinstance(task, dict) and 'elements_shown' in task:
                     elements_shown = task['elements_shown']
                     print(f"🚀 Task {task_index + 1} elements_shown (dict): {elements_shown}")
+                elif hasattr(task, 'elements_shown'):
+                    elements_shown = getattr(task, 'elements_shown', {})
+                    print(f"🚀 Task {task_index + 1} elements_shown (attr): {elements_shown}")
                 else:
                     print(f"🚀 Task {task_index + 1} no elements_shown found, task type: {type(task)}")
                     print(f"🚀 Task {task_index + 1} task content: {task}")
-                
-                if not elements_shown:
-                    elements_shown = {}
                 
                 print(f"🚀 Task {task_index + 1} elements_shown keys: {list(elements_shown.keys()) if elements_shown else 'EMPTY'}")
                 print(f"🚀 Available key mappings: {key_to_descriptive}")
@@ -780,13 +791,24 @@ def export_study(study_id):
         layer_keys = []
         key_to_descriptive = {}
         if study.study_type == 'layer' and study.study_layers:
-            # Get the actual keys from task data
-            for response in responses:
-                if response.completed_tasks:
-                    for task in response.completed_tasks:
-                        elements_shown = getattr(task, 'elements_shown_in_task', {})
-                        if elements_shown:
-                            # Get all keys that don't end with '_content' (these are the actual layer keys)
+            # Use cached task data if available, otherwise load once
+            if 'panelist_tasks_cache' not in locals():
+                panelist_tasks_cache = {}
+                try:
+                    from models.study_task import StudyPanelistTasks
+                    panel_docs = StudyPanelistTasks.objects(draft=study)
+                    if panel_docs:
+                        for doc in panel_docs:
+                            panelist_tasks_cache[doc.panelist_id] = doc.tasks
+                except Exception as e:
+                    print(f"WARN: Could not load StudyPanelistTasks for layer key extraction: {e}")
+            
+            # Extract layer keys from cached data
+            for panelist_id, panelist_tasks in panelist_tasks_cache.items():
+                if panelist_tasks:
+                    for task in panelist_tasks[:1]:  # Check first task only
+                        if isinstance(task, dict) and 'elements_shown' in task:
+                            elements_shown = task['elements_shown']
                             for key in elements_shown.keys():
                                 if not key.endswith('_content'):
                                     if key not in layer_keys:
@@ -794,6 +816,22 @@ def export_study(study_id):
                             break
                     if layer_keys:
                         break
+            
+            # Fallback to response data if StudyPanelistTasks not available
+            if not layer_keys:
+                for response in responses:
+                    if response.completed_tasks:
+                        for task in response.completed_tasks:
+                            elements_shown = getattr(task, 'elements_shown_in_task', {})
+                            if elements_shown:
+                                # Get all keys that don't end with '_content' (these are the actual layer keys)
+                                for key in elements_shown.keys():
+                                    if not key.endswith('_content'):
+                                        if key not in layer_keys:
+                                            layer_keys.append(key)
+                                break
+                        if layer_keys:
+                            break
             
             # Create mapping from actual layer keys to descriptive names
             for key in layer_keys:
@@ -865,17 +903,45 @@ def export_study(study_id):
                 
                 # Get the actual keys from task data and map them to descriptive names
                 actual_keys = set()
-                for response in responses:
-                    if response.completed_tasks:
-                        for task in response.completed_tasks:
-                            elements_shown = getattr(task, 'elements_shown_in_task', {})
-                            if elements_shown:
+                
+                # Use cached task data if available, otherwise load once
+                if 'panelist_tasks_cache' not in locals():
+                    panelist_tasks_cache = {}
+                    try:
+                        from models.study_task import StudyPanelistTasks
+                        panel_docs = StudyPanelistTasks.objects(draft=study)
+                        if panel_docs:
+                            for doc in panel_docs:
+                                panelist_tasks_cache[doc.panelist_id] = doc.tasks
+                    except Exception as e:
+                        print(f"WARN: Could not load StudyPanelistTasks for key extraction: {e}")
+                
+                # Extract keys from cached data
+                for panelist_id, panelist_tasks in panelist_tasks_cache.items():
+                    if panelist_tasks:
+                        for task in panelist_tasks[:1]:  # Check first task only
+                            if isinstance(task, dict) and 'elements_shown' in task:
+                                elements_shown = task['elements_shown']
                                 for key in elements_shown.keys():
                                     if not key.endswith('_content'):
                                         actual_keys.add(key)
                                 break
                         if actual_keys:
                             break
+                
+                # Fallback to response data if StudyPanelistTasks not available
+                if not actual_keys:
+                    for response in responses:
+                        if response.completed_tasks:
+                            for task in response.completed_tasks:
+                                elements_shown = getattr(task, 'elements_shown_in_task', {})
+                                if elements_shown:
+                                    for key in elements_shown.keys():
+                                        if not key.endswith('_content'):
+                                            actual_keys.add(key)
+                                    break
+                            if actual_keys:
+                                break
                 
                 # Create grid_columns using descriptive names for keys that exist in task data
                 for key in sorted(actual_keys):
@@ -939,8 +1005,11 @@ def export_study(study_id):
         
         # Write data rows - one row per task
         total_rows = 0
+        print(f"🔄 Processing {len(responses)} responses for export...")
         
-        for response in responses:
+        for response_idx, response in enumerate(responses):
+            if response_idx % 10 == 0:  # Progress every 10 responses
+                print(f"🔄 Processing response {response_idx + 1}/{len(responses)}...")
             # Get classification answers once per response
             classification_answers = {}
             if study.classification_questions:
@@ -1009,10 +1078,15 @@ def export_study(study_id):
                 if task_data:
                     # Element/Layer visibility for this task
                     if study.study_type == 'grid' and (study.grid_categories or study.elements):
-                        elements_shown = getattr(task_data, 'elements_shown_in_task', {})
-                        print(f"DEBUG: Task {task_num} elements_shown_in_task: {elements_shown}")
-                        print(f"DEBUG: Task {task_num} elements_shown_in_task type: {type(elements_shown)}")
-                        print(f"DEBUG: Task {task_num} elements_shown_in_task keys: {list(elements_shown.keys()) if elements_shown else 'None'}")
+                        # Try new structure first (elements_shown), then fallback to old structure
+                        elements_shown = {}
+                        if isinstance(task_data, dict) and 'elements_shown' in task_data:
+                            elements_shown = task_data['elements_shown']
+                        else:
+                            elements_shown = getattr(task_data, 'elements_shown_in_task', {})
+                        print(f"DEBUG: Task {task_num} elements_shown: {elements_shown}")
+                        print(f"DEBUG: Task {task_num} elements_shown type: {type(elements_shown)}")
+                        print(f"DEBUG: Task {task_num} elements_shown keys: {list(elements_shown.keys()) if elements_shown else 'None'}")
                         
                         if study.grid_categories:
                             # New grid structure: use mapping from descriptive names to simplified keys
@@ -1072,7 +1146,12 @@ def export_study(study_id):
                         row_data.extend([rating, response_time])
                         
                     elif study.study_type == 'layer' and study.study_layers:
-                        elements_shown_in_task = getattr(task_data, 'elements_shown_in_task', {})
+                        # Try new structure first (elements_shown), then fallback to old structure
+                        elements_shown_in_task = {}
+                        if isinstance(task_data, dict) and 'elements_shown' in task_data:
+                            elements_shown_in_task = task_data['elements_shown']
+                        else:
+                            elements_shown_in_task = getattr(task_data, 'elements_shown_in_task', {})
                         
                         # For layer studies: use actual layer keys to look up values, but write descriptive column names
                         for i, column in enumerate(layer_columns):
@@ -1101,7 +1180,8 @@ def export_study(study_id):
                 
                 writer.writerow(row_data)
                 total_rows += 1
-            
+        
+        print(f"✅ Export completed! Generated {total_rows} rows of data")
         output.seek(0)
         
         # Generate descriptive filename with study details

@@ -215,14 +215,24 @@
                                 <span class="btn-icon">📊</span>
                                 View All Responses
                             </a>
-                            <a href="{{ url_for('dashboard.export_study', study_id=study._id, type='csv') }}" class="btn btn--secondary btn--lg">
+                            <a href="{{ url_for('dashboard.export_study', study_id=study._id, type='csv') }}" class="btn btn--secondary btn--lg export-btn" data-export-type="CSV">
                                 <span class="btn-icon">📥</span>
                                 Export Responses CSV
                             </a>
-                            <a href="{{ url_for('dashboard.export_task_matrix', study_id=study._id) }}" class="btn btn--secondary btn--lg">
+                            <a href="{{ url_for('dashboard.export_task_matrix', study_id=study._id) }}" class="btn btn--secondary btn--lg export-btn" data-export-type="Task Matrix">
                                 <span class="btn-icon">📊</span>
                                 Export Task Matrix
                             </a>
+                        </div>
+                        
+                        <!-- Export Progress Bar (hidden by default) -->
+                        <div id="export-progress" class="export-progress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span class="progress-label">Exporting...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -280,5 +290,52 @@
           notification.remove();
       }, 3000);
   }
+
+  // Export loading functionality
+  function showExportLoading(button, exportType) {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="btn-icon">⏳</span>Exporting...';
+      button.disabled = true;
+      button.classList.add('btn--loading');
+      
+      // Show simple progress indicator
+      const progressBar = document.getElementById('export-progress');
+      const progressLabel = progressBar.querySelector('.progress-label');
+      
+      progressLabel.textContent = `Exporting ${exportType}... Please wait, this may take a few minutes for large studies.`;
+      progressBar.style.display = 'block';
+      
+      // Show progress notification
+      showNotification(`${exportType} export started! This may take a few moments for large studies...`, 'info');
+      
+      // Store original state for potential restoration
+      button.dataset.originalText = originalText;
+  }
+
+  function hideExportLoading(button) {
+      if (button.dataset.originalText) {
+          button.innerHTML = button.dataset.originalText;
+          button.disabled = false;
+          button.classList.remove('btn--loading');
+      }
+      
+      // Hide progress bar
+      const progressBar = document.getElementById('export-progress');
+      progressBar.style.display = 'none';
+  }
+
+  // Add click handlers to export buttons
+  document.addEventListener('DOMContentLoaded', function() {
+      const exportButtons = document.querySelectorAll('.export-btn');
+      exportButtons.forEach(button => {
+          button.addEventListener('click', function(e) {
+              const exportType = this.dataset.exportType || 'Data';
+              showExportLoading(this, exportType);
+              
+              // Keep loading until page changes (download starts)
+              // The loader will be cleared when the page navigates or refreshes
+          });
+      });
+  });
   </script>
   {% endblock %}
