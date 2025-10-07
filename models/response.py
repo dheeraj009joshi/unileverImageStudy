@@ -94,7 +94,9 @@ class StudyResponse(Document):
     last_activity = DateTimeField(default=datetime.utcnow)
     
     # Abandonment Detection
-    is_abandoned = BooleanField(default=True)  # Default to abandoned, set to False when completed
+    # Status flags
+    is_abandoned = BooleanField(default=False)
+    is_in_progress = BooleanField(default=True)
     abandonment_timestamp = DateTimeField()
     abandonment_reason = StringField(max_length=200)
     
@@ -131,7 +133,8 @@ class StudyResponse(Document):
     def mark_completed(self):
         """Mark the study response as completed."""
         self.is_completed = True
-        self.is_abandoned = False  # Set to False when completed
+        self.is_abandoned = False
+        self.is_in_progress = False
         self.session_end_time = datetime.utcnow()
         if self.session_start_time:
             self.total_study_duration = (self.session_end_time - self.session_start_time).total_seconds()
@@ -139,7 +142,12 @@ class StudyResponse(Document):
         
         # Update study response counters
         try:
+            # Move from in-progress to completed
             self.study.increment_completed_responses()
+            try:
+                self.study.decrement_in_progress_responses()
+            except Exception:
+                pass
             # Auto-complete study if target reached
             try:
                 self.study.auto_mark_completed_if_reached()
@@ -157,13 +165,19 @@ class StudyResponse(Document):
         """Mark the study response as abandoned."""
         was_completed = self.is_completed
         self.is_abandoned = True
-        self.is_completed = False  # Set to False when abandoned
+        self.is_completed = False
+        self.is_in_progress = False
         self.abandonment_timestamp = datetime.utcnow()
         self.abandonment_reason = reason
         
         # Update study response counters
         try:
+            # Move from in-progress to abandoned
             self.study.increment_abandoned_responses()
+            try:
+                self.study.decrement_in_progress_responses()
+            except Exception:
+                pass
             # If this response was previously completed, decrement completed count
             if was_completed and self.study.completed_responses > 0:
                 self.study.completed_responses -= 1

@@ -60,6 +60,13 @@
                 </div>
             </div>
             <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ study.in_progress_responses if study.in_progress_responses is defined else 0 }}</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-icon">📈</div>
                 <div class="stat-content">
                     <div class="stat-value">

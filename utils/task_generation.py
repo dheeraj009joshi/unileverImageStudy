@@ -1715,7 +1715,8 @@ def generate_layer_tasks_v2(layers_data: List[Dict], number_of_respondents: int,
     # Use main function logic from final_builder_parallel.py
     # Extract variables for main function
     C = len(category_info)  # Number of categories
-    N = number_of_respondents +int(number_of_respondents/2) # Number of respondents
+    # Generate 5x respondents for buffer
+    N = number_of_respondents * 5
     
     # Use layout mode for layer studies
     mode = "layout"
@@ -1918,7 +1919,8 @@ def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: i
     
     # EXACT same logic as main function in final_builder_parallel.py
     C = len(category_info)
-    N = number_of_respondents +int(number_of_respondents/2)
+    # Generate 5x respondents for buffer
+    N = number_of_respondents * 5
     
     # --- Study mode & per-row active cap --- (EXACT same as main function)
     mode = "grid"  # Grid mode
@@ -2034,7 +2036,7 @@ def generate_grid_tasks_v2(categories_data: List[Dict], number_of_respondents: i
         tasks_structure = {}
         all_elements = [e for es in category_info.values() for e in es]
         
-        # Build tasks for all over-generated respondents (1.5x)
+        # Build tasks for all over-generated respondents (5x)
         for respondent_id in range(N):
             respondent_tasks = []
             start_idx = respondent_id * tasks_per_consumer

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from models.study import Study
 from models.response import StudyResponse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 import json
 
@@ -161,6 +161,28 @@ def serialize_study_for_preloading(study):
 
 study_participation = Blueprint('study_participation', __name__)
 
+
+def _abandon_stale_in_progress_responses(study):
+    """Auto-mark in-progress responses as abandoned after 10 minutes of inactivity."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(minutes=10)
+        stale = StudyResponse.objects(
+            study=study,
+            is_completed=False,
+            is_abandoned=False,
+            is_in_progress=True,
+            last_activity__lt=cutoff
+        )
+        count = 0
+        for resp in stale:
+            resp.mark_abandoned('Auto-abandoned after 10 minutes of inactivity')
+            resp.save()
+            count += 1
+        if count:
+            print(f"⏱️ Auto-abandoned {count} stale responses for study {study._id}")
+    except Exception as e:
+        print(f"WARN: Failed abandoning stale responses: {e}")
+
 def safe_datetime_parse(datetime_string):
     """Parse datetime string and ensure timezone-naive format for MongoDB."""
     try:
@@ -178,6 +200,8 @@ def welcome(study_id):
     """Welcome page for study participation"""
     try:
         study = Study.objects.get(_id=study_id)
+        # Auto-abandon stale in-progress responses
+        # _abandon_stale_in_progress_responses(study)
         
         if study.status == 'completed':
             return render_template('study_participation/study_completed.html', study=study)
@@ -187,7 +211,7 @@ def welcome(study_id):
         # Soft-cap guard: if over-response buffer reached, inform user early
         try:
             planned = int(getattr(study.iped_parameters, 'number_of_respondents', 0) or 0)
-            max_allowed = planned + int(planned / 2)
+            max_allowed = planned *5
         except Exception:
             planned = 0
             max_allowed = 0
@@ -438,8 +462,10 @@ def personal_info(study_id):
                 
                 # Update study response counters
                 study.total_responses += 1
-                study.abandoned_responses += 1  # Increment abandoned count since response starts as abandoned
-                study.save()
+                try:
+                    study.increment_in_progress_responses()
+                except Exception:
+                    study.save()
                 
                 # Store in session
                 session['response_id'] = str(response._id)
@@ -650,82 +676,95 @@ def load_all_tasks(study_id):
                 total_tasks = 25
         
         # Generate tasks if they don't exist
-        if not hasattr(study, 'tasks') or not study.tasks:
-            print(f"DEBUG: No tasks found, generating...")
-            try:
-                from utils.task_generation import generate_grid_tasks, generate_layer_tasks_v2
+        # if not hasattr(study, 'tasks') or not study.tasks:
+        #     print(f"DEBUG: No tasks found, generating...")
+        #     try:
+        #         from utils.task_generation import generate_grid_tasks, generate_layer_tasks_v2
                 
-                if study.study_type == 'grid':
-                    # Check if study has new category structure
-                    if hasattr(study, 'grid_categories') and study.grid_categories:
-                        # Use new category-based generation
-                        from utils.task_generation import generate_grid_tasks_v2
+        #         if study.study_type == 'grid':
+        #             # Check if study has new category structure
+        #             if hasattr(study, 'grid_categories') and study.grid_categories:
+        #                 # Use new category-based generation
+        #                 from utils.task_generation import generate_grid_tasks_v2
                         
-                        # Convert grid categories to categories_data format
-                        categories_data = []
-                        for category in study.grid_categories:
-                            category_data = {
-                                'category_name': category.name,
-                                'category_description': category.description,
-                                'elements': []
-                            }
-                            for element in category.elements:
-                                element_data = {
-                                    'name': element.name,
-                                    'description': element.description,
-                                    'element_type': element.element_type,
-                                    'content': element.content,
-                                    'alt_text': element.alt_text
-                                }
-                                category_data['elements'].append(element_data)
-                            categories_data.append(category_data)
+        #                 # Convert grid categories to categories_data format
+        #                 categories_data = []
+        #                 for category in study.grid_categories:
+        #                     category_data = {
+        #                         'category_name': category.name,
+        #                         'category_description': category.description,
+        #                         'elements': []
+        #                     }
+        #                     for element in category.elements:
+        #                         element_data = {
+        #                             'name': element.name,
+        #                             'description': element.description,
+        #                             'element_type': element.element_type,
+        #                             'content': element.content,
+        #                             'alt_text': element.alt_text
+        #                         }
+        #                         category_data['elements'].append(element_data)
+        #                     categories_data.append(category_data)
                         
-                        result = generate_grid_tasks_v2(
-                            categories_data=categories_data,
-                            number_of_respondents=study.iped_parameters.number_of_respondents,
-                            exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
-                            seed=getattr(study.iped_parameters, 'seed', None)
-                        )
-                        study.tasks = result['tasks']
-                    else:
-                        # Use legacy grid generation
-                        result = generate_grid_tasks(
-                            num_elements=study.iped_parameters.num_elements,
-                            tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
-                            number_of_respondents=study.iped_parameters.number_of_respondents,
-                            exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
-                            seed=getattr(study.iped_parameters, 'seed', None),
-                            elements=study.elements
-                        )
-                        study.tasks = result['tasks']
-                elif study.study_type == 'layer':
-                    if not hasattr(study, 'study_layers') or not study.study_layers:
-                        flash('Layer study configuration not found.', 'error')
-                        return redirect(url_for('study_participation.welcome', study_id=study_id))
+        #                 result = generate_grid_tasks_v2(
+        #                     categories_data=categories_data,
+        #                     number_of_respondents=study.iped_parameters.number_of_respondents,
+        #                     exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+        #                     seed=getattr(study.iped_parameters, 'seed', None)
+        #                 )
+        #                 study.tasks = result['tasks']
+        #             else:
+        #                 # Use legacy grid generation
+        #                 result = generate_grid_tasks(
+        #                     num_elements=study.iped_parameters.num_elements,
+        #                     tasks_per_consumer=study.iped_parameters.tasks_per_consumer,
+        #                     number_of_respondents=study.iped_parameters.number_of_respondents,
+        #                     exposure_tolerance_cv=getattr(study.iped_parameters, 'exposure_tolerance_cv', 1.0),
+        #                     seed=getattr(study.iped_parameters, 'seed', None),
+        #                     elements=study.elements
+        #                 )
+        #                 study.tasks = result['tasks']
+        #         elif study.study_type == 'layer':
+        #             if not hasattr(study, 'study_layers') or not study.study_layers:
+        #                 flash('Layer study configuration not found.', 'error')
+        #                 return redirect(url_for('study_participation.welcome', study_id=study_id))
                     
-                    result = generate_layer_tasks_v2(
-                        layers_data=study.study_layers,
-                        number_of_respondents=study.iped_parameters.number_of_respondents,
-                        exposure_tolerance_pct=getattr(study.iped_parameters, 'exposure_tolerance_pct', 2.0),
-                        seed=getattr(study.iped_parameters, 'seed', None)
-                    )
-                    study.tasks = result['tasks']
-                else:
-                    flash('Study tasks not configured properly.', 'error')
-                    return redirect(url_for('study_participation.welcome', study_id=study_id))
+        #             result = generate_layer_tasks_v2(
+        #                 layers_data=study.study_layers,
+        #                 number_of_respondents=study.iped_parameters.number_of_respondents,
+        #                 exposure_tolerance_pct=getattr(study.iped_parameters, 'exposure_tolerance_pct', 2.0),
+        #                 seed=getattr(study.iped_parameters, 'seed', None)
+        #             )
+        #             study.tasks = result['tasks']
+        #         else:
+        #             flash('Study tasks not configured properly.', 'error')
+        #             return redirect(url_for('study_participation.welcome', study_id=study_id))
                 
-                study.save()
-            except Exception as e:
-                flash(f'Error generating tasks: {str(e)}', 'error')
-                return redirect(url_for('study_participation.welcome', study_id=study_id))
+        #         study.save()
+        #     except Exception as e:
+        #         flash(f'Error generating tasks: {str(e)}', 'error')
+        #         return redirect(url_for('study_participation.welcome', study_id=study_id))
         
-        # Get all tasks for respondent 0 (anonymous participation)
-        print(f"DEBUG: Study tasks type: {type(study.tasks)}")
-        print(f"DEBUG: Study tasks keys: {list(study.tasks.keys()) if isinstance(study.tasks, dict) else 'Not a dict'}")
-        print(f"DEBUG: Study tasks content: {study.tasks}")
-        
-        respondent_tasks = study.tasks.get("0", [])
-        print(f"DEBUG: Respondent 0 tasks: {len(respondent_tasks) if respondent_tasks else 0} tasks")
+        # Dynamically choose panelist id based on current responses count
+        # If there are no responses, use panelist_id "0"; else use count (monotonic)
+        try:
+            from models.response import StudyResponse as SR
+            resp_count = SR.objects(study=study).count()
+        except Exception:
+            resp_count = 0
+        target_pid = str(resp_count) if resp_count > 0 else "0"
+        respondent_tasks = []
+        try:
+            from models.study_task import StudyPanelistTasks
+            panel_doc = StudyPanelistTasks.objects(draft=study, panelist_id=target_pid).first()
+            
+            if panel_doc and panel_doc.tasks:
+                respondent_tasks = panel_doc.tasks
+        except Exception as e:
+            print(f"WARN: Could not load StudyPanelistTasks for study {study._id}: {e}")
+        if not respondent_tasks and hasattr(study, 'tasks') and isinstance(study.tasks, dict):
+            respondent_tasks = study.tasks.get(target_pid, []) or study.tasks.get("0", [])
+        print(f"DEBUG: Target panelist_id={target_pid}, tasks: {len(respondent_tasks) if respondent_tasks else 0} tasks")
         print(f"DEBUG: Expected total tasks: {total_tasks}")
         
         if not respondent_tasks or len(respondent_tasks) != total_tasks:
@@ -951,6 +990,15 @@ def submit_all_ratings(study_id):
         response.save()
         print(f"Persisted {saved_count} ratings to response {response._id}")
         
+        # If they saved at least one rating, keep response as in-progress until completed
+        try:
+            if saved_count > 0 and not response.is_completed:
+                response.is_in_progress = True
+                response.is_abandoned = False
+                response.save()
+        except Exception:
+            pass
+
         # Keep session small: do not store ratings array
         session.setdefault('study_data', {})
         session['study_data']['task_ratings_count'] = saved_count

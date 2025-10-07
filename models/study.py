@@ -66,7 +66,7 @@ class IPEDParameters(EmbeddedDocument):
     total_tasks = IntField(required=True)  # Calculated: tasks_per_consumer * number_of_respondents
     
     # Grid study parameters
-    num_elements = IntField(required=False, min_value=4, max_value=50)
+    num_elements = IntField(required=False, min_value=4, max_value=5000)
     tasks_per_consumer = IntField(required=False, min_value=1, max_value=240)
     exposure_tolerance_cv = FloatField(required=False, min_value=0.1, max_value=5.0, default=1.0)
     
@@ -152,6 +152,7 @@ class Study(Document):
     total_responses = IntField(default=0)
     completed_responses = IntField(default=0)
     abandoned_responses = IntField(default=0)
+    in_progress_responses = IntField(default=0)
     
     meta = {
         'collection': 'studies',
@@ -198,6 +199,19 @@ class Study(Document):
         self.abandoned_responses += 1
         self.save()
         return self.abandoned_responses
+
+    def increment_in_progress_responses(self):
+        """Increment the in-progress responses counter."""
+        self.in_progress_responses += 1
+        self.save()
+        return self.in_progress_responses
+
+    def decrement_in_progress_responses(self):
+        """Decrement the in-progress responses counter safely."""
+        if self.in_progress_responses > 0:
+            self.in_progress_responses -= 1
+            self.save()
+        return self.in_progress_responses
     
     def update_response_counters(self):
         """Update response counters based on actual StudyResponse objects."""
@@ -207,6 +221,7 @@ class Study(Document):
         total_count = StudyResponse.objects(study=self).count()
         completed_count = StudyResponse.objects(study=self, is_completed=True).count()
         abandoned_count = StudyResponse.objects(study=self, is_abandoned=True).count()
+        in_progress_count = StudyResponse.objects(study=self, is_completed=False, is_abandoned=False).count()
         
         # Update counters if they differ
         if (self.total_responses != total_count or 
@@ -216,17 +231,20 @@ class Study(Document):
             self.total_responses = total_count
             self.completed_responses = completed_count
             self.abandoned_responses = abandoned_count
+            self.in_progress_responses = in_progress_count
             self.save()
             
             print(f"✅ Updated study {self.title} response counters:")
             print(f"   Total: {self.total_responses}")
             print(f"   Completed: {self.completed_responses}")
             print(f"   Abandoned: {self.abandoned_responses}")
+            print(f"   In Progress: {self.in_progress_responses}")
         
         return {
             'total': self.total_responses,
             'completed': self.completed_responses,
-            'abandoned': self.abandoned_responses
+            'abandoned': self.abandoned_responses,
+            'in_progress': self.in_progress_responses
         }
 
     def auto_mark_completed_if_reached(self):
@@ -249,11 +267,13 @@ class Study(Document):
         total = StudyResponse.objects(study=self).count()
         completed = StudyResponse.objects(study=self, is_completed=True).count()
         abandoned = StudyResponse.objects(study=self, is_abandoned=True).count()
+        in_progress = StudyResponse.objects(study=self, is_completed=False, is_abandoned=False).count()
         
         return {
             'total': total,
             'completed': completed,
-            'abandoned': abandoned
+            'abandoned': abandoned,
+            'in_progress': in_progress
         }
     
     def get_respondent_tasks(self, respondent_id):

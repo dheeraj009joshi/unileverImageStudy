@@ -191,6 +191,7 @@ def study_detail(study_id):
             'total_responses': {'$sum': 1},
             'completed_responses': {'$sum': {'$cond': ['$is_completed', 1, 0]}},
             'abandoned_responses': {'$sum': {'$cond': ['$is_abandoned', 1, 0]}},
+            'in_progress_responses': {'$sum': {'$cond': [{'$and': [{'$eq': ['$is_completed', False]}, {'$eq': ['$is_abandoned', False]}]}, 1, 0]}},
             'total_duration': {'$sum': {'$cond': ['$is_completed', '$total_study_duration', 0]}},
             'recent_responses': {
                 '$push': {
@@ -211,6 +212,7 @@ def study_detail(study_id):
             'total_responses': 1,
             'completed_responses': 1,
             'abandoned_responses': 1,
+            'in_progress_responses': 1,
             'completion_rate': {
                 '$multiply': [
                     {'$divide': ['$completed_responses', '$total_responses']},
@@ -238,11 +240,12 @@ def study_detail(study_id):
         total_responses = stats['total_responses']
         completed_responses = stats['completed_responses']
         abandoned_responses = stats['abandoned_responses']
+        in_progress_responses = stats.get('in_progress_responses', 0)
         completion_rate = stats['completion_rate']
         avg_task_time = stats['avg_task_time']
         recent_responses = stats['recent_responses']
     else:
-        total_responses = completed_responses = abandoned_responses = completion_rate = avg_task_time = 0
+        total_responses = completed_responses = abandoned_responses = in_progress_responses = completion_rate = avg_task_time = 0
         recent_responses = []
     
     # Create stats object for template
@@ -250,6 +253,7 @@ def study_detail(study_id):
         'total_responses': total_responses,
         'completed_responses': completed_responses,
         'abandoned_responses': abandoned_responses,
+        'in_progress_responses': in_progress_responses,
         'completion_rate': completion_rate,
         'avg_task_time': avg_task_time
     }
@@ -260,6 +264,7 @@ def study_detail(study_id):
                          total_responses=total_responses,
                          completed_responses=completed_responses,
                          abandoned_responses=abandoned_responses,
+                         in_progress_responses=in_progress_responses,
                          completion_rate=completion_rate,
                          avg_task_time=avg_task_time,
                          recent_responses=recent_responses)
@@ -465,14 +470,19 @@ def export_task_matrix(study_id):
     if study.study_type == 'grid' and study.grid_categories:
         print(f"🚀 Processing GRID study with {len(study.grid_categories)} categories")
         
-        # Get actual keys from task data first
+        # Get actual keys from task data first (prefer StudyPanelistTasks)
         actual_keys = set()
-        if hasattr(study, 'tasks') and study.tasks:
-            print(f"🚀 Study has tasks: {len(study.tasks)} panelists")
-            print(f"🚀 Task structure type: {type(study.tasks)}")
-            print(f"🚀 First few panelist IDs: {list(study.tasks.keys())[:3]}")
-            
-            for panelist_id, panelist_tasks in study.tasks.items():
+        panelist_iter = []
+        try:
+            from models.study_task import StudyPanelistTasks
+            panel_docs = StudyPanelistTasks.objects(study=study)
+            if panel_docs:
+                panelist_iter = [(doc.panelist_id, doc.tasks) for doc in panel_docs]
+        except Exception as e:
+            print(f"WARN: Could not load StudyPanelistTasks: {e}")
+        if not panelist_iter and hasattr(study, 'tasks') and study.tasks:
+            panelist_iter = list(study.tasks.items())
+        for panelist_id, panelist_tasks in panelist_iter:
                 print(f"🚀 Panelist {panelist_id} tasks type: {type(panelist_tasks)}")
                 print(f"🚀 Panelist {panelist_id} tasks length: {len(panelist_tasks) if panelist_tasks else 'None'}")
                 
@@ -544,14 +554,19 @@ def export_task_matrix(study_id):
     elif study.study_type == 'layer' and study.study_layers:
         print(f"🚀 Processing LAYER study with {len(study.study_layers)} layers")
         
-        # Get actual keys from task data first
+        # Get actual keys from task data first (prefer StudyPanelistTasks)
         actual_keys = set()
-        if hasattr(study, 'tasks') and study.tasks:
-            print(f"🚀 Study has tasks: {len(study.tasks)} panelists")
-            print(f"🚀 Task structure type: {type(study.tasks)}")
-            print(f"🚀 First few panelist IDs: {list(study.tasks.keys())[:3]}")
-            
-            for panelist_id, panelist_tasks in study.tasks.items():
+        panelist_iter = []
+        try:
+            from models.study_task import StudyPanelistTasks
+            panel_docs = StudyPanelistTasks.objects(study=study)
+            if panel_docs:
+                panelist_iter = [(doc.panelist_id, doc.tasks) for doc in panel_docs]
+        except Exception as e:
+            print(f"WARN: Could not load StudyPanelistTasks: {e}")
+        if not panelist_iter and hasattr(study, 'tasks') and study.tasks:
+            panelist_iter = list(study.tasks.items())
+        for panelist_id, panelist_tasks in panelist_iter:
                 print(f"🚀 Panelist {panelist_id} tasks type: {type(panelist_tasks)}")
                 print(f"🚀 Panelist {panelist_id} tasks length: {len(panelist_tasks) if panelist_tasks else 'None'}")
                 
@@ -626,11 +641,20 @@ def export_task_matrix(study_id):
     writer.writerow(header_row)
     print(f"🚀 Header row: {header_row}")
     
-    # Write task matrix data
-    if hasattr(study, 'tasks') and study.tasks:
-        print(f"🚀 Processing {len(study.tasks)} panelists")
-        
-        for panelist_id, panelist_tasks in study.tasks.items():
+    # Write task matrix data (prefer StudyPanelistTasks)
+    panelist_iter = []
+    try:
+        from models.study_task import StudyPanelistTasks
+        panel_docs = StudyPanelistTasks.objects(study=study)
+        if panel_docs:
+            panelist_iter = [(doc.panelist_id, doc.tasks) for doc in panel_docs]
+    except Exception as e:
+        print(f"WARN: Could not load StudyPanelistTasks for rows: {e}")
+    if not panelist_iter and hasattr(study, 'tasks') and study.tasks:
+        panelist_iter = list(study.tasks.items())
+    if panelist_iter:
+        print(f"🚀 Processing {len(panelist_iter)} panelists")
+        for panelist_id, panelist_tasks in panelist_iter:
             print(f"🚀 Processing panelist {panelist_id} with {len(panelist_tasks)} tasks")
             
             for task_index, task in enumerate(panelist_tasks):

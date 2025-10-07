@@ -16,6 +16,7 @@ from forms.study import (
 )
 from utils.azure_storage import upload_to_azure, upload_multiple_files_to_azure, upload_layer_images_to_azure, is_valid_image_file, get_file_size_mb
 from utils.task_generation import generate_grid_tasks_v2, generate_layer_tasks_v2
+from models.study_task import StudyPanelistTasks
 import math
 import base64
 import io
@@ -27,13 +28,13 @@ study_creation_bp = Blueprint('study_creation', __name__, url_prefix='/study/cre
 def get_study_draft():
     """Get or create study creation draft in database."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Starting get_study_draft() at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Starting get_study_draft() at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     # Try to get existing draft
     db_start = time.time()
     draft = StudyDraft.objects(user=current_user, is_complete=False).order_by('-created_at').first()
     db_duration = time.time() - db_start
-    print(f"⏱️  [PERF] Database query took {db_duration:.3f}s")
+    #print(f"⏱️  [PERF]Database query took {db_duration:.3f}s")
     
     if not draft:
         # Create new draft
@@ -41,10 +42,10 @@ def get_study_draft():
         draft = StudyDraft(user=current_user, current_step='1a')
         draft.save()
         create_duration = time.time() - create_start
-        print(f"⏱️  [PERF] Draft creation took {create_duration:.3f}s")
+        #print(f"⏱️  [PERF]Draft creation took {create_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] get_study_draft() total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]get_study_draft() total: {total_duration:.3f}s")
     return draft
 
 def save_uploaded_file(file, study_id):
@@ -69,14 +70,14 @@ def save_uploaded_file(file, study_id):
 def index():
     """Study creation index - redirect to first step."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Index route started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Index route started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     redirect_start = time.time()
     result = redirect(url_for('study_creation.step1a'))
     redirect_duration = time.time() - redirect_start
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Index route total: {total_duration:.3f}s (redirect: {redirect_duration:.3f}s)")
+    #print(f"⏱️  [PERF]Index route total: {total_duration:.3f}s (redirect: {redirect_duration:.3f}s)")
     return result
 
 @study_creation_bp.route('/<step_id>')
@@ -84,12 +85,12 @@ def index():
 def navigate_to_step(step_id):
     """Navigate to a specific step if accessible."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Navigate to step {step_id} started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Navigate to step {step_id} started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     # Check if step is accessible (step1a is always accessible)
     access_start = time.time()
@@ -97,7 +98,7 @@ def navigate_to_step(step_id):
         flash('You cannot access this step yet. Please complete previous steps first.', 'warning')
         return redirect(url_for('study_creation.index'))
     access_duration = time.time() - access_start
-    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     
     # Redirect to the appropriate step route
     redirect_start = time.time()
@@ -131,7 +132,7 @@ def navigate_to_step(step_id):
     
     redirect_duration = time.time() - redirect_start
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Navigate to step {step_id} total: {total_duration:.3f}s (redirect: {redirect_duration:.3f}s)")
+    #print(f"⏱️  [PERF]Navigate to step {step_id} total: {total_duration:.3f}s (redirect: {redirect_duration:.3f}s)")
     return result
 
 @study_creation_bp.route('/step1a', methods=['GET', 'POST'])
@@ -139,19 +140,19 @@ def navigate_to_step(step_id):
 def step1a():
     """Step 1a: Basic Study Details."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step1a started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step1a started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     # Step1a is always accessible - no validation needed
     
     form_start = time.time()
     form = Step1aBasicDetailsForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if form.validate_on_submit():
         validation_start = time.time()
@@ -164,7 +165,7 @@ def step1a():
         draft.current_step = '1b'
         draft.save()
         validation_duration = time.time() - validation_start
-        print(f"⏱️  [PERF] Form validation and save took {validation_duration:.3f}s")
+        #print(f"⏱️  [PERF]Form validation and save took {validation_duration:.3f}s")
         
         flash('Basic details saved successfully!', 'success')
         return redirect(url_for('study_creation.step1b'))
@@ -178,15 +179,15 @@ def step1a():
         form.language.data = step_data.get('language', 'en')
         form.terms_accepted.data = step_data.get('terms_accepted', False)
     populate_duration = time.time() - populate_start
-    print(f"⏱️  [PERF] Form population took {populate_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form population took {populate_duration:.3f}s")
     
     render_start = time.time()
     result = render_template('study_creation/step1a.html', form=form, current_step='1a', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step1a total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step1a total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/step1b', methods=['GET', 'POST'])
@@ -194,12 +195,12 @@ def step1a():
 def step1b():
     """Step 1b: Study Type & Main Question."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step1b started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step1b started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if request.method == 'GET':
         # For GET requests (viewing/navigating), use can_access_step
@@ -208,7 +209,7 @@ def step1b():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.index'))
         access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     else:
         # For POST requests (submitting), use can_proceed_to_step
         proceed_start = time.time()
@@ -216,12 +217,12 @@ def step1b():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.index'))
         proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step proceed check took {proceed_duration:.3f}s")
     
     form_start = time.time()
     form = Step1bStudyTypeForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if form.validate_on_submit():
         validation_start = time.time()
@@ -236,7 +237,7 @@ def step1b():
         draft.current_step = '1c'
         draft.save()
         validation_duration = time.time() - validation_start
-        print(f"⏱️  [PERF] Form validation and save took {validation_duration:.3f}s")
+        #print(f"⏱️  [PERF]Form validation and save took {validation_duration:.3f}s")
         
         flash('Study type and questions saved successfully!', 'success')
         return redirect(url_for('study_creation.step1c'))
@@ -249,15 +250,15 @@ def step1b():
         form.main_question.data = step_data.get('main_question', '')
         form.orientation_text.data = step_data.get('orientation_text', '')
     populate_duration = time.time() - populate_start
-    print(f"⏱️  [PERF] Form population took {populate_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form population took {populate_duration:.3f}s")
     
     render_start = time.time()
     result = render_template('study_creation/step1b.html', form=form, current_step='1b', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step1b total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step1b total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/step1c', methods=['GET', 'POST'])
@@ -265,12 +266,12 @@ def step1b():
 def step1c():
     """Step 1c: Rating Scale Configuration."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step1c started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step1c started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if request.method == 'GET':
         # For GET requests (viewing/navigating), use can_access_step
@@ -279,7 +280,7 @@ def step1c():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.index'))
         access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     else:
         # For POST requests (submitting), use can_proceed_to_step
         proceed_start = time.time()
@@ -287,12 +288,12 @@ def step1c():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.index'))
         proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step proceed check took {proceed_duration:.3f}s")
     
     form_start = time.time()
     form = Step1cRatingScaleForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if form.validate_on_submit():
         validation_start = time.time()
@@ -306,7 +307,7 @@ def step1c():
         draft.current_step = '2b'
         draft.save()
         validation_duration = time.time() - validation_start
-        print(f"⏱️  [PERF] Form validation and save took {validation_duration:.3f}s")
+        #print(f"⏱️  [PERF]Form validation and save took {validation_duration:.3f}s")
         
         flash('Rating scale configuration saved successfully!', 'success')
         return redirect(url_for('study_creation.step2b'))
@@ -321,15 +322,15 @@ def step1c():
         form.max_label.data = step_data.get('max_label', '')
         form.middle_label.data = step_data.get('middle_label', '')
     populate_duration = time.time() - populate_start
-    print(f"⏱️  [PERF] Form population took {populate_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form population took {populate_duration:.3f}s")
     
     render_start = time.time()
     result = render_template('study_creation/step1c.html', form=form, current_step='1c', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step1c total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step1c total: {total_duration:.3f}s")
     return result
 
 # REMOVED: step1c_layer route - not needed for current layer study flow
@@ -339,12 +340,12 @@ def step1c():
 def step2a():
     """Step 2a: Study Elements Setup."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step2a started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step2a started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if request.method == 'GET':
         # For GET requests (viewing/navigating), use can_access_step
@@ -353,7 +354,7 @@ def step2a():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.step2b'))
         access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     else:
         # For POST requests (submitting), use can_proceed_to_step
         proceed_start = time.time()
@@ -361,12 +362,12 @@ def step2a():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.step2b'))
         proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step proceed check took {proceed_duration:.3f}s")
     
     study_type_start = time.time()
     study_type = draft.get_step_data('1b').get('study_type', 'grid')
     study_type_duration = time.time() - study_type_start
-    print(f"⏱️  [PERF] Study type retrieval took {study_type_duration:.3f}s")
+    #print(f"⏱️  [PERF]Study type retrieval took {study_type_duration:.3f}s")
     
     if request.method == 'POST':
         try:
@@ -528,11 +529,11 @@ def step2a():
                     'num_elements': len(elements_data)
                 })
             else:
-                    # For layer studies, save as regular elements
+                # For layer studies, save as regular elements
                 draft.update_step_data('2a', {
                     'elements': elements_data,
                     'study_type': study_type,
-                            'num_elements': len(elements_data)
+                                        'num_elements': len(elements_data)
                 })
             
             db_duration = time.time() - db_start_time
@@ -570,13 +571,13 @@ def step2a():
         else:
             num_elements = 4
         existing_duration = time.time() - existing_start
-        print(f"⏱️  [PERF] Existing data retrieval took {existing_duration:.3f}s")
+        #print(f"⏱️  [PERF]Existing data retrieval took {existing_duration:.3f}s")
     
     # Get existing elements data
     data_start = time.time()
     elements_data = draft.get_step_data('2a').get('elements', []) if draft.get_step_data('2a') else []
     data_duration = time.time() - data_start
-    print(f"⏱️  [PERF] Elements data retrieval took {data_duration:.3f}s")
+    #print(f"⏱️  [PERF]Elements data retrieval took {data_duration:.3f}s")
     
     # Debug logging
     print(f"DEBUG: num_elements = {num_elements}")
@@ -588,10 +589,10 @@ def step2a():
                          study_type=study_type, num_elements=num_elements, 
                          elements_data=elements_data, current_step='2a', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Step2a template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step2a template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step2a total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step2a total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/step2b', methods=['GET', 'POST'])
@@ -599,12 +600,12 @@ def step2a():
 def step2b():
     """Step 2b: Classification Questions."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step2b started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step2b started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     # Previous step is always step1c (rating scale) for both study types
     previous_step = 'step1c'
@@ -616,7 +617,7 @@ def step2b():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for(f'study_creation.{previous_step}'))
         access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     else:
         # For POST requests (submitting), use can_proceed_to_step
         proceed_start = time.time()
@@ -624,7 +625,7 @@ def step2b():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for(f'study_creation.{previous_step}'))
         proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step proceed check took {proceed_duration:.3f}s")
     
     if request.method == 'POST':
         # Handle dynamic form submission with individual option fields
@@ -687,10 +688,10 @@ def step2b():
     result = render_template('study_creation/step2b.html', 
                          num_questions=num_questions, questions_data=questions_data, current_step='2b', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Step2b template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step2b template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step2b total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step2b total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/step2c', methods=['GET', 'POST'])
@@ -698,12 +699,12 @@ def step2b():
 def step2c():
     """Step 2c: IPED Parameters Configuration."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step2c started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step2c started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if request.method == 'GET':
         # For GET requests (viewing/navigating), use can_access_step
@@ -712,7 +713,7 @@ def step2c():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.step2a'))
         access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     else:
         # For POST requests (submitting), use can_proceed_to_step
         proceed_start = time.time()
@@ -720,7 +721,7 @@ def step2c():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.step2a'))
         proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step proceed check took {proceed_duration:.3f}s")
     
     # Get study type to determine functionality
     study_type = draft.get_step_data('1b').get('study_type', 'grid')
@@ -733,7 +734,7 @@ def step2c():
     form_start = time.time()
     form = Step2cIPEDParametersForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     template = 'study_creation/step2c.html'
     
@@ -909,10 +910,10 @@ def step2c():
     result = render_template(template, form=form, current_step='2c', draft=draft, study_type=study_type, 
                            calculated_tasks_per_consumer=calculated_tasks_per_consumer)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Step2c template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step2c template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step2c total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step2c total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/step3a', methods=['GET', 'POST'])
@@ -920,12 +921,12 @@ def step2c():
 def step3a():
     """Step 3a: Show appropriate task generation page based on study type."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step3a started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step3a started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     # Get study type to determine which previous step to check
     study_type = draft.get_step_data('1b').get('study_type', 'grid')
@@ -955,7 +956,7 @@ def step3a():
     form_start = time.time()
     form = Step3aTaskGenerationForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     # Handle form submission for task generation
     if form.validate_on_submit():
@@ -1006,10 +1007,55 @@ def step3a():
                 
                 print(f"DEBUG: Task matrix generated successfully: {len(tasks_matrix)} respondents")
                 
-                # Save grid study task matrix WITH METADATA (like layer)
+                # Write per-panelist tasks to dedicated collection scoped to draft
+                try:
+                    # Remove previous draft-scoped tasks for this user draft
+                    # Delete any previous draft-scoped panelist tasks for this draft id
+                    try:
+                        StudyPanelistTasks.objects(draft=draft).delete()
+                    except Exception:
+                        StudyPanelistTasks.objects(draft=str(draft.id)).delete()
+                    # Bulk insert in small chunks and parallelize groups of 100 panelists
+                    from concurrent.futures import ThreadPoolExecutor, as_completed
+                    CHUNK = 100
+                    items = list(tasks_matrix.items())
+
+                    def _insert_batch(batch_items):
+                        docs = []
+                        for pid, ptasks in batch_items:
+                            if not ptasks:
+                                continue
+                            docs.append(StudyPanelistTasks(draft=draft, panelist_id=str(pid), tasks=list(ptasks)))
+                        if not docs:
+                            return 0
+                        # Retry on transient timeouts
+                        tries = 0
+                        while True:
+                            try:
+                                StudyPanelistTasks.objects.insert(docs, load_bulk=False, write_concern=None)
+                                return len(docs)
+                            except Exception as _e:
+                                tries += 1
+                                if tries >= 3:
+                                    f=open("error.txt", "a")
+                                    f.write(f"ERROR: insert batch failed after retries: {_e}")
+                                    f.close()
+                                    print(f"ERROR: insert batch failed after retries: {_e}")
+                                    return 0
+                                time.sleep(0.5 * tries)
+
+                    futures = []
+                    with ThreadPoolExecutor(max_workers=4) as ex:
+                        for i in range(0, len(items), CHUNK):
+                            futures.append(ex.submit(_insert_batch, items[i:i+CHUNK]))
+                        # Ensure completion
+                        _ = [f.result() for f in as_completed(futures)]
+                except Exception as e:
+                    print(f"ERROR: Failed to persist panelist tasks for draft: {e}")
+
+                # Save only metadata to draft (no heavy tasks blob)
                 draft.update_step_data('3a_grid', {
                     'tasks_matrix': {
-                        'tasks': tasks_matrix,
                         'metadata': grid_result.get('metadata', {})
                     },
                     'generated_at': datetime.utcnow().isoformat(),
@@ -1072,23 +1118,58 @@ def step3a():
                 print(f"DEBUG: Metadata: {metadata}")
                 print(f"DEBUG: tasks_per_consumer from metadata: {metadata.get('tasks_per_consumer', 'NOT_FOUND')}")
                 
-                # Save layer study task matrix WITH METADATA
+                # Persist per-panelist tasks to collection scoped to draft
+                try:
+                    try:
+                        StudyPanelistTasks.objects(draft=draft).delete()
+                    except Exception:
+                        StudyPanelistTasks.objects(draft=str(draft.id)).delete()
+                    from concurrent.futures import ThreadPoolExecutor, as_completed
+                    CHUNK = 100
+                    items = list(tasks_matrix.items())
+                    def _insert_batch(batch_items):
+                        docs = []
+                        for pid, ptasks in batch_items:
+                            if not ptasks:
+                                continue
+                            docs.append(StudyPanelistTasks(draft=draft, panelist_id=str(pid), tasks=list(ptasks)))
+                        if not docs:
+                            return 0
+                        tries = 0
+                        while True:
+                            try:
+                                StudyPanelistTasks.objects.insert(docs, load_bulk=False, write_concern=None)
+                                return len(docs)
+                            except Exception as _e:
+                                tries += 1
+                                if tries >= 3:
+                                    print(f"ERROR: insert batch failed after retries: {_e}")
+                                    return 0
+                                time.sleep(0.5 * tries)
+                    futures = []
+                    with ThreadPoolExecutor(max_workers=4) as ex:
+                        for i in range(0, len(items), CHUNK):
+                            futures.append(ex.submit(_insert_batch, items[i:i+CHUNK]))
+                        _ = [f.result() for f in as_completed(futures)]
+                except Exception as e:
+                    print(f"ERROR: Failed to persist layer panelist tasks for draft: {e}")
+
+                # Save only metadata to draft
                 draft.update_step_data('3a_layer', {
                     'tasks_matrix': {
-                        'tasks': tasks_matrix,
                         'metadata': metadata
                     },
                     'generated_at': datetime.utcnow().isoformat(),
                     'regenerate_matrix': bool(getattr(form, 'regenerate_matrix', False) and form.regenerate_matrix.data),
                     'step_completed': True
                 })
-                
+            
                 draft.current_step = '3b'
                 draft.save()
-                
+            
                 print(f"DEBUG: Step 3a marked as complete for layer study")
                 print(f"DEBUG: Draft saved with current_step: {draft.current_step}")
-                
+                    
                 flash('Task matrix generated successfully!', 'success')
                 return redirect(url_for('study_creation.step3b'))
                 
@@ -1109,16 +1190,44 @@ def step3a():
         stored_step3a = draft.get_step_data('3a_grid') or {}
         tasks_matrix_data = stored_step3a.get('tasks_matrix', {})
         
-        # Handle new structure where tasks_matrix contains both 'tasks' and 'metadata'
+        # Handle structures saved to draft for Step 3a
+        # Case A: New structure -> {'tasks': {...}, 'metadata': {...}}
         if isinstance(tasks_matrix_data, dict) and 'tasks' in tasks_matrix_data:
             tasks_matrix = tasks_matrix_data['tasks']
             metadata = tasks_matrix_data.get('metadata', {})
             print(f"DEBUG: Grid study - Using new structure with metadata: {metadata}")
+        # Case B: Metadata-only (current logic persists panelist tasks in StudyPanelistTasks)
+        elif isinstance(tasks_matrix_data, dict) and 'metadata' in tasks_matrix_data and 'tasks' not in tasks_matrix_data:
+            metadata = tasks_matrix_data.get('metadata', {})
+            tasks_matrix = {}  # force fallback loader below
+            print(f"DEBUG: Grid study - Metadata-only draft; will load preview from StudyPanelistTasks")
         else:
-            # Fallback for old structure
+            # Fallback for very old structure where the full matrix was embedded directly
             tasks_matrix = tasks_matrix_data
             metadata = {}
             print(f"DEBUG: Grid study - Using old structure (no metadata)")
+
+        # If no tasks present in draft, hydrate preview from StudyPanelistTasks using metadata respondents count
+        if not tasks_matrix:
+            try:
+               
+                meta = tasks_matrix_data.get('metadata', {}) if isinstance(tasks_matrix_data, dict) else {}
+                planned_n = 0
+                try:
+                    planned_n = int(meta.get('number_of_respondents') or 0)
+                except Exception:
+                    planned_n = 0
+                qs = StudyPanelistTasks.objects(draft=str(draft.id)).order_by('panelist_id')
+                total_docs = qs.count()
+                load_n = planned_n if planned_n > 0 else min(total_docs, 10)
+                built = {}
+                for idx, doc in enumerate(qs.limit(load_n)):
+                    built[str(idx)] = list(doc.tasks) if doc.tasks else []
+                if built:
+                    tasks_matrix = built
+                    print(f"DEBUG: Grid preview built from {len(built)} panelists (planned={planned_n}, total={total_docs})")
+            except Exception as e:
+                print(f"WARN: Could not load StudyPanelistTasks for draft preview (grid): {e}")
         
         # Get grid IPED data for display
         grid_iped_data = draft.get_step_data('grid_iped') or {}
@@ -1140,58 +1249,32 @@ def step3a():
                 grid_iped_data[key] = None
                 print(f"WARNING: Replaced undefined value for {key}: {value}")
         
-        # Calculate matrix summary for display
+        # Calculate grid matrix summary using metadata + preview
         matrix_summary = {}
-        if tasks_matrix and isinstance(tasks_matrix, (dict, list)):
-            matrix_summary['total_respondents'] = len(tasks_matrix)
-            try:
-                matrix_summary['total_tasks'] = sum(len(respondent_tasks) for respondent_tasks in tasks_matrix.values() if isinstance(respondent_tasks, list))
-                if matrix_summary['total_respondents'] > 0:
-                    matrix_summary['tasks_per_respondent'] = matrix_summary['total_tasks'] // matrix_summary['total_respondents']
-                    # Calculate elements per task for grid studies
-                    if tasks_matrix and any(tasks_matrix.values()):
-                        first_respondent_tasks = next(iter(tasks_matrix.values()))
-                        if first_respondent_tasks:
-                            first_task = first_respondent_tasks[0]
-                            print(f"DEBUG: Grid study - First task structure: {type(first_task)}")
-                            print(f"DEBUG: Grid study - First task data: {first_task}")
-                            
-                            # Count active elements (excluding _content entries)
-                            if hasattr(first_task, 'elements_shown'):
-                                print(f"DEBUG: Grid study - Using elements_shown attribute")
-                                active_elements = sum(1 for element, is_active in first_task.elements_shown.items() 
-                                                if is_active and not element.endswith('_content'))
-                                matrix_summary['elements_per_task'] = active_elements
-                                print(f"DEBUG: Grid study - Active elements counted: {active_elements}")
-                            elif isinstance(first_task, dict) and 'elements_shown' in first_task:
-                                print(f"DEBUG: Grid study - Using elements_shown dict key")
-                                active_elements = sum(1 for element, is_active in first_task['elements_shown'].items() 
-                                                if is_active and not element.endswith('_content'))
-                                matrix_summary['elements_per_task'] = active_elements
-                                print(f"DEBUG: Grid study - Active elements counted: {active_elements}")
-                            else:
-                                print(f"DEBUG: Grid study - No elements_shown found, available keys: {list(first_task.keys()) if isinstance(first_task, dict) else 'N/A'}")
-                                matrix_summary['elements_per_task'] = 0
-                        else:
-                            matrix_summary['elements_per_task'] = 0
-                    else:
-                        matrix_summary['elements_per_task'] = 0
-            except Exception as e:
-                print(f"ERROR: Failed to calculate matrix summary: {e}")
-                matrix_summary = {
-                    'total_respondents': 0,
-                    'total_tasks': 0,
-                    'tasks_per_respondent': 0,
-                    'elements_per_task': 0
-                }
-        else:
-            # Set default values when no tasks matrix exists
-            matrix_summary = {
-                'total_respondents': 0,
-                'total_tasks': 0,
-                'tasks_per_respondent': 0,
-                'elements_per_task': 0
-            }
+        try:
+            meta = tasks_matrix_data.get('metadata', {}) if isinstance(tasks_matrix_data, dict) else {}
+            total_resp_meta = int(meta.get('number_of_respondents') or 0)
+            tpc_meta = int(meta.get('tasks_per_consumer') or 0)
+            preview_resp = len(tasks_matrix) if isinstance(tasks_matrix, dict) else 0
+            preview_tpc = 0
+            if preview_resp > 0:
+                first_tasks = next(iter(tasks_matrix.values())) or []
+                preview_tpc = len(first_tasks)
+            matrix_summary['total_respondents'] = total_resp_meta or preview_resp
+            matrix_summary['tasks_per_respondent'] = tpc_meta or preview_tpc
+            matrix_summary['total_tasks'] = (matrix_summary['total_respondents'] or 0) * (matrix_summary['tasks_per_respondent'] or 0)
+            # Elements per task via preview if available
+            matrix_summary['elements_per_task'] = 0
+            if isinstance(tasks_matrix, dict) and any(tasks_matrix.values()):
+                first_respondent_tasks = next(iter(tasks_matrix.values()))
+                if first_respondent_tasks:
+                    ft = first_respondent_tasks[0]
+                    if isinstance(ft, dict):
+                        els = ft.get('elements_shown') or {}
+                        matrix_summary['elements_per_task'] = sum(1 for k, v in els.items() if v and not str(k).endswith('_content'))
+        except Exception as e:
+            print(f"ERROR: Failed to compute grid matrix summary from metadata/preview: {e}")
+            matrix_summary = {'total_respondents': 0, 'total_tasks': 0, 'tasks_per_respondent': 0, 'elements_per_task': 0}
         
         render_start = time.time()
         result = render_template('study_creation/step3a_grid.html', 
@@ -1200,80 +1283,83 @@ def step3a():
                              matrix_summary=matrix_summary,
                              current_step='3a', draft=draft)
         render_duration = time.time() - render_start
-        print(f"⏱️  [PERF] Step3a_grid template rendering took {render_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step3a_grid template rendering took {render_duration:.3f}s")
         
         total_duration = time.time() - start_time
-        print(f"⏱️  [PERF] Step3a total: {total_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step3a total: {total_duration:.3f}s")
         return result
     else:
         # Get layer study data
         stored_step3a = draft.get_step_data('3a_layer') or {}
         tasks_matrix_data = stored_step3a.get('tasks_matrix', {})
         
-        # Handle new structure where tasks_matrix contains both 'tasks' and 'metadata'
+        # Handle structures saved to draft for Step 3a (layer)
         if isinstance(tasks_matrix_data, dict) and 'tasks' in tasks_matrix_data:
             tasks_matrix = tasks_matrix_data['tasks']
             metadata = tasks_matrix_data.get('metadata', {})
             print(f"DEBUG: Layer study - Using new structure with metadata: {metadata}")
+        elif isinstance(tasks_matrix_data, dict) and 'metadata' in tasks_matrix_data and 'tasks' not in tasks_matrix_data:
+            metadata = tasks_matrix_data.get('metadata', {})
+            tasks_matrix = {}
+            print(f"DEBUG: Layer study - Metadata-only draft; will load preview from StudyPanelistTasks")
         else:
-            # Fallback for old structure
             tasks_matrix = tasks_matrix_data
             metadata = {}
             print(f"DEBUG: Layer study - Using old structure (no metadata)")
+
+        # If no tasks present in draft, hydrate preview from StudyPanelistTasks using metadata respondents count (layer)
+        if not tasks_matrix:
+            try:
+              
+                meta = tasks_matrix_data.get('metadata', {}) if isinstance(tasks_matrix_data, dict) else {}
+                print(f"DEBUG: Layer preview metadata: {meta}")
+                planned_n = 0
+                try:
+                    planned_n = int(meta.get('number_of_respondents') or 0)
+                except Exception:
+                    planned_n = 0
+                print(draft.id)
+                qs = StudyPanelistTasks.objects(draft=str(draft.id)).order_by('panelist_id')
+                print(f"DEBUG: Layer preview panelist tasks: {qs}")
+                total_docs = qs.count()
+                load_n = planned_n if planned_n > 0 else min(total_docs, 10)
+
+                built = {}
+                for idx, doc in enumerate(qs.limit(load_n)):
+                    built[str(idx)] = list(doc.tasks) if doc.tasks else []
+                if built:
+                    tasks_matrix = built
+                    print(f"DEBUG: Layer preview built from {len(built)} panelists (planned={planned_n}, total={total_docs})")
+            except Exception as e:
+                print(f"WARN: Could not load StudyPanelistTasks for draft preview (layer): {e}")
         
-        # Calculate matrix summary for display
+        # Calculate layer matrix summary using metadata + preview
         matrix_summary = {}
-        if tasks_matrix:
-            matrix_summary['total_respondents'] = len(tasks_matrix)
-            matrix_summary['total_tasks'] = sum(len(respondent_tasks) for respondent_tasks in tasks_matrix.values())
-            if matrix_summary['total_respondents'] > 0:
-                matrix_summary['tasks_per_respondent'] = matrix_summary['total_tasks'] // matrix_summary['total_respondents']
-                # Calculate elements per task for layer studies
-                if tasks_matrix and any(tasks_matrix.values()):
-                    first_respondent_tasks = next(iter(tasks_matrix.values()))
-                    if first_respondent_tasks:
-                        first_task = first_respondent_tasks[0]
-                        print(f"DEBUG: First task structure: {type(first_task)}")
-                        print(f"DEBUG: First task attributes: {dir(first_task)}")
-                        
-                        # For layer studies, count active layers from elements_shown_content
-                        print(f"DEBUG: First task data: {first_task}")
-                        print(f"DEBUG: First task type: {type(first_task)}")
-                        
-                        # Check if it's a BaseDict and access data properly
-                        if isinstance(first_task, dict) or hasattr(first_task, 'get'):
-                            # Use dictionary access method
-                            elements_shown_content = first_task.get('elements_shown_content', {})
-                            print(f"DEBUG: Using dictionary access for layer study")
-                            print(f"DEBUG: elements_shown_content: {elements_shown_content}")
-                            
-                            # Count layers that have content (active layers)
-                            active_layers = 0
-                            for element_name, content in elements_shown_content.items():
-                                print(f"DEBUG: Processing element {element_name}: {content}")
-                                if content and isinstance(content, dict) and content.get('url'):
-                                    active_layers += 1
-                                    print(f"DEBUG: Active layer found: {element_name} with URL: {content.get('url')}")
-                                else:
-                                    print(f"DEBUG: Inactive layer: {element_name} - content: {content}")
-                            matrix_summary['elements_per_task'] = active_layers
-                            print(f"DEBUG: Active layers counted: {active_layers}")
-                        else:
-                            print(f"DEBUG: No valid data structure found")
-                            print(f"DEBUG: Available attributes: {dir(first_task)}")
-                            matrix_summary['elements_per_task'] = 0
-                    else:
-                        matrix_summary['elements_per_task'] = 0
-                else:
-                    matrix_summary['elements_per_task'] = 0
-        else:
-            # Set default values when no tasks matrix exists
-            matrix_summary = {
-                'total_respondents': 0,
-                'total_tasks': 0,
-                'tasks_per_respondent': 0,
-                'elements_per_task': 0
-            }
+        try:
+            meta = tasks_matrix_data.get('metadata', {}) if isinstance(tasks_matrix_data, dict) else {}
+            print(f"DEBUG: Layer matrix summary metadata: {meta}")
+            total_resp_meta = int(meta.get('number_of_respondents') or 0)
+            tpc_meta = int(meta.get('tasks_per_consumer') or 0)
+            preview_resp = len(tasks_matrix) if isinstance(tasks_matrix, dict) else 0
+            preview_tpc = 0
+            if preview_resp > 0:
+                first_tasks = next(iter(tasks_matrix.values())) or []
+                preview_tpc = len(first_tasks)
+            matrix_summary['total_respondents'] = total_resp_meta or preview_resp
+            matrix_summary['tasks_per_respondent'] = tpc_meta or preview_tpc
+            matrix_summary['total_tasks'] = (matrix_summary['total_respondents'] or 0) * (matrix_summary['tasks_per_respondent'] or 0)
+            # Elements per task via preview if available (count active content URLs)
+            matrix_summary['elements_per_task'] = 0
+            if isinstance(tasks_matrix, dict) and any(tasks_matrix.values()):
+                first_respondent_tasks = next(iter(tasks_matrix.values()))
+                if first_respondent_tasks:
+                    ft = first_respondent_tasks[0]
+                    if isinstance(ft, dict):
+                        esc = ft.get('elements_shown_content') or {}
+                        matrix_summary['elements_per_task'] = sum(1 for _, v in esc.items() if v and isinstance(v, dict) and v.get('url'))
+        except Exception as e:
+            print(f"ERROR: Failed to compute layer matrix summary from metadata/preview: {e}")
+            matrix_summary = {'total_respondents': 0, 'total_tasks': 0, 'tasks_per_respondent': 0, 'elements_per_task': 0}
         
         # Get layer IPED data with defensive checks
         layer_iped_data = draft.get_step_data('layer_iped') or {}
@@ -1289,6 +1375,9 @@ def step3a():
                 layer_iped_data[key] = None
                 print(f"WARNING: Replaced undefined value for {key}: {value}")
         
+        # Track completion flag explicitly (even when preview is not materialized)
+        step_completed = bool(stored_step3a.get('step_completed') or (isinstance(tasks_matrix_data, dict) and ('metadata' in tasks_matrix_data or 'tasks' in tasks_matrix_data)))
+
         render_start = time.time()
         # Get layer config data for default background
         layer_config_data = draft.get_step_data('layer_config') or {}
@@ -1305,12 +1394,13 @@ def step3a():
                              layer_iped_data=layer_iped_data,
                              layer_config_data=layer_config_data,
                              matrix_summary=matrix_summary,
+                             step_completed=step_completed,
                              current_step='3a', draft=draft)
         render_duration = time.time() - render_start
-        print(f"⏱️  [PERF] Step3a_layer template rendering took {render_duration:.3f}s")
-        
+        #print(f"⏱️  [PERF]Step3a_layer template rendering took {render_duration:.3f}s")
+        print(f"DEBUG: layer_config_data retrieved: {tasks_matrix}")
         total_duration = time.time() - start_time
-        print(f"⏱️  [PERF] Step3a total: {total_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step3a total: {total_duration:.3f}s")
         return result
 
 
@@ -1322,12 +1412,12 @@ def step3a():
 def step3b():
     """Step 3b: Study Preview & Launch."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Step3b started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Step3b started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if request.method == 'GET':
         # For GET requests (viewing/navigating), use can_access_step
@@ -1336,7 +1426,7 @@ def step3b():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.step3a'))
         access_duration = time.time() - access_start
-        print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     else:
         # For POST requests (submitting), use can_proceed_to_step
         proceed_start = time.time()
@@ -1344,12 +1434,12 @@ def step3b():
             flash('Please complete previous steps first.', 'warning')
             return redirect(url_for('study_creation.step3a'))
         proceed_duration = time.time() - proceed_start
-        print(f"⏱️  [PERF] Step proceed check took {proceed_duration:.3f}s")
+        #print(f"⏱️  [PERF]Step proceed check took {proceed_duration:.3f}s")
     
     form_start = time.time()
     form = Step3bLaunchForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     # Pre-populate from stored step3b data
     stored_step3b = draft.get_step_data('3b') or {}
@@ -1374,8 +1464,9 @@ def step3b():
         draft.save()
         print(f"DEBUG: Draft saved with step3b data")
         try:
-            # Create the study
+            # Create the study using draft id as final study id for continuity
             study = Study(
+                _id=str(draft.id),
                 title=draft.get_step_data('1a')['title'],
                 background=draft.get_step_data('1a')['background'],
                 language=draft.get_step_data('1a')['language'],
@@ -1618,6 +1709,8 @@ def step3b():
                     print(f"DEBUG: Found metadata in step3a_data for layer study: {step3a_data['tasks_matrix']['metadata']}")
                     print(f"DEBUG: Using ACTUAL tasks_per_consumer from metadata: {actual_tasks_per_consumer}")
                     tasks_per_consumer = actual_tasks_per_consumer
+                    # Compute total tasks from metadata as well
+                    total_tasks = tasks_per_consumer * layer_iped_data['number_of_respondents']
                 else:
                     # Fallback to original logic if no metadata available
                     if layer_config_data and 'layers' in layer_config_data:
@@ -1629,8 +1722,8 @@ def step3b():
                     else:
                         tasks_per_consumer = 24  # Default fallback
                         print(f"DEBUG: WARNING - No layer config or metadata, using default: {tasks_per_consumer}")
-                
-                total_tasks = tasks_per_consumer * layer_iped_data['number_of_respondents']
+
+                    total_tasks = tasks_per_consumer * layer_iped_data['number_of_respondents']
                 
                 study.iped_parameters = IPEDParameters(
                     number_of_respondents=layer_iped_data['number_of_respondents'],
@@ -1638,7 +1731,7 @@ def step3b():
                     total_tasks=total_tasks,
                     tasks_per_consumer=tasks_per_consumer  # Save tasks per consumer
                 )
-                
+            
                 print(f"✅ SAVED: Layer Study IPED Parameters set with ACTUAL tasks_per_consumer: {tasks_per_consumer}")
                 print(f"✅ SAVED: Total tasks: {total_tasks} = {tasks_per_consumer} × {layer_iped_data['number_of_respondents']}")
             
@@ -1658,18 +1751,26 @@ def step3b():
             print(f"DEBUG: step3a_data['tasks_matrix'] type: {type(step3a_data['tasks_matrix'])}")
             print(f"DEBUG: step3a_data['tasks_matrix'] keys: {list(step3a_data['tasks_matrix'].keys()) if isinstance(step3a_data['tasks_matrix'], dict) else 'Not a dict'}")
             
-            if isinstance(step3a_data['tasks_matrix'], dict) and 'tasks' in step3a_data['tasks_matrix']:
-                study.tasks = step3a_data['tasks_matrix']['tasks']
-                print(f"DEBUG: Tasks extracted from tasks_matrix and set successfully")
-                print(f"DEBUG: study.tasks type: {type(study.tasks)}")
-                print(f"DEBUG: study.tasks keys: {list(study.tasks.keys()) if isinstance(study.tasks, dict) else 'Not a dict'}")
-                if isinstance(study.tasks, dict) and '0' in study.tasks:
-                    print(f"DEBUG: Respondent 0 has {len(study.tasks['0'])} tasks")
-            else:
-                # Fallback for old format
-                study.tasks = step3a_data['tasks_matrix']
-                print(f"DEBUG: Tasks matrix set directly (legacy format)")
-                
+            # We no longer attach the heavy tasks matrix to Study; tasks live in StudyPanelistTasks
+            # For backward compatibility, if legacy tasks exist, migrate them to StudyPanelistTasks
+            try:
+                if isinstance(step3a_data['tasks_matrix'], dict) and 'tasks' in step3a_data['tasks_matrix']:
+                    legacy_tasks = step3a_data['tasks_matrix']['tasks']
+                else:
+                    legacy_tasks = None
+                if legacy_tasks and isinstance(legacy_tasks, dict):
+                    for panelist_id, panelist_tasks in legacy_tasks.items():
+                        if not panelist_tasks:
+                            continue
+                        StudyPanelistTasks.objects(study=study, panelist_id=str(panelist_id)).modify(
+                            upsert=True,
+                            new=True,
+                            set__tasks=list(panelist_tasks)
+                        )
+                    print(f"DEBUG: Migrated legacy tasks to StudyPanelistTasks for study {study._id}")
+            except Exception as e:
+                print(f"ERROR: Failed migrating legacy tasks to StudyPanelistTasks: {e}")
+            
             # Generate share URL
             study.generate_share_url(request.host_url.rstrip('/'))
             
@@ -1776,11 +1877,11 @@ def step3b():
                 tasks_per_consumer = step3a_data['tasks_matrix']['metadata']['tasks_per_consumer']
                 print(f"DEBUG: Using ACTUAL tasks_per_consumer from layer task metadata: {tasks_per_consumer}")
             else:
-                # Fallback to calculated value if metadata not available
+                        # Fallback to calculated value if metadata not available
                 tasks_per_consumer = 24  # Default
                 if uniqueness_capacity < 24:
                     tasks_per_consumer = uniqueness_capacity
-                print(f"DEBUG: Using fallback tasks_per_consumer for layer: {tasks_per_consumer}")
+                    print(f"DEBUG: Using fallback tasks_per_consumer for layer: {tasks_per_consumer}")
             
             # Calculate total tasks using ACTUAL tasks_per_consumer
             total_tasks = tasks_per_consumer * layer_iped_data.get('number_of_respondents', 0)
@@ -1852,10 +1953,10 @@ def step3b():
     result = render_template('study_creation/step3b.html', 
                          form=form, study_data=preview_data, current_step='3b', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Step3b template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step3b template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Step3b total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step3b total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/layer-config', methods=['GET', 'POST'])
@@ -1863,12 +1964,12 @@ def step3b():
 def layer_config():
     """Layer configuration page for layer studies."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Layer config started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Layer config started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if not draft:
         flash('No active study draft found. Please start creating a study.', 'error')
@@ -1880,12 +1981,12 @@ def layer_config():
         flash('Please complete the previous steps first.', 'error')
         return redirect(url_for('study_creation.step2b'))
     access_duration = time.time() - access_start
-    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     
     form_start = time.time()
     form = LayerConfigForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if request.method == 'POST':
         try:
@@ -2173,10 +2274,10 @@ def layer_config():
     render_start = time.time()
     result = render_template('study_creation/layer_config.html', form=form, draft=draft, layer_config_data=layer_config_data)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Layer config template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Layer config template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Layer config total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Layer config total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/upload-image', methods=['POST'])
@@ -2184,7 +2285,7 @@ def layer_config():
 def upload_image():
     """Upload image to Azure Blob Storage."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Upload image started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Upload image started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     try:
         current_app.logger.info(f'Upload request received: {request.files}')
@@ -2258,7 +2359,7 @@ def validate_image_urls(layers_data):
 def upload_layer_images():
     """Batch upload layer images to Azure Blob Storage using multiprocessing."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Layer image batch upload started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Layer image batch upload started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     try:
         current_app.logger.info(f'Layer image batch upload request received')
@@ -2356,12 +2457,12 @@ def upload_layer_images():
 def layer_iped():
     """IPED parameters configuration for layer studies after layers are configured."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Layer IPED started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Layer IPED started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if not draft:
         flash('No active study draft found. Please start creating a study.', 'error')
@@ -2373,12 +2474,12 @@ def layer_iped():
         flash('Please complete the previous steps first.', 'error')
         return redirect(url_for('study_creation.step2b'))
     access_duration = time.time() - access_start
-    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     
     form_start = time.time()
     form = LayerIPEDForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -2423,10 +2524,10 @@ def layer_iped():
     render_start = time.time()
     result = render_template('study_creation/layer_iped.html', form=form, draft=draft, layer_config_data=layer_config_data)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Layer IPED template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Layer IPED template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Layer IPED total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Layer IPED total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/calculate-layer-parameters')
@@ -2482,18 +2583,18 @@ def calculate_layer_parameters():
 def reset():
     """Reset study creation draft."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Reset started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Reset started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = StudyDraft.objects(user=current_user, is_complete=False).order_by('-created_at').first()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if draft:
         delete_start = time.time()
         draft.delete()
         delete_duration = time.time() - delete_start
-        print(f"⏱️  [PERF] Draft deletion took {delete_duration:.3f}s")
+        #print(f"⏱️  [PERF]Draft deletion took {delete_duration:.3f}s")
     
     flash('Study creation draft reset. You can start over.', 'info')
     return redirect(url_for('study_creation.step1a'))
@@ -2503,7 +2604,7 @@ def reset():
 def update_study_counters():
     """Update response counters for all studies based on actual StudyResponse objects."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Study counters update started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Study counters update started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     try:
         from models.study import Study
@@ -2522,7 +2623,7 @@ def update_study_counters():
                 continue
         
         total_duration = time.time() - start_time
-        print(f"⏱️  [PERF] Study counters update total: {total_duration:.3f}s")
+        #print(f"⏱️  [PERF]Study counters update total: {total_duration:.3f}s")
         
         return f"Updated response counters for {updated_count}/{len(studies)} studies in {total_duration:.2f}s"
         
@@ -2535,7 +2636,7 @@ def update_study_counters():
 def cleanup_base64_images():
     """Clean up any existing base64 images in the database and convert them to Azure URLs."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Base64 cleanup started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Base64 cleanup started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     try:
         draft = get_study_draft()
@@ -2623,7 +2724,7 @@ def cleanup_base64_images():
             print(f"✅ Successfully converted {len(base64_images)} base64 images to Azure URLs")
         
         total_duration = time.time() - start_time
-        print(f"⏱️  [PERF] Base64 cleanup total: {total_duration:.3f}s")
+        #print(f"⏱️  [PERF]Base64 cleanup total: {total_duration:.3f}s")
         
         return f"Cleanup completed! Converted {len(base64_images)} base64 images to Azure URLs in {total_duration:.2f}s"
         
@@ -2636,12 +2737,12 @@ def cleanup_base64_images():
 def grid_config():
     """Grid configuration page for grid studies."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Grid config started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Grid config started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if not draft:
         flash('No active study draft found. Please start creating a study.', 'error')
@@ -2653,12 +2754,12 @@ def grid_config():
         flash('Please complete the previous steps first.', 'error')
         return redirect(url_for('study_creation.step2b'))
     access_duration = time.time() - access_start
-    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     
     form_start = time.time()
     form = GridConfigForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if request.method == 'POST':
         try:
@@ -2762,10 +2863,10 @@ def grid_config():
                            form=form, categories_data=categories_data,
                            current_step='grid_config', draft=draft)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Grid config template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Grid config template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Grid config total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Grid config total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/grid-iped', methods=['GET', 'POST'])
@@ -2773,12 +2874,12 @@ def grid_config():
 def grid_iped():
     """IPED parameters configuration for grid studies after categories are configured."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Grid IPED started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Grid IPED started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if not draft:
         flash('No active study draft found. Please start creating a study.', 'error')
@@ -2790,12 +2891,12 @@ def grid_iped():
         flash('Please complete the previous steps first.', 'error')
         return redirect(url_for('study_creation.grid_config'))
     access_duration = time.time() - access_start
-    print(f"⏱️  [PERF] Step access check took {access_duration:.3f}s")
+    #print(f"⏱️  [PERF]Step access check took {access_duration:.3f}s")
     
     form_start = time.time()
     form = GridIPEDForm()
     form_duration = time.time() - form_start
-    print(f"⏱️  [PERF] Form creation took {form_duration:.3f}s")
+    #print(f"⏱️  [PERF]Form creation took {form_duration:.3f}s")
     
     if request.method == 'POST':
         try:
@@ -2907,10 +3008,10 @@ def grid_iped():
                            form=form, current_step='grid_iped', draft=draft,
                            calculated_values=calculated_values)
     render_duration = time.time() - render_start
-    print(f"⏱️  [PERF] Grid IPED template rendering took {render_duration:.3f}s")
+    #print(f"⏱️  [PERF]Grid IPED template rendering took {render_duration:.3f}s")
     
     total_duration = time.time() - start_time
-    print(f"⏱️  [PERF] Grid IPED total: {total_duration:.3f}s")
+    #print(f"⏱️  [PERF]Grid IPED total: {total_duration:.3f}s")
     return result
 
 @study_creation_bp.route('/debug-draft')
@@ -2918,12 +3019,12 @@ def grid_iped():
 def debug_draft():
     """Debug route to check draft data."""
     start_time = time.time()
-    print(f"⏱️  [PERF] Debug draft started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
+    #print(f"⏱️  [PERF]Debug draft started at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     
     draft_start = time.time()
     draft = get_study_draft()
     draft_duration = time.time() - draft_start
-    print(f"⏱️  [PERF] Draft retrieval took {draft_duration:.3f}s")
+    #print(f"⏱️  [PERF]Draft retrieval took {draft_duration:.3f}s")
     
     if not draft:
         return "No draft found"
