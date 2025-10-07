@@ -7,7 +7,7 @@ Usage (cron, every 5 minutes for example):
 
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Ensure project root on sys.path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,17 +15,30 @@ PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
+from mongoengine import connect
+from config import config as app_config
+from models.user import User  # ensure registration in document registry
 from models.study import Study
 from models.response import StudyResponse
 
 
+def _connect_db():
+    env = os.environ.get('FLASK_ENV', 'default')
+    cfg_cls = app_config.get(env, app_config['default'])
+    cfg = cfg_cls()
+    connect(host=cfg.MONGODB_SETTINGS['host'])
+
+
 def run():
-    cutoff = datetime.utcnow() - timedelta(minutes=10)
+    _connect_db()
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
     total_marked = 0
 
     try:
         # Iterate all active studies
+        print("inside the script")
         for study in Study.objects(status='active'):
+            print(f"inside the study {study._id}")
             stale = StudyResponse.objects(
                 study=study,
                 is_completed=False,
@@ -39,12 +52,12 @@ def run():
                 resp.save()
                 count += 1
             if count:
-                print(f"[{datetime.utcnow().isoformat()}] Auto-abandoned {count} responses for study {study._id}")
+                print(f"[{datetime.now(timezone.utc).isoformat()}] Auto-abandoned {count} responses for study {study._id}")
             total_marked += count
     except Exception as e:
-        print(f"[{datetime.utcnow().isoformat()}] ERROR: {e}")
+        print(f"[{datetime.now(timezone.utc).isoformat()}] ERROR: {e}")
 
-    print(f"[{datetime.utcnow().isoformat()}] Done. Total marked abandoned: {total_marked}")
+    print(f"[{datetime.now(timezone.utc).isoformat()}] Done. Total marked abandoned: {total_marked}")
 
 
 if __name__ == '__main__':
