@@ -380,8 +380,12 @@ def personal_info(study_id):
                     print(f"DEBUG: Study validation failed: {validation_error}")
                     # Continue anyway, but log the issue
                 
-                # Calculate respondent ID based on total responses
-                respondent_id = study.total_responses
+                # Assign a monotonic respondent_id based on DB count to avoid duplicates across pages
+                try:
+                    from models.response import StudyResponse as SR
+                    respondent_id = SR.objects(study=study).count() + 1
+                except Exception:
+                    respondent_id = (study.total_responses or 0) + 1
                 
                 # Get total tasks from IPED parameters
                 total_tasks = 0
