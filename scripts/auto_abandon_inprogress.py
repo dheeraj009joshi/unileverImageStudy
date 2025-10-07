@@ -31,29 +31,37 @@ def _connect_db():
 
 def run():
     _connect_db()
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
     total_marked = 0
+    now = datetime.now(timezone.utc)
+    ten_minutes_ago = now - timedelta(minutes=10)
 
     try:
-        # Iterate all active studies
         print("inside the script")
+
         for study in Study.objects(status='active'):
-            print(f"inside the study {study._id}")
-            stale = StudyResponse.objects(
+            print(f"inside the study {study.id}")
+
+            # Find responses that have been in progress for more than 10 min since creation
+            stale_responses = StudyResponse.objects(
                 study=study,
                 is_completed=False,
                 is_abandoned=False,
                 is_in_progress=True,
-                last_activity__lt=cutoff
+                last_activity__lt=ten_minutes_ago
             )
+
             count = 0
-            for resp in stale:
-                resp.mark_abandoned('Auto-abandoned after 10 minutes of inactivity')
+            for resp in stale_responses:
+                resp.is_abandoned = True
+                resp.is_in_progress = False
                 resp.save()
                 count += 1
+
             if count:
-                print(f"[{datetime.now(timezone.utc).isoformat()}] Auto-abandoned {count} responses for study {study._id}")
+                print(f"[{now.isoformat()}] Auto-abandoned {count} responses for study {study.id}")
+
             total_marked += count
+
     except Exception as e:
         print(f"[{datetime.now(timezone.utc).isoformat()}] ERROR: {e}")
 
