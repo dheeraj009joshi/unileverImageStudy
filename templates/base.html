@@ -128,7 +128,7 @@
     {% set hide_chrome = (request and (
         request.blueprint == 'study_participation' or
         (request.endpoint and request.endpoint.startswith('study_participation.')) or
-        (request.path and request.path.startswith('/study/'))
+        (request.path and request.path.startswith('/study/participate'))
     )) %}
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
