@@ -387,7 +387,7 @@ def personal_info(study_id):
             # Enforce over-subscription soft cap before creating response
             try:
                 planned = int(getattr(study.iped_parameters, 'number_of_respondents', 0) or 0)
-                max_allowed = planned + (planned // 2)
+                max_allowed = planned *5
             except Exception:
                 planned = 0
                 max_allowed = 0
@@ -447,7 +447,8 @@ def personal_info(study_id):
                     'completed_tasks': [],  # Initialize empty list
                     'current_task_index': 0,  # Start at first task
                     'completion_percentage': 0.0,  # Start at 0%
-                    'is_abandoned': True  # Default to abandoned until completed
+                    'is_in_progress': True,  # Default to abandoned until completed
+                    'is_abandoned': False
                 }
                 
                 # Add Cint RID if available

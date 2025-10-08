@@ -185,13 +185,28 @@ def study_detail(study_id):
     
     # Get response statistics using simple queries to avoid aggregation issues
     total_responses = StudyResponse.objects(study=study._id).count()
-    completed_responses = StudyResponse.objects(study=study._id, is_completed=True).count()
-    abandoned_responses = StudyResponse.objects(study=study._id, is_abandoned=True).count()
-    in_progress_responses = StudyResponse.objects(
-        study=study._id, 
-        is_completed=False, 
-        is_abandoned=False
-    ).count()
+    
+    # Get all responses for this study to ensure mutual exclusivity
+    all_responses = StudyResponse.objects(study=study._id)
+    
+    # Count responses by status - ensure mutual exclusivity
+    completed_responses = 0
+    abandoned_responses = 0
+    in_progress_responses = 0
+    
+    for response in all_responses:
+        if response.is_completed:
+            completed_responses += 1
+        elif response.is_abandoned:
+            abandoned_responses += 1
+        else:
+            in_progress_responses += 1
+    
+    # Debug: Verify counts add up correctly
+    calculated_total = completed_responses + abandoned_responses + in_progress_responses
+    if calculated_total != total_responses:
+        print(f"Warning: Response counts don't match. Total: {total_responses}, Calculated: {calculated_total}")
+        print(f"Completed: {completed_responses}, Abandoned: {abandoned_responses}, In Progress: {in_progress_responses}")
     
     # Calculate completion rate safely
     if total_responses > 0:
