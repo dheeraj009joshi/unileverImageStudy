@@ -994,7 +994,8 @@ def submit_all_ratings(study_id):
         # If they saved at least one rating, keep response as in-progress until completed
         try:
             if saved_count > 0 and not response.is_completed:
-                response.is_in_progress = True
+                response.is_completed = True
+                response.is_in_progress = False
                 response.is_abandoned = False
                 response.save()
         except Exception:

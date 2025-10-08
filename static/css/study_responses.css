@@ -759,6 +759,11 @@
     color: var(--color-warning-700);
 }
 
+.status-badge.status-in_progress {
+    background: var(--color-info-100);
+    color: var(--color-info-700);
+}
+
 .status-icon {
     font-size: var(--font-size-sm);
 }
@@ -1319,6 +1324,11 @@
 
 .status-abandoned {
     color: var(--color-red-600);
+    font-weight: var(--font-weight-semibold);
+}
+
+.status-in_progress {
+    color: var(--color-blue-600);
     font-weight: var(--font-weight-semibold);
 }
 

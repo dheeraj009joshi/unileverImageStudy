@@ -143,7 +143,7 @@
                     </thead>
                     <tbody>
                         {% for response in responses %}
-                                <tr class="response-row" data-status="{{ 'completed' if response.is_completed else 'abandoned' }}" data-completion="{{ response.completion_percentage }}">
+                                <tr class="response-row" data-status="{% if response.is_completed %}completed{% elif response.is_abandoned %}abandoned{% else %}in_progress{% endif %}" data-completion="{{ response.completion_percentage }}">
                                     <td>
                                         <div class="respondent-info">
                                             <span class="respondent-id">{{ response.respondent_id }}</span>
@@ -174,9 +174,9 @@
                                         </div>
                             </td>
                             <td>
-                                <span class="status-badge status-{{ 'completed' if response.is_completed else 'abandoned' }}">
-                                            <span class="status-icon">{{ '✅' if response.is_completed else '⏸️' }}</span>
-                                    {{ 'Completed' if response.is_completed else 'Abandoned' }}
+                                <span class="status-badge status-{% if response.is_completed %}completed{% elif response.is_abandoned %}abandoned{% else %}in_progress{% endif %}">
+                                            <span class="status-icon">{% if response.is_completed %}✅{% elif response.is_abandoned %}⏸️{% else %}🔄{% endif %}</span>
+                                    {% if response.is_completed %}Completed{% elif response.is_abandoned %}Abandoned{% else %}In Progress{% endif %}
                                 </span>
                             </td>
                         
@@ -200,7 +200,7 @@
                 <div class="cards-view" id="cards-view">
                     <div class="response-cards">
                         {% for response in responses %}
-                        <div class="response-card" data-status="{{ 'completed' if response.is_completed else 'abandoned' }}" data-completion="{{ response.completion_percentage }}">
+                        <div class="response-card" data-status="{% if response.is_completed %}completed{% elif response.is_abandoned %}abandoned{% else %}in_progress{% endif %}" data-completion="{{ response.completion_percentage }}">
                             <div class="card-header">
                                 <div class="respondent-info">
                                     <h4>Respondent {{ response.respondent_id }}</h4>
@@ -208,8 +208,8 @@
                                     <span class="respondent-details">{{ response.personal_info.get('age', 'N/A') }}y, {{ response.personal_info.get('gender', 'N/A') }}</span>
                                     {% endif %}
                                 </div>
-                                <span class="status-badge status-{{ 'completed' if response.is_completed else 'abandoned' }}">
-                                    {{ '✅' if response.is_completed else '⏸️' }} {{ 'Completed' if response.is_completed else 'Abandoned' }}
+                                <span class="status-badge status-{% if response.is_completed %}completed{% elif response.is_abandoned %}abandoned{% else %}in_progress{% endif %}">
+                                    {% if response.is_completed %}✅{% elif response.is_abandoned %}⏸️{% else %}🔄{% endif %} {% if response.is_completed %}Completed{% elif response.is_abandoned %}Abandoned{% else %}In Progress{% endif %}
                                 </span>
             </div>
 
@@ -578,7 +578,7 @@ function viewResponseDetails(responseId) {
                             </div>
                             <div class="overview-item">
                                 <span class="label">Status:</span>
-                                <span class="value status-${data.is_completed ? 'completed' : 'abandoned'}">${data.status}</span>
+                                <span class="value status-${data.is_completed ? 'completed' : data.is_abandoned ? 'abandoned' : 'in_progress'}">${data.status}</span>
                             </div>
                             <div class="overview-item">
                                 <span class="label">Completion:</span>
