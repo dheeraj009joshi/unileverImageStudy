@@ -214,9 +214,13 @@ def study_detail(study_id):
             'abandoned_responses': 1,
             'in_progress_responses': 1,
             'completion_rate': {
-                '$multiply': [
-                    {'$divide': ['$completed_responses', '$total_responses']},
-                    100
+                '$cond': [
+                    {'$gt': ['$total_responses', 0]},
+                    {'$multiply': [
+                        {'$divide': ['$completed_responses', '$total_responses']},
+                        100
+                    ]},
+                    0
                 ]
             },
             'avg_task_time': {
