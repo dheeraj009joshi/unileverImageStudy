@@ -641,7 +641,7 @@ HARD_CAP_SWAP_TRIES = 30000  # extra attempts to enforce MAX_ACTIVE_PER_ROW hard
 ABSENCE_RATIO = 2.0        # absences per category >= ceil(ABSENCE_RATIO * E)
 ROW_MIX_MODE = "wide"      # "dense" or "wide" row-mix mode
 ROW_MIX_WIDEN = 0.40       # fraction of rows to push to (base-1)
-T_RATIO = 1.10             # scale rows/respondent above minimal feasible T
+T_RATIO = 1.50            # scale rows/respondent above minimal feasible T
 CAPACITY_SLACK = 1         # try to keep at least this many patterns un-used
 
 def vignette_signature_pairs(cat_elem_pairs):
