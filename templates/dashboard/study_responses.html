@@ -41,39 +41,43 @@
             <div class="stat-card">
                 <div class="stat-icon">📊</div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ study.total_responses }}</div>
+                    <div class="stat-value">{{ total_responses }}</div>
                     <div class="stat-label">Total Responses</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">✅</div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ study.completed_responses }}</div>
+                    <div class="stat-value">{{ completed_responses }}</div>
                     <div class="stat-label">Completed</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⏸️</div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ study.abandoned_responses }}</div>
+                    <div class="stat-value">{{ abandoned_responses }}</div>
                     <div class="stat-label">Abandoned</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">⏳</div>
+                <div class="stat-icon">🔄</div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ study.in_progress_responses if study.in_progress_responses is defined else 0 }}</div>
+                    <div class="stat-value">{{ in_progress_responses }}</div>
                     <div class="stat-label">In Progress</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">📈</div>
                 <div class="stat-content">
-                    <div class="stat-value">
-                        {% set completed = study.completed_responses %}
-                        {% if study.total_responses and study.total_responses > 0 and completed %}{{ "%.1f"|format(completed / study.total_responses * 100) }}%{% else %}0%{% endif %}
-                    </div>
+                    <div class="stat-value">{{ "%.1f"|format(completion_rate) }}%</div>
                     <div class="stat-label">Completion Rate</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ "%.1f"|format(avg_task_time) }}s</div>
+                    <div class="stat-label">Avg Task Time</div>
                 </div>
             </div>
         </div>
