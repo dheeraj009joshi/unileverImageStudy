@@ -114,10 +114,14 @@ class StudyResponse(Document):
     
     def update_completion_percentage(self):
         """Update completion percentage based on completed tasks."""
+        actual_completed_tasks = len(self.completed_tasks) if self.completed_tasks else 0
         if self.total_tasks_assigned > 0:
-            self.completion_percentage = (self.completed_tasks_count / self.total_tasks_assigned) * 100.0
+            self.completion_percentage = (actual_completed_tasks / self.total_tasks_assigned) * 100.0
         else:
             self.completion_percentage = 0.0
+        
+        # Also update the completed_tasks_count to match actual completed tasks
+        self.completed_tasks_count = actual_completed_tasks
     
     def add_completed_task(self, task_data):
         """Add a completed task to the response."""
@@ -138,7 +142,15 @@ class StudyResponse(Document):
         self.session_end_time = datetime.utcnow()
         if self.session_start_time:
             self.total_study_duration = (self.session_end_time - self.session_start_time).total_seconds()
-        self.completion_percentage = 100.0
+        
+        # Calculate completion percentage based on actual completed tasks
+        actual_completed_tasks = len(self.completed_tasks) if self.completed_tasks else 0
+        total_tasks = self.total_tasks_assigned or 0
+        
+        if total_tasks > 0:
+            self.completion_percentage = (actual_completed_tasks / total_tasks) * 100.0
+        else:
+            self.completion_percentage = 0.0
         
         # Update study response counters
         try:

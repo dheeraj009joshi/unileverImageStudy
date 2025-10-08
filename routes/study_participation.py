@@ -991,14 +991,32 @@ def submit_all_ratings(study_id):
         response.save()
         print(f"Persisted {saved_count} ratings to response {response._id}")
         
-        # If they saved at least one rating, keep response as in-progress until completed
+        # Update completion status based on actual completed tasks
         try:
-            if saved_count > 0 and not response.is_completed:
-                response.is_completed = True
-                response.is_in_progress = False
-                response.is_abandoned = False
+            if saved_count > 0:
+                # Refresh response to get latest completed_tasks count
+                response.reload()
+                actual_completed_tasks = len(response.completed_tasks) if response.completed_tasks else 0
+                total_tasks = response.total_tasks_assigned or 0
+                
+                # Calculate completion percentage
+                if total_tasks > 0:
+                    completion_percentage = (actual_completed_tasks / total_tasks) * 100
+                    response.completion_percentage = completion_percentage
+                
+                # Only mark as completed if ALL tasks are done
+                if actual_completed_tasks >= total_tasks and total_tasks > 0:
+                    response.is_completed = True
+                    response.is_in_progress = False
+                    response.is_abandoned = False
+                else:
+                    response.is_completed = False
+                    response.is_in_progress = True
+                    response.is_abandoned = False
+                
                 response.save()
-        except Exception:
+        except Exception as e:
+            print(f"Error updating completion status: {e}")
             pass
 
         # Keep session small: do not store ratings array
