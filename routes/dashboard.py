@@ -183,74 +183,44 @@ def study_detail(study_id):
         flash('Study not found.', 'error')
         return redirect(url_for('dashboard.studies'))
     
-    # Single aggregation for all response statistics
-    pipeline = [
-        {'$match': {'study': study._id}},
-        {'$group': {
-            '_id': None,
-            'total_responses': {'$sum': 1},
-            'completed_responses': {'$sum': {'$cond': ['$is_completed', 1, 0]}},
-            'abandoned_responses': {'$sum': {'$cond': ['$is_abandoned', 1, 0]}},
-            'in_progress_responses': {'$sum': {'$cond': [{'$and': [{'$eq': ['$is_completed', False]}, {'$eq': ['$is_abandoned', False]}]}, 1, 0]}},
-            'total_duration': {'$sum': {'$cond': ['$is_completed', '$total_study_duration', 0]}},
-            'recent_responses': {
-                '$push': {
-                    '_id': '$_id',
-                    'session_id': '$session_id',
-                    'respondent_id': '$respondent_id',
-                    'session_start_time': '$session_start_time',
-                    'session_end_time': '$session_end_time',
-                    'is_completed': '$is_completed',
-                    'is_abandoned': '$is_abandoned',
-                    'total_study_duration': '$total_study_duration',
-                    'completed_tasks_count': '$completed_tasks_count',
-                    'completion_percentage': '$completion_percentage'
-                }
-            }
-        }},
-        {'$project': {
-            'total_responses': 1,
-            'completed_responses': 1,
-            'abandoned_responses': 1,
-            'in_progress_responses': 1,
-            'completion_rate': {
-                '$cond': [
-                    {'$gt': ['$total_responses', 0]},
-                    {'$multiply': [
-                        {'$divide': ['$completed_responses', '$total_responses']},
-                        100
-                    ]},
-                    0
-                ]
-            },
-            'avg_task_time': {
-                '$cond': [
-                    {'$gt': ['$completed_responses', 0]},
-                    {'$divide': ['$total_duration', '$completed_responses']},
-                    0
-                ]
-            },
-            'recent_responses': {
-                '$slice': ['$recent_responses', 10]
-            }
-        }}
-    ]
+    # Get response statistics using simple queries to avoid aggregation issues
+    total_responses = StudyResponse.objects(study=study._id).count()
+    completed_responses = StudyResponse.objects(study=study._id, is_completed=True).count()
+    abandoned_responses = StudyResponse.objects(study=study._id, is_abandoned=True).count()
+    in_progress_responses = StudyResponse.objects(
+        study=study._id, 
+        is_completed=False, 
+        is_abandoned=False
+    ).count()
     
-    # Execute aggregation
-    results = list(StudyResponse.objects.aggregate(*pipeline))
-    
-    if results:
-        stats = results[0]
-        total_responses = stats['total_responses']
-        completed_responses = stats['completed_responses']
-        abandoned_responses = stats['abandoned_responses']
-        in_progress_responses = stats.get('in_progress_responses', 0)
-        completion_rate = stats['completion_rate']
-        avg_task_time = stats['avg_task_time']
-        recent_responses = stats['recent_responses']
+    # Calculate completion rate safely
+    if total_responses > 0:
+        completion_rate = (completed_responses / total_responses) * 100
     else:
-        total_responses = completed_responses = abandoned_responses = in_progress_responses = completion_rate = avg_task_time = 0
-        recent_responses = []
+        completion_rate = 0
+    
+    # Calculate average task time safely
+    if completed_responses > 0:
+        completed_responses_objs = StudyResponse.objects(study=study._id, is_completed=True)
+        total_duration = sum(r.total_study_duration for r in completed_responses_objs if r.total_study_duration)
+        avg_task_time = total_duration / completed_responses
+    else:
+        avg_task_time = 0
+    
+    # Get recent responses
+    recent_responses = StudyResponse.objects(study=study._id).order_by('-session_start_time').limit(10)
+    recent_responses = [{
+        '_id': str(r._id),
+        'session_id': r.session_id,
+        'respondent_id': r.respondent_id,
+        'session_start_time': r.session_start_time,
+        'session_end_time': r.session_end_time,
+        'is_completed': r.is_completed,
+        'is_abandoned': r.is_abandoned,
+        'total_study_duration': r.total_study_duration,
+        'completed_tasks_count': r.completed_tasks_count,
+        'completion_percentage': r.completion_percentage
+    } for r in recent_responses]
     
     # Create stats object for template
     stats_obj = {
