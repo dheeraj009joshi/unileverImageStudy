@@ -44,8 +44,8 @@ def run():
             # Find responses that have been in progress for more than 10 min since creation
             stale_responses = StudyResponse.objects(
                 study=study,
-                is_completed=False,
-                is_abandoned=False,
+              
+                is_abandoned=False,  is_completed=False,
                 is_in_progress=True,
                 last_activity__lt=ten_minutes_ago
             )
