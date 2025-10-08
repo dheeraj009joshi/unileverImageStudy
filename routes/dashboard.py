@@ -797,8 +797,8 @@ def export_study(study_id):
         return redirect(url_for('dashboard.studies'))
     
     if export_type == 'csv':
-        # Get all completed responses for this study
-        responses = StudyResponse.objects(study=study, is_completed=True)
+        # Get all completed responses for this study, sorted by respondent_id (panelist ID) in ascending order
+        responses = StudyResponse.objects(study=study, is_completed=True).order_by('respondent_id')
         # Convert to list for easier processing
         responses = list(responses)
         
