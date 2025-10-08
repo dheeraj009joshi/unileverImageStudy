@@ -59,7 +59,7 @@ ROW_MIX_MODE       = "wide"  # "dense" (old behavior) or "wide" (more 3s & 5s)
 ROW_MIX_WIDEN      = 0.40    # fraction of rows to push to (base-1); same + deficit go to (base+1)
 
 # Optional "don't think, just pick a ratio" knob for T
-T_RATIO            = 1.10     # scale rows/respondent above minimal feasible T
+T_RATIO            = 1.50    # scale rows/respondent above minimal feasible T
 
 # Per-respondent safety: enforce **no duplicate columns** in each person's design matrix
 PER_RESP_UNIQUE_COLS_ENFORCE = True
