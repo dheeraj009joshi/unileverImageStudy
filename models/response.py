@@ -123,6 +123,22 @@ class StudyResponse(Document):
         # Also update the completed_tasks_count to match actual completed tasks
         self.completed_tasks_count = actual_completed_tasks
     
+    def reset_for_restart(self):
+        """Reset response for task restart when no tasks are completed."""
+        self.is_completed = False
+        self.is_in_progress = True
+        self.is_abandoned = False
+        self.completed_tasks_count = 0
+        self.completion_percentage = 0.0
+        self.current_task_index = 0
+        # Clear completed tasks
+        self.completed_tasks = []
+        # Reset session timing
+        self.session_start_time = datetime.utcnow()
+        self.session_end_time = None
+        self.total_study_duration = 0.0
+        print(f"Response {self._id} reset for restart - no completed tasks found")
+    
     def add_completed_task(self, task_data):
         """Add a completed task to the response."""
         completed_task = CompletedTask(**task_data)
@@ -136,16 +152,23 @@ class StudyResponse(Document):
     
     def mark_completed(self):
         """Mark the study response as completed."""
+        # Calculate completion percentage based on actual completed tasks
+        actual_completed_tasks = len(self.completed_tasks) if self.completed_tasks else 0
+        total_tasks = self.total_tasks_assigned or 0
+        
+        # Safety check: Only mark as completed if there are actually completed tasks
+        if actual_completed_tasks == 0:
+            print(f"WARNING: Attempting to mark response {self._id} as completed with 0 tasks - resetting for restart!")
+            self.reset_for_restart()
+            return
+        
+        # Only mark as completed if we have completed tasks
         self.is_completed = True
         self.is_abandoned = False
         self.is_in_progress = False
         self.session_end_time = datetime.utcnow()
         if self.session_start_time:
             self.total_study_duration = (self.session_end_time - self.session_start_time).total_seconds()
-        
-        # Calculate completion percentage based on actual completed tasks
-        actual_completed_tasks = len(self.completed_tasks) if self.completed_tasks else 0
-        total_tasks = self.total_tasks_assigned or 0
         
         if total_tasks > 0:
             self.completion_percentage = (actual_completed_tasks / total_tasks) * 100.0

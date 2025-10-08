@@ -1004,8 +1004,8 @@ def submit_all_ratings(study_id):
                     completion_percentage = (actual_completed_tasks / total_tasks) * 100
                     response.completion_percentage = completion_percentage
                 
-                # Only mark as completed if ALL tasks are done
-                if actual_completed_tasks >= total_tasks and total_tasks > 0:
+                # Only mark as completed if ALL tasks are done AND at least one task is completed
+                if actual_completed_tasks >= total_tasks and total_tasks > 0 and actual_completed_tasks > 0:
                     response.is_completed = True
                     response.is_in_progress = False
                     response.is_abandoned = False
@@ -1013,6 +1013,11 @@ def submit_all_ratings(study_id):
                     response.is_completed = False
                     response.is_in_progress = True
                     response.is_abandoned = False
+                    
+                    # If no tasks completed at all, reset for restart
+                    if actual_completed_tasks == 0:
+                        print(f"WARNING: Response {response._id} has 0 completed tasks - resetting for restart")
+                        response.reset_for_restart()
                 
                 response.save()
         except Exception as e:

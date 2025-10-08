@@ -1,44 +1,60 @@
 import pandas as pd
+import csv
 
-# File paths - update these with your actual file paths
+# File paths
 file1 = 'Skin_Microbiome_GRID_150_responses_2025-10-08_1641.csv'
 file2 = 'Skin_Microbiome_(1-150_responds)_GRID_150_responses_2025-10-08_1554.csv'
-output_file = 'combined_output.csv'
+output_file = 'combined_output_fixed.csv'
 
-# Read both CSV files
-df1 = pd.read_csv(file1)
-df2 = pd.read_csv(file2)
+def process_file(filename, start_panelist=1):
+    """Process a CSV file and reassign panelist numbers sequentially."""
+    rows = []
+    current_panelist = start_panelist
+    row_count = 0
+    
+    with open(filename, mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        header = next(reader)  # Get header row
+        rows.append(header)  # Add header to output
+        
+        for row in reader:
+            # Reassign panelist number (first column)
+            row[0] = current_panelist
+            rows.append(row)
+            
+            row_count += 1
+            # Every 96 rows, move to next panelist
+            if row_count % 96 == 0:
+                current_panelist += 1
+                print(f"Completed panelist {current_panelist - 1} (96 rows)")
+    
+    print(f"File {filename}: {len(rows)-1} data rows, {current_panelist - start_panelist} panelists")
+    return rows, current_panelist
 
-# Assuming the panelist column is named 'Panelist' or 'panelist_id'
-# Update this column name based on your actual CSV structure
-panelist_column = 'Panelist'  # Change this to match your column name
+# Process both files
+print("Processing file 1...")
+rows1, next_panelist = process_file(file1, start_panelist=1)
 
-# Find the maximum panelist number in the first file
-max_panelist_file1 = df1[panelist_column].max()
+print(f"\nProcessing file 2...")
+rows2, final_panelist = process_file(file2, start_panelist=next_panelist)
 
-print(f"Maximum panelist number in file 1: {max_panelist_file1}")
+# Combine the data (skip header from second file)
+combined_rows = rows1 + rows2[1:]  # Skip header from second file
 
-# Update panelist numbers in the second file to start from max+1
-# Calculate the offset needed
-min_panelist_file2 = df2[panelist_column].min()
-offset = max_panelist_file1 - min_panelist_file2 + 1
+# Write combined file
+print(f"\nWriting combined file...")
+with open(output_file, mode='w', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
+    writer.writerows(combined_rows)
 
-df2[panelist_column] = df2[panelist_column] + offset
+print(f"✅ Combined file saved: {output_file}")
+print(f"📊 Total rows: {len(combined_rows)}")
+print(f"👥 Total panelists: {final_panelist - 1}")
+print(f"📋 Rows per panelist: 96")
 
-print(f"Panelist numbers in file 2 adjusted by offset: {offset}")
-print(f"New range in file 2: {df2[panelist_column].min()} to {df2[panelist_column].max()}")
-
-# Combine both dataframes
-combined_df = pd.concat([df1, df2], ignore_index=True)
-
-# Verify rows per panelist (should be 96)
-rows_per_panelist = combined_df.groupby(panelist_column).size()
-print("\nRows per panelist:")
-print(rows_per_panelist.value_counts())
-
-# Save the combined CSV
-combined_df.to_csv(output_file, index=False)
-
-print(f"\nCombined CSV saved to: {output_file}")
-print(f"Total rows: {len(combined_df)}")
-print(f"Total panelists: {combined_df[panelist_column].nunique()}")
+# Verify the result
+print(f"\n🔍 Verification:")
+print(f"First panelist range: 1 to {next_panelist - 1}")
+print(f"Second panelist range: {next_panelist} to {final_panelist - 1}")
+print(f"Expected total rows: {(final_panelist - 1) * 96}")
+print(f"Actual total rows: {len(combined_rows) - 1}")  # -1 for header
