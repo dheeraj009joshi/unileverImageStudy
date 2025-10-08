@@ -1048,6 +1048,15 @@ def export_study(study_id):
         # Write header
         writer.writerow(header_row)
         
+        # Create panelist ID to number mapping (sorted by respondent_id)
+        # Since responses are already sorted by respondent_id, we can assign sequential numbers
+        panelist_id_to_number = {}
+        for idx, response in enumerate(responses):
+            if response.respondent_id not in panelist_id_to_number:
+                panelist_id_to_number[response.respondent_id] = len(panelist_id_to_number) + 1
+        
+        print(f"🔄 Created panelist mapping: {len(panelist_id_to_number)} unique panelists")
+        
         # Write data rows - one row per task
         total_rows = 0
         print(f"🔄 Processing {len(responses)} responses for export...")
@@ -1104,8 +1113,9 @@ def export_study(study_id):
                 
                 row_data = []
                 
-                # Panelist (Respondent ID)
-                row_data.append(response.respondent_id)
+                # Panelist (Sequential Number instead of actual ID)
+                panelist_number = panelist_id_to_number.get(response.respondent_id, response_idx + 1)
+                row_data.append(panelist_number)
                 
                 # Classification answers (option numbers)
                 if study.classification_questions:
