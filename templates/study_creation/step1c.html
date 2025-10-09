@@ -24,7 +24,7 @@
             <div class="study-form-row">
                 <div class="study-form-group">
                     {{ form.min_value.label(class="study-form-label study-form-label--required") }}
-                    {{ form.min_value(class="study-form-control", placeholder="e.g., 1") }}
+                    {{ form.min_value(class="study-form-control", placeholder="1") }}
                     {% if form.min_value.errors %}
                         <div class="form-error">
                             {% for error in form.min_value.errors %}
@@ -37,7 +37,7 @@
                 
                 <div class="study-form-group">
                     {{ form.max_value.label(class="study-form-label study-form-label--required") }}
-                    {{ form.max_value(class="study-form-control", placeholder="e.g., 7") }}
+                    {{ form.max_value(class="study-form-control", placeholder="5") }}
                     {% if form.max_value.errors %}
                         <div class="form-error">
                             {% for error in form.max_value.errors %}
@@ -52,7 +52,7 @@
             <div class="study-form-row">
                 <div class="study-form-group">
                     {{ form.min_label.label(class="study-form-label study-form-label--required") }}
-                    {{ form.min_label(class="study-form-control", placeholder="e.g., Not at all important") }}
+                    {{ form.min_label(class="study-form-control", placeholder="e.g., Not appealing at all") }}
                     {% if form.min_label.errors %}
                         <div class="form-error">
                             {% for error in form.min_label.errors %}
@@ -65,7 +65,7 @@
                 
                 <div class="study-form-group">
                     {{ form.max_label.label(class="study-form-label study-form-label--required") }}
-                    {{ form.max_label(class="study-form-control", placeholder="e.g., Extremely important") }}
+                    {{ form.max_label(class="study-form-control", placeholder="e.g., Extremely appealing") }}
                     {% if form.max_label.errors %}
                         <div class="form-error">
                             {% for error in form.max_label.errors %}
@@ -79,7 +79,7 @@
             
             <div class="study-form-group">
                 {{ form.middle_label.label(class="study-form-label") }}
-                {{ form.middle_label(class="study-form-control", placeholder="e.g., Moderately important") }}
+                {{ form.middle_label(class="study-form-control", placeholder="e.g.,  Somewhat appealing") }}
                 {% if form.middle_label.errors %}
                     <div class="form-error">
                         {% for error in form.middle_label.errors %}

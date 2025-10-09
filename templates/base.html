@@ -220,9 +220,14 @@
     {% endif %}
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
+    <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="true">
         <div class="loading-overlay-content">
-            <div class="loading-spinner loading-spinner--xl"></div>
+            <!-- Animated Loader: Bouncing Dots -->
+            <div class="loading-bouncer" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
             <p class="loading-overlay-text">Loading...</p>
         </div>
     </div>
@@ -233,13 +238,6 @@
 </main>
 
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loading-overlay" aria-hidden="true">
-        <div class="loading-spinner">
-            <div class="spinner-ring"></div>
-            <p class="loading-text">Loading...</p>
-        </div>
-    </div>
 
     <!-- Core JavaScript -->
     <script src="{{ url_for('static', filename='js/base.js') }}" defer></script>

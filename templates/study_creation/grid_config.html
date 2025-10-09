@@ -20,15 +20,15 @@
                     <h3>Categories Configuration</h3>
                     <div class="category-actions">
                         <button type="button" class="btn btn--primary" onclick="openAddCategoryModal()">
-                            ➕ Add Category
+                            ╋ Add Category
                         </button>
                         <span class="category-count">
-                            <span id="categoryCount">{{ categories_data|length if categories_data else 0 }}</span>/12 categories
+                            <span id="categoryCount">{{ categories_data|length if categories_data else 0 }}</span>/10 categories
                         </span>
                     </div>
                 </div>
                 
-                <p class="form-help">Add categories to organize your elements. Each category can contain multiple elements. Minimum 2 categories, maximum 12.</p>
+                <p class="form-help">Add categories to organize your elements. Each category can contain multiple elements. Minimum 3 categories, maximum 10.</p>
                 
                 <!-- Categories Container -->
                 <div id="categoriesContainer" class="categories-container">
@@ -93,19 +93,19 @@
         <form id="categoryForm" enctype="multipart/form-data">
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Category Name *</label>
+                    <label class="form-label" for="categoryName">Category Name</label>
                     <input type="text" id="categoryName" name="category_name" class="form-input" required>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Category Description</label>
+                    <label class="form-label" for="categoryDescription">Category Description</label>
                     <textarea id="categoryDescription" name="category_description" class="form-textarea" placeholder="Describe what this category represents..."></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Elements *</label>
+                    <label class="form-label">Elements</label>
                     <div class="file-upload-area" id="fileUploadArea">
-                        <input type="file" id="elementFiles" name="element_files" multiple accept="image/*" style="display: none;">
+                        <input type="file" id="elementFiles" name="element_files" multiple accept="image/*" style="display: none;" required>
                         <div class="upload-zone" onclick="document.getElementById('elementFiles').click()">
                             <div class="upload-icon">📁</div>
                             <p>Click to select multiple images</p>
@@ -574,11 +574,11 @@ async function saveCategory() {
                 const previewUrl = await createFilePreviewUrl(file);
                 const elementData = {
                     element_id: generateElementId(),
-                    name: file.name.split('.')[0] || `Element ${index + 1}`,
+                    name: file.name || `Element ${index + 1}`,
                     description: '',
                     element_type: 'image',
                     content: previewUrl, // Use data URL as fallback
-                    alt_text: file.name.split('.')[0] || `Element ${index + 1}`,
+                    alt_text: file.name || `Element ${index + 1}`,
                     file: file // Store the file for later upload
                 };
                 console.log(`⚠️ Using data URL preview for ${file.name} - will upload in background`);
@@ -587,11 +587,11 @@ async function saveCategory() {
             
             const elementData = {
                 element_id: generateElementId(),
-                name: file.name.split('.')[0] || `Element ${index + 1}`,
+                name: file.name|| `Element ${index + 1}`,
                 description: '',
                 element_type: 'image',
                 content: uploadResult.azureUrl, // Use the successful Azure URL
-                alt_text: file.name.split('.')[0] || `Element ${index + 1}`
+                alt_text: file.name || `Element ${index + 1}`
             };
             
             console.log(`✅ Element created for ${file.name} with Azure URL: ${uploadResult.azureUrl}`);

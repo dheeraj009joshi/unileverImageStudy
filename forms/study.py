@@ -33,11 +33,11 @@ class Step1aBasicDetailsForm(FlaskForm):
 class Step1bStudyTypeForm(FlaskForm):
     """Step 1b: Study Type & Main Question Form."""
     study_type = SelectField('Study Type', choices=[
-        ('grid', 'Grid Study - Image/Text Elements'),
-        ('layer', 'Layer Study - Categorized Elements (A, B, C, D)')
+        ('grid', 'Grid Study (Side-by-Side)'),
+        ('layer', 'Layer Study (Stacked)')
     ], validators=[DataRequired(message='Study type selection is required')])
-    main_question = TextAreaField('Main Research Question', validators=[
-        DataRequired(message='Main research question is required'),
+    main_question = TextAreaField('Main Task Question', validators=[
+        DataRequired(message='Main Task Question is required'),
         Length(min=10, max=500, message='Question must be between 10 and 500 characters')
     ])
     orientation_text = TextAreaField('Orientation Text for Respondents', validators=[
@@ -50,11 +50,11 @@ class Step1cRatingScaleForm(FlaskForm):
     """Step 1c: Rating Scale Configuration Form."""
     min_value = IntegerField('Minimum Value', validators=[
         DataRequired(message='Minimum value is required'),
-        NumberRange(min=1, max=10, message='Minimum value must be between 1 and 10')
+        NumberRange(min=1, max=5, message='Minimum value must be between 1 and 10')
     ])
     max_value = IntegerField('Maximum Value', validators=[
         DataRequired(message='Maximum value is required'),
-        NumberRange(min=1, max=5, message='Maximum value must be between 1 and 5')
+        NumberRange(min=2, max=5, message='Maximum value must be between 1 and 5')
     ])
     min_label = StringField('Minimum Label', validators=[
         DataRequired(message='Minimum label is required'),
@@ -133,7 +133,7 @@ class LayerStudyCategoryForm(FlaskForm):
     """Form for configuring layer study categories."""
     num_categories = IntegerField('Number of Categories', validators=[
         DataRequired(message='Number of categories is required'),
-        NumberRange(min=2, max=10, message='Number of categories must be between 2 and 10')
+        NumberRange(min=3, max=10, message='Number of categories must be between 3 and 10')
     ])
     submit = SubmitField('Continue to Category Setup')
 
@@ -141,7 +141,7 @@ class GridCategoryForm(FlaskForm):
     """Form for configuring grid study categories."""
     num_categories = IntegerField('Number of Categories', validators=[
         DataRequired(message='Number of categories is required'),
-        NumberRange(min=2, max=10, message='Number of categories must be between 2 and 10')
+        NumberRange(min=3, max=10, message='Number of categories must be between 3 and 10')
     ])
     submit = SubmitField('Continue to Category Setup')
 

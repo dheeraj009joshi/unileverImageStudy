@@ -31,7 +31,7 @@
 
             <div class="study-form-group">
                 {{ form.main_question.label(class="study-form-label study-form-label--required") }}
-                {{ form.main_question(class="study-form-control study-form-textarea", placeholder="What is the main question respondents will answer?") }}
+                {{ form.main_question(class="study-form-control study-form-textarea", placeholder="Enter the question that will appear at the top of every task") }}
                 {% if form.main_question.errors %}
                     <div class="form-error">
                         {% for error in form.main_question.errors %}
@@ -44,7 +44,7 @@
 
             <div class="study-form-group">
                 {{ form.orientation_text.label(class="study-form-label study-form-label--required") }}
-                {{ form.orientation_text(class="study-form-control study-form-textarea", placeholder="Provide instructions for respondents") }}
+                {{ form.orientation_text(class="study-form-control study-form-textarea", placeholder="Explain what respondents will see and how to rate each set of images") }}
                 {% if form.orientation_text.errors %}
                     <div class="form-error">
                         {% for error in form.orientation_text.errors %}
@@ -52,7 +52,7 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                <small class="form-help">Instructions that will be shown to respondents before they start the study</small>
+                <small class="form-help">Instructions will be shown to respondents before the start the tasks</small>
             </div>
 
             <div class="step-actions">

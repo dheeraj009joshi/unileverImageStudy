@@ -20,6 +20,7 @@ class UnileverApp {
         this.setupNavigation();
         this.setupFlashMessages();
         this.setupLoadingStates();
+        this.applyRequiredIndicators();
         this.setupFormEnhancements();
         
         this.isInitialized = true;
@@ -145,21 +146,81 @@ class UnileverApp {
 
     showLoading(message = 'Loading...') {
         const overlay = document.getElementById('loading-overlay');
-        if (overlay) {
-            // Update loading message if provided
-            const textElement = overlay.querySelector('.loading-overlay-text');
-            if (textElement && message) {
-                textElement.textContent = message;
-            }
-            overlay.classList.add('is-visible');
-        }
+        if (!overlay) return;
+
+        // Update message
+        const textElement = overlay.querySelector('.loading-overlay-text');
+        if (textElement) textElement.textContent = message || 'Loading...';
+
+        // Start subtle fade-in
+        overlay.style.opacity = '0';
+        overlay.classList.add('is-visible');
+        requestAnimationFrame(() => {
+            overlay.style.transition = 'opacity 150ms ease-in';
+            overlay.style.opacity = '1';
+            overlay.setAttribute('aria-hidden', 'false');
+        });
     }
 
     hideLoading() {
         const overlay = document.getElementById('loading-overlay');
-        if (overlay) {
+        if (!overlay) return;
+        overlay.style.transition = 'opacity 150ms ease-out';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
             overlay.classList.remove('is-visible');
-        }
+            overlay.setAttribute('aria-hidden', 'true');
+        }, 150);
+    }
+
+    // Add visual required indicator to labels based on actual required fields
+    applyRequiredIndicators() {
+        // Handle standard form controls
+        const requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+        requiredFields.forEach(field => {
+            let label = null;
+            if (field.id) {
+                label = document.querySelector(`label[for="${CSS.escape(field.id)}"]`);
+            }
+            // Fallback: look for a label within the same form-group
+            if (!label) {
+                const group = field.closest('.form-group, .field, .input-group');
+                if (group) {
+                    label = group.querySelector('label');
+                }
+            }
+            if (label) {
+                // Remove any hardcoded trailing '*'
+                const trimmed = label.textContent.trim();
+                if (trimmed.endsWith('*')) {
+                    label.textContent = trimmed.slice(0, -1).trim();
+                }
+                if (label.classList.contains('study-form-label')) {
+                    label.classList.add('study-form-label--required');
+                } else {
+                    label.classList.add('form-label--required');
+                }
+            }
+        });
+
+        // Handle grouped question blocks (e.g., classification)
+        const questionBlocks = document.querySelectorAll('.question, .question-item, .form-group');
+        questionBlocks.forEach(block => {
+            const hasRequired = block.querySelector('input[required], select[required], textarea[required]') !== null;
+            if (!hasRequired) return;
+            const qLabel = block.querySelector('.question-label, label');
+            if (qLabel) {
+                const trimmed = qLabel.textContent.trim();
+                if (trimmed.endsWith('*')) {
+                    qLabel.textContent = trimmed.slice(0, -1).trim();
+                }
+                if (qLabel.classList.contains('study-form-label')) {
+                    qLabel.classList.add('study-form-label--required');
+                } else if (qLabel.classList.contains('form-label') || qLabel.classList.contains('question-label')) {
+                    qLabel.classList.add('form-label--required');
+                }
+            }
+        });
     }
 
     // Enhanced form handling

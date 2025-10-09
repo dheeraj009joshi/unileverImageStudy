@@ -137,7 +137,7 @@
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+    
     border-radius: var(--radius-full);
 }
 
@@ -185,7 +185,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+
 }
 
 .stat-card:hover {
@@ -292,7 +292,11 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+     
+}
+.create-study-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
 }
 
 .action-card:hover {
@@ -395,7 +399,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+     
     opacity: 0;
     transition: opacity 0.3s ease;
 }

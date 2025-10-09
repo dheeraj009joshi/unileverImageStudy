@@ -268,7 +268,7 @@
         <p class="loading-overlay-text" id="loadingText">Generating task matrix...</p>
         <div class="timer-container" id="timerContainer" style="display: none;">
             <div class="timer-text">Estimated time remaining:</div>
-            <div class="timer-display" id="timerDisplay">3:00</div>
+            <div class="timer-display" id="timerDisplay">10:00</div>
         </div>
     </div>
 </div>
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadingOverlay.classList.add('is-visible');
                 loadingOverlay.style.display = 'flex';
                 
-                // Start the 3-minute timer
+        // Start the 10-minute timer
                 startTimer();
                 
                 // Disable form submission to prevent double submission
@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadingOverlay.classList.add('is-visible');
                     loadingOverlay.style.display = 'flex';
                     
-                    // Start the 3-minute timer
+                    // Start the 10-minute timer
                     startTimer();
                     
                     // Update loading text for regenerate

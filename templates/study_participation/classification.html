@@ -86,7 +86,7 @@
             {% if study.classification_questions %}
                 {% for question in study.classification_questions %}
                 <div class="question-group" data-question-id="{{ question.question_id }}">
-                    <label class="question-label">{{ question.question_text }} *</label>
+                    <label class="question-label">{{ question.question_text }}</label>
                     
                     <div class="options-grid">
                         {% if question.answer_options %}

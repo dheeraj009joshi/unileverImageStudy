@@ -1658,7 +1658,7 @@
     position: relative;
 }
 
-.form-label::after {
+.form-label[required]::after {
     content: ' *';
     color: #dc3545;
     font-weight: 400;
@@ -2974,7 +2974,7 @@
     position: relative;
 }
 
-.form-label::after {
+.form-label[required]::after {
     content: ' *';
     color: #dc3545;
     font-weight: 400;
@@ -3604,7 +3604,7 @@
     position: relative;
 }
 
-.form-label::after {
+.form-label[required]::after {
     content: ' *';
     color: #dc3545;
     font-weight: 400;

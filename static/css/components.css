@@ -414,14 +414,30 @@
     border: 1px solid var(--color-neutral-200);
 }
 
-.loading-spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid var(--color-neutral-200);
-    border-top: 4px solid var(--color-primary-600);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+/* New animated loader: bouncing dots */
+.loading-bouncer {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
     margin: 0 auto var(--space-4);
+}
+
+.loading-bouncer .dot {
+    width: 10px;
+    height: 10px;
+    background: var(--color-primary-600);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 0.9s infinite ease-in-out;
+}
+
+.loading-bouncer .dot:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.loading-bouncer .dot:nth-child(3) {
+    animation-delay: 0.3s;
 }
 
 .loading-overlay-text {
@@ -430,9 +446,9 @@
     margin: 0;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
+    40% { transform: translateY(-10px); opacity: 1; }
 }
 
 @keyframes slideInDown {
@@ -909,6 +925,14 @@
 .form-label--required::after {
     content: ' *';
     color: var(--color-error-500);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Support for study creation label variant */
+.study-form-label--required::after {
+    content: ' *';
+    color: var(--color-error-500);
+    font-weight: var(--font-weight-bold);
 }
 
 .form-control {

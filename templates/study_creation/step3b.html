@@ -162,7 +162,7 @@
                                                         </div>
                                                     {% endif %}
                                                     <div class="element-info">
-                                                        <span class="element-name">{{ element.name or 'Unnamed Element' }}</span>
+                                                        <span class="element-name">{{ element.name.split('.')[1] or 'Unnamed Element' }}</span>
                                                         {% if element.description %}
                                                         <small class="element-description">{{ element.description }}</small>
                                                         {% endif %}

@@ -16,9 +16,16 @@
                 <p class="header-subtitle">Manage your research studies and track progress</p>
             </div>
             <div class="header-actions">
-                <a href="{{ url_for('study_creation.step1a') }}" class="btn btn--primary" style="color: white; text-decoration: none;">
-                    Create New Study
-                </a>
+                <a href="{{ url_for('study_creation.step1a') }}" 
+   class="btn btn--primary create-study-btn"
+   style="background: linear-gradient(135deg, #0066ff, #00c6ff);
+          color: #fff;
+          box-shadow: 0 6px 16px rgba(0, 102, 255, 0.35);
+          transition: all 0.25s ease-in-out;
+          text-decoration: none;">
+    Create New Study
+</a>
+
             </div>
         </div>
     </div>
