@@ -120,29 +120,38 @@
         <div class="section-header">
             <h2 class="section-title">Response Statistics</h2>
         </div>
-        <div class="analytics-grid">
+        
+        {% if load_stats_async %}
+        <!-- Loading Animation for Response Statistics -->
+        <div id="response-stats-loading" class="response-stats-loading">
+            <div class="loading-spinner-large"></div>
+            <div class="loading-text">Loading response statistics...</div>
+        </div>
+        {% endif %}
+        
+        <div class="analytics-grid" id="response-stats-grid" {% if load_stats_async %}style="display: none;"{% endif %}>
             <div class="analytics-card">
-                <div class="analytics-number">{{ total_responses }}</div>
+                <div class="analytics-number" id="top-total-responses">{{ total_responses }}</div>
                 <div class="analytics-label">Total Responses</div>
             </div>
             <div class="analytics-card">
-                <div class="analytics-number">{{ completed_responses }}</div>
+                <div class="analytics-number" id="top-completed-responses">{{ completed_responses }}</div>
                 <div class="analytics-label">Completed</div>
             </div>
             <div class="analytics-card">
-                <div class="analytics-number">{{ abandoned_responses }}</div>
+                <div class="analytics-number" id="top-abandoned-responses">{{ abandoned_responses }}</div>
                 <div class="analytics-label">Abandoned</div>
             </div>
             <div class="analytics-card">
-                <div class="analytics-number">{{ in_progress_responses }}</div>
+                <div class="analytics-number" id="top-in-progress-responses">{{ in_progress_responses }}</div>
                 <div class="analytics-label">In Progress</div>
             </div>
             <div class="analytics-card">
-                <div class="analytics-number">{{ "%.1f"|format(completion_rate) }}%</div>
+                <div class="analytics-number" id="top-completion-rate">{{ "%.1f"|format(completion_rate) }}%</div>
                 <div class="analytics-label">Completion Rate</div>
             </div>
             <div class="analytics-card">
-                <div class="analytics-number">{{ "%.1f"|format(avg_task_time) }}s</div>
+                <div class="analytics-number" id="top-avg-task-time">{{ "%.1f"|format(avg_task_time) }}s</div>
                 <div class="analytics-label">Avg Task Time</div>
             </div>
         </div>
@@ -192,24 +201,39 @@
             <div class="card">
                 <div class="card-body">
                     <div class="responses-overview">
-                        <div class="responses-stats">
+                        <div class="responses-stats" id="responses-stats">
                             <div class="stat-item">
-                                <span class="stat-value">{{ stats.total_responses }}</span>
+                                <span class="stat-value" id="total-responses">{{ stats.total_responses }}</span>
                                 <span class="stat-label">Total Responses</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value">{{ stats.completed_responses }}</span>
+                                <span class="stat-value" id="completed-responses">{{ stats.completed_responses }}</span>
                                 <span class="stat-label">Completed</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value">{{ stats.abandoned_responses }}</span>
+                                <span class="stat-value" id="abandoned-responses">{{ stats.abandoned_responses }}</span>
                                 <span class="stat-label">Abandoned</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value">{{ "%.1f"|format(stats.completion_rate) }}%</span>
+                                <span class="stat-value" id="in-progress-responses">{{ stats.in_progress_responses }}</span>
+                                <span class="stat-label">In Progress</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="completion-rate">{{ "%.1f"|format(stats.completion_rate) }}%</span>
                                 <span class="stat-label">Completion Rate</span>
                             </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="avg-task-time">{{ "%.1f"|format(stats.avg_task_time) }}s</span>
+                                <span class="stat-label">Avg Task Time</span>
+                            </div>
                         </div>
+                        
+                        {% if load_stats_async %}
+                        <div id="stats-loading" class="stats-loading">
+                            <div class="loading-spinner"></div>
+                            <span class="loading-text">Loading response statistics...</span>
+                        </div>
+                        {% endif %}
                         <div class="responses-actions">
                             <a href="{{ url_for('dashboard.study_responses', study_id=study._id) }}" class="btn btn--primary btn--lg">
                                 <span class="btn-icon">📊</span>
@@ -337,5 +361,91 @@
           });
       });
   });
+  
+  // Async loading of study statistics
+  {% if load_stats_async %}
+      document.addEventListener('DOMContentLoaded', function() {
+          const studyId = '{{ study._id }}';
+          const loadingElement = document.getElementById('stats-loading');
+          const responseStatsLoading = document.getElementById('response-stats-loading');
+          const responseStatsGrid = document.getElementById('response-stats-grid');
+          
+          // Show loading indicators
+          if (loadingElement) {
+              loadingElement.style.display = 'block';
+          }
+          if (responseStatsLoading) {
+              responseStatsLoading.style.display = 'block';
+          }
+          if (responseStatsGrid) {
+              responseStatsGrid.style.display = 'none';
+          }
+      
+      // Load statistics asynchronously
+      console.log('Loading statistics for study:', studyId);
+      fetch(`/dashboard/studies/${studyId}/stats`)
+          .then(response => {
+              console.log('Stats API response status:', response.status);
+              return response.json();
+          })
+          .then(data => {
+              console.log('Stats API data received:', data);
+              
+              // Update both Response Statistics section (top) and Responses overview section (bottom)
+              const updateElement = (selector, value, suffix = '') => {
+                  const element = document.querySelector(selector);
+                  if (element) {
+                      element.textContent = value + suffix;
+                      console.log(`Updated ${selector} to:`, value + suffix);
+                  } else {
+                      console.error(`Element ${selector} not found`);
+                  }
+              };
+              
+              // Update Response Statistics section (top) - analytics cards with IDs
+              updateElement('#top-total-responses', data.total_responses);
+              updateElement('#top-completed-responses', data.completed_responses);
+              updateElement('#top-abandoned-responses', data.abandoned_responses);
+              updateElement('#top-in-progress-responses', data.in_progress_responses);
+              updateElement('#top-completion-rate', data.completion_rate, '%');
+              updateElement('#top-avg-task-time', data.avg_task_time, 's');
+              
+              // Update Responses overview section (bottom) - stat items
+              updateElement('#total-responses', data.total_responses);
+              updateElement('#completed-responses', data.completed_responses);
+              updateElement('#abandoned-responses', data.abandoned_responses);
+              updateElement('#in-progress-responses', data.in_progress_responses);
+              updateElement('#completion-rate', data.completion_rate, '%');
+              updateElement('#avg-task-time', data.avg_task_time, 's');
+              
+              console.log('Statistics updated successfully');
+              
+              // Hide loading indicators and show statistics
+              if (loadingElement) {
+                  loadingElement.style.display = 'none';
+              }
+              if (responseStatsLoading) {
+                  responseStatsLoading.style.display = 'none';
+              }
+              if (responseStatsGrid) {
+                  responseStatsGrid.style.display = 'grid';
+              }
+          })
+          .catch(error => {
+              console.error('Error loading statistics:', error);
+              
+              // Hide loading indicators and show error
+              if (loadingElement) {
+                  loadingElement.innerHTML = '<span class="error-text">Failed to load statistics</span>';
+              }
+              if (responseStatsLoading) {
+                  responseStatsLoading.innerHTML = '<span class="error-text">Failed to load statistics</span>';
+              }
+              if (responseStatsGrid) {
+                  responseStatsGrid.style.display = 'grid'; // Show grid even with error
+              }
+          });
+  });
+  {% endif %}
   </script>
   {% endblock %}

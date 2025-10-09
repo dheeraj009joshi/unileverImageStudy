@@ -153,18 +153,46 @@ def studies():
     else:
         total = status_counts.get(status_filter, 0)
     
-    # Add real-time response counts for each study
-    for study in studies:
-        study_id = study['_id']
-        # Get real-time counts from StudyResponse collection
-        total_responses = StudyResponse.objects(study=study_id).count()
-        completed_responses = StudyResponse.objects(study=study_id, is_completed=True).count()
-        abandoned_responses = StudyResponse.objects(study=study_id, is_abandoned=True).count()
+    # OPTIMIZED: Get response counts in a single aggregation instead of individual queries
+    study_ids = [study['_id'] for study in studies]
+    
+    if study_ids:
+        # Single aggregation to get all response counts at once
+        response_counts_pipeline = [
+            {'$match': {'study': {'$in': study_ids}}},
+            {'$group': {
+                '_id': '$study',
+                'total_responses': {'$sum': 1},
+                'completed_responses': {
+                    '$sum': {'$cond': [{'$eq': ['$is_completed', True]}, 1, 0]}
+                },
+                'abandoned_responses': {
+                    '$sum': {'$cond': [{'$eq': ['$is_abandoned', True]}, 1, 0]}
+                }
+            }}
+        ]
         
-        # Add counts to study object
-        study['total_responses'] = total_responses
-        study['completed_responses'] = completed_responses
-        study['abandoned_responses'] = abandoned_responses
+        response_counts = {
+            str(count['_id']): count for count in StudyResponse.objects.aggregate(*response_counts_pipeline)
+        }
+        
+        # Add counts to study objects
+        for study in studies:
+            study_id_str = str(study['_id'])
+            counts = response_counts.get(study_id_str, {
+                'total_responses': 0,
+                'completed_responses': 0,
+                'abandoned_responses': 0
+            })
+            study['total_responses'] = counts['total_responses']
+            study['completed_responses'] = counts['completed_responses']
+            study['abandoned_responses'] = counts['abandoned_responses']
+    else:
+        # No studies, set default counts
+        for study in studies:
+            study['total_responses'] = 0
+            study['completed_responses'] = 0
+            study['abandoned_responses'] = 0
     
     return render_template('dashboard/studies.html',
                          studies=studies,
@@ -177,86 +205,108 @@ def studies():
 @dashboard_bp.route('/studies/<study_id>')
 @login_required
 def study_detail(study_id):
-    """Study detail page with optimized analytics."""
-    study = Study.objects(_id=study_id, creator=current_user).first()
+    """Study detail page - Phase 1: Load basic study details instantly."""
+    # OPTIMIZED: Only fetch fields actually displayed in the UI
+    study = Study.objects(_id=study_id, creator=current_user).only(
+        '_id',
+        'title',
+        'status',
+        'study_type',
+        'created_at',
+        'launched_at',
+        'background',
+        'main_question',
+        'orientation_text',
+        'rating_scale',
+        'elements',
+        'iped_parameters',
+        'classification_questions'
+    ).first()
+    
     if not study:
         flash('Study not found.', 'error')
         return redirect(url_for('dashboard.studies'))
     
-    # Get response statistics using simple queries to avoid aggregation issues
-    total_responses = StudyResponse.objects(study=study._id).count()
-    
-    # Get all responses for this study to ensure mutual exclusivity
-    all_responses = StudyResponse.objects(study=study._id)
-    
-    # Count responses by status - ensure mutual exclusivity
-    completed_responses = 0
-    abandoned_responses = 0
-    in_progress_responses = 0
-    
-    for response in all_responses:
-        if response.is_completed:
-            completed_responses += 1
-        elif response.is_abandoned:
-            abandoned_responses += 1
-        else:
-            in_progress_responses += 1
-    
-    # Debug: Verify counts add up correctly
-    calculated_total = completed_responses + abandoned_responses + in_progress_responses
-    if calculated_total != total_responses:
-        print(f"Warning: Response counts don't match. Total: {total_responses}, Calculated: {calculated_total}")
-        print(f"Completed: {completed_responses}, Abandoned: {abandoned_responses}, In Progress: {in_progress_responses}")
-    
-    # Calculate completion rate safely
-    if total_responses > 0:
-        completion_rate = (completed_responses / total_responses) * 100
-    else:
-        completion_rate = 0
-    
-    # Calculate average task time safely
-    if completed_responses > 0:
-        completed_responses_objs = StudyResponse.objects(study=study._id, is_completed=True)
-        total_duration = sum(r.total_study_duration for r in completed_responses_objs if r.total_study_duration)
-        avg_task_time = total_duration / completed_responses
-    else:
-        avg_task_time = 0
-    
-    # Get recent responses
-    recent_responses = StudyResponse.objects(study=study._id).order_by('-session_start_time').limit(10)
-    recent_responses = [{
-        '_id': str(r._id),
-        'session_id': r.session_id,
-        'respondent_id': r.respondent_id,
-        'session_start_time': r.session_start_time,
-        'session_end_time': r.session_end_time,
-        'is_completed': r.is_completed,
-        'is_abandoned': r.is_abandoned,
-        'total_study_duration': r.total_study_duration,
-        'completed_tasks_count': r.completed_tasks_count,
-        'completion_percentage': r.completion_percentage
-    } for r in recent_responses]
-    
-    # Create stats object for template
+    # Phase 1: Load study details instantly with placeholder stats
+    # Response statistics will be loaded asynchronously via AJAX
     stats_obj = {
-        'total_responses': total_responses,
-        'completed_responses': completed_responses,
-        'abandoned_responses': abandoned_responses,
-        'in_progress_responses': in_progress_responses,
-        'completion_rate': completion_rate,
-        'avg_task_time': avg_task_time
+        'total_responses': 0,
+        'completed_responses': 0,
+        'abandoned_responses': 0,
+        'in_progress_responses': 0,
+        'completion_rate': 0,
+        'avg_task_time': 0
     }
     
     return render_template('dashboard/study_detail.html',
                          study=study,
                          stats=stats_obj,
-                         total_responses=total_responses,
-                         completed_responses=completed_responses,
-                         abandoned_responses=abandoned_responses,
-                         in_progress_responses=in_progress_responses,
-                         completion_rate=completion_rate,
-                         avg_task_time=avg_task_time,
-                         recent_responses=recent_responses)
+                         total_responses=0,
+                         completed_responses=0,
+                         abandoned_responses=0,
+                         in_progress_responses=0,
+                         completion_rate=0,
+                         avg_task_time=0,
+                         load_stats_async=True)  # Flag to enable async loading
+
+@dashboard_bp.route('/studies/<study_id>/stats')
+@login_required
+def study_stats(study_id):
+    """API endpoint to load study statistics asynchronously."""
+    try:
+        study = Study.objects(_id=study_id, creator=current_user).first()
+        if not study:
+            return jsonify({'error': 'Study not found'}), 404
+        
+        # Get response statistics using optimized queries
+        total_responses = StudyResponse.objects(study=study._id).count()
+        
+        # Get all responses for this study to ensure mutual exclusivity
+        # OPTIMIZED: Only fetch status fields, not tasks or classification data
+        all_responses = StudyResponse.objects(study=study._id).only(
+            'is_completed', 'is_abandoned', 'is_in_progress'
+        )
+        
+        # Count responses by status - ensure mutual exclusivity
+        completed_responses = 0
+        abandoned_responses = 0
+        in_progress_responses = 0
+        
+        for response in all_responses:
+            if response.is_completed:
+                completed_responses += 1
+            elif response.is_abandoned:
+                abandoned_responses += 1
+            else:
+                in_progress_responses += 1
+        
+        # Calculate completion rate safely
+        if total_responses > 0:
+            completion_rate = (completed_responses / total_responses) * 100
+        else:
+            completion_rate = 0
+        
+        # Calculate average task time safely
+        if completed_responses > 0:
+            # OPTIMIZED: Only fetch duration field for completed responses
+            completed_responses_objs = StudyResponse.objects(study=study._id, is_completed=True).only('total_study_duration')
+            total_duration = sum(r.total_study_duration for r in completed_responses_objs if r.total_study_duration)
+            avg_task_time = total_duration / completed_responses
+        else:
+            avg_task_time = 0
+        
+        return jsonify({
+            'total_responses': total_responses,
+            'completed_responses': completed_responses,
+            'abandoned_responses': abandoned_responses,
+            'in_progress_responses': in_progress_responses,
+            'completion_rate': round(completion_rate, 1),
+            'avg_task_time': round(avg_task_time, 1)
+        })
+        
+    except Exception as e:
+        print(f"Error loading study stats: {e}")
+        return jsonify({'error': 'Failed to load statistics'}), 500
 
 @dashboard_bp.route('/studies/<study_id>/responses')
 @login_required
@@ -271,7 +321,10 @@ def study_responses(study_id):
     total_responses = StudyResponse.objects(study=study._id).count()
     
     # Get all responses for this study to ensure mutual exclusivity
-    all_responses = StudyResponse.objects(study=study._id)
+    # OPTIMIZED: Only fetch status fields, not tasks or classification data
+    all_responses = StudyResponse.objects(study=study._id).only(
+        'is_completed', 'is_abandoned', 'is_in_progress'
+    )
     
     # Count responses by status - ensure mutual exclusivity
     completed_responses = 0
@@ -300,7 +353,8 @@ def study_responses(study_id):
     
     # Calculate average task time safely
     if completed_responses > 0:
-        completed_responses_objs = StudyResponse.objects(study=study._id, is_completed=True)
+        # OPTIMIZED: Only fetch duration field for completed responses
+        completed_responses_objs = StudyResponse.objects(study=study._id, is_completed=True).only('total_study_duration')
         total_duration = sum(r.total_study_duration for r in completed_responses_objs if r.total_study_duration)
         avg_task_time = total_duration / completed_responses
     else:
@@ -319,7 +373,30 @@ def study_responses(study_id):
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    responses = StudyResponse.objects(study=study).order_by('-created_at')
+    # OPTIMIZED: Only fetch fields needed for the table view
+    # Exclude tasks and classification_answers which can be large
+    responses = StudyResponse.objects(study=study).only(
+        '_id',
+        'session_id',
+        'respondent_id',
+        'personal_info',
+        'is_completed',
+        'is_abandoned',
+        'is_in_progress',
+        'session_start_time',
+        'session_end_time',
+        'last_activity',
+        'completed_tasks_count',
+        'total_tasks_assigned',
+        'completion_percentage',
+        'total_study_duration',
+        'ip_address',
+        'user_agent',
+        'cint_rid',
+        'abandonment_timestamp',
+        'abandonment_reason'
+    ).order_by('respondent_id')
+    
     total = responses.count()
     
     # Ensure total is a valid number

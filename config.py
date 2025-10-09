@@ -7,7 +7,12 @@ class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     MONGODB_SETTINGS = {
-        'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://study:Dheeraj2006@studies.global.mongocluster.cosmos.azure.com/iped_system_v2'
+        'host': os.environ.get('MONGODB_URI') or 'mongodb+srv://study:Dheeraj2006@studies.global.mongocluster.cosmos.azure.com/iped_system_v2',
+        'connectTimeoutMS': 30000,  # 30 seconds
+        'socketTimeoutMS': 30000,   # 30 seconds
+        'serverSelectionTimeoutMS': 30000,  # 30 seconds
+        'maxPoolSize': 50,
+        'minPoolSize': 5
     }
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # Increased to 100MB for multiple file uploads
