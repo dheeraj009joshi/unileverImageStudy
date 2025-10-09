@@ -899,7 +899,9 @@ function renderModalImages(images) {
                 </div>
             </div>
             <div class="image-info">
+                <label for="image-name-input">Image name</label>
                 <input type="text" class="image-name-input" placeholder="Image name" value="${imageName}" onchange="updateImageName('${image.id}', this.value)">
+                <label for="image-alt-input">Alt text</label>
                 <input type="text" class="image-alt-input" placeholder="Alt text" value="${imageAlt}" onchange="updateImageAlt('${image.id}', this.value)">
             </div>
         `;
