@@ -52,16 +52,12 @@ def run():
 
             count = 0
             for resp in stale_responses:
-                resp.is_abandoned = True
-                resp.is_in_progress = False
+                # Use mark_abandoned method for proper count updates
+                resp.mark_abandoned(reason="Auto-abandoned due to inactivity (>10 minutes)")
                 resp.save()
-                study.decrement_in_progress_responses()
-                study.increment_abandoned_responses()
-                study.save()
                 count += 1
 
             if count:
-                study.decrement_in_progress_responses()
                 print(f"[{now.isoformat()}] Auto-abandoned {count} responses for study {study.id}")
 
             total_marked += count
